@@ -90,14 +90,16 @@ what could not run and why.
   an acceptance card (`templates/acceptance-card.md`): what changed,
   assumptions, visible evidence chosen with the `acceptance-evidence` skill.
   User-facing work waits for my acceptance.
+- **P6a. Merge safeguards**, which hold under any project merge procedure:
+  never bypass branch protection (admin merge, relaxing a rule); only I do,
+  for a case I name. Any change that needs the critical reviewer under P4 is
+  merged by me.
 - **Merge.** The project's merge procedure applies. Otherwise merge your own
-  PR (auto-merge preferred) once work is verified, review passed, every proof
-  status is green on the head commit and nothing awaits my answer or
-  acceptance. Any change that needs the critical reviewer under P4 is merged
-  by me. Never bypass branch protection (admin merge, relaxing a rule); only I
-  do, for a case I name. Disable auto-merge before pushing, get new commits
-  reviewed, then re-enable. Stay until merged, then clean up. Procedure:
-  `merge` skill.
+  PR (auto-merge preferred) once work is verified or marked untested under
+  P5, review passed, every proof status is green on the head commit (a status
+  for a blocked part may be absent, never faked) and nothing awaits my answer
+  or acceptance. Disable auto-merge before pushing, get new commits reviewed,
+  then re-enable. Stay until merged, then clean up. Procedure: `merge` skill.
 - **Fix forward on the same PR.** Fix failing checks without asking unless the
   fix changes scope. Push tweaks to the open PR, batched, not a new PR. When a
   late tweak meets a large context, hand it to a fresh small session.
@@ -118,7 +120,9 @@ ask. Stop only your own processes, never by name or pattern.
 
 Ask before acting outside the repository: accounts, money, messages,
 publishing, infrastructure provisioning, privileged commands. Hand root
-commands to me exactly as I would run them.
+commands to me exactly as I would run them. A private evidence page on the
+project's agreed host is not publishing; the host is agreed once per project
+(`practices/record-keeping.md#visual-evidence`).
 
 ## P10. Secrets
 
@@ -176,15 +180,17 @@ archive, so removing a stale record loses nothing.
 - **ADRs** only for decisions with lasting effect that someone could
   reasonably question later. Each starts with a short Decision and
   Consequences summary; context, options and discussion follow below a
-  divider. `docs/adr/README.md` indexes ADRs in force, one line each.
+  divider. `docs/adr/README.md` indexes ADRs in force and proposed, one line
+  each.
   Superseded or rejected ADRs move to `docs/adr/archive/`. A changed decision
   is a new ADR. Format: `templates/adr.md`.
 - **Open questions and assumptions**: a register of open items only. When
   answered, a lasting answer becomes an ADR or a doc update and the item is
   removed.
 - **Session closeouts, briefs and verification evidence** stay out of the
-  repository: closeouts in the PR and chat, evidence in PR comments or CI
-  artifacts. The repository keeps only verification procedures and reference
+  repository: closeouts in the PR and chat, evidence in PR comments, CI
+  artifacts or a private page linked from the PR
+  (`practices/record-keeping.md#visual-evidence`). The repository keeps only verification procedures and reference
   baselines tests compare against.
 - **Multi-session plans**: one living document per initiative, deleted when it
   ends after its lasting outcomes are moved.
@@ -215,8 +221,8 @@ Every project's `AGENTS.md` declares its type. Required current-state docs
   procedure.
 - **tooling**: a README with purpose and usage; other docs when relevant.
 
-A session starts by reading these docs (for a product, the roadmap and tech
-stack), not past session summaries.
+**P19a. Session start.** A session without a brief starts by reading these
+docs (for a product, the roadmap and tech stack), not past session summaries.
 
 ## P20. Project baseline
 
@@ -228,6 +234,6 @@ for anything deployed, the observability contract in
 logs. Set up or audit it with the `project-setup` skill; report gaps rather
 than leaving them silent.
 
-Pin dependencies to exact versions. A new dependency is justified in its PR; a
+**P20a. Pins.** Pin dependencies to exact versions. A new dependency is justified in its PR; a
 novel one (a new runtime, framework, service or vendor) needs an ADR. Detail:
 `practices/project-baseline.md`.

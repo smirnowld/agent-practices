@@ -7,11 +7,17 @@ description: Merge your own pull request once P6 allows it. Picks the merge meth
 
 Goal: a verified, reviewed PR reaches the default branch without an
 unreviewed commit slipping in and without polling. The project's own merge
-procedure, if it has one, replaces this skill.
+procedure, if it has one, replaces this skill, except for the P6a
+safeguards, which always hold: never bypass branch protection (no admin
+override such as `gh pr merge --admin`, no relaxing the ruleset; only I do,
+for a case I name), and a change that needs the critical reviewer under P4
+is handed to me to merge.
 
 ## 1. Check that merging is allowed
 
-P6's merge conditions hold on the PR's head commit. Auto-merge waits only for
+P6's merge conditions hold on the PR's head commit. Work marked untested
+under P5 may lack a proof status for the blocked part; never create a fake
+one. Auto-merge waits only for
 checks the ruleset requires, so any other proof status (for example
 `verified-locally/LANE`) must already be green before you enable it.
 
@@ -26,8 +32,7 @@ Keep the printed check name for step 4. Empty output (including a branch
 protected only by classic branch protection, which this endpoint does not
 show): do not merge; tell me the PR is ready and that I merge (baseline R4).
 
-Never merge with an admin override (`gh pr merge --admin`) or by relaxing the
-ruleset; a PR that cannot merge within the rules is handed to me (P6).
+A PR that cannot merge within the rules is handed to me (P6a).
 
 ## 2. Pick the method
 
