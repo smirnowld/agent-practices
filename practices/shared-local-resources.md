@@ -74,9 +74,10 @@ Typical cost: a container VM left running for days, holding one idle service.
 - If you see a claim or usage you can't explain: ask its session or me; never force it.
 - Never delete data or profiles without my explicit say-so.
 - In a parallel round sharing one simulator or emulator, one owner builds and installs the app once; lanes only
-  run the JS or dev server against it and never build.
+  run the bundler or dev server against it and never build.
 
 ## Origin
 
 A product repository, 2026-09: a container database shared by several agent
-sessions on one laptop.
+sessions on one laptop. The single-build rule: a mobile product repository,
+2026-09, parallel lanes rebuilding the app on one simulator.

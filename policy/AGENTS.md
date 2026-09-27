@@ -62,13 +62,13 @@ advisory instead.
 - The reviewer's tier is at least the implementer's. It may be lower only for
   mechanical changes with objective checks (renames, copy, formatting) or
   simple docs. Security, data loss, concurrency, auth, payments, migrations and
-  release-critical work always get the critical reviewer. A migration is
-  checked against every build still running (an installed mobile app changes
-  only when a new build is installed), not only against its own branch. A reviewer from a
+  release-critical work always get the critical reviewer. A reviewer from a
   different model family adds independence where available.
 - The brief states risk level and focus. Docs reviews check implications:
   missing or broken references, contradictions between documents, stale
-  mentions and, for a decision status change, what depends on it.
+  mentions and, for a decision status change, what depends on it. A migration
+  is checked against every build still running (an installed mobile app
+  changes only when a new build is installed), not only against its branch.
 
 ## P5. Proof
 
@@ -138,7 +138,7 @@ project's agreed host is not publishing; the host is agreed once per project
 ## P10. Secrets
 
 Never read, print, copy or commit a secret. Name it and where I place it.
-Never open env or secret files with file read, write or edit tools: the
+Never open env files holding secrets with file read, write or edit tools: the
 harness can echo later edits, secrets included, into the transcript. Check a
 key in the shell and print only a status code or a match count.
 

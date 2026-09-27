@@ -95,6 +95,8 @@ reaches a known-good state in one session.
 **C2 note: aggregate gate conditions.** A gate with `if: ${{ !cancelled() }}`
 still runs when a job it needs times out: `cancelled()` describes the run,
 not the results in `needs`. A gate is skipped only when its own condition is
-false, and a gate cancelled with its run reports cancelled, which blocks the
-merge. Don't switch such a gate to `always()` for the timeout reason (measured
-2026-09).
+false (a skipped required check counts as passing, which is the danger). A
+gate still waiting when its run is cancelled reports cancelled, which blocks
+the merge. Don't switch such a gate to `always()` for the timeout reason.
+Origin: a CI infrastructure repo, 2026-09, both cases measured with a
+throwaway workflow.
