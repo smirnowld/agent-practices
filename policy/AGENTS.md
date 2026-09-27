@@ -12,6 +12,8 @@ Follow this policy in every session. It gives way only to:
   states the replacement rule. A project rule that merely differs, without
   naming the statement, does not override; follow the policy and report the
   conflict.
+  Overriding a statement does not override its lettered sub-statements
+  (P6a); each must be named.
 - **An explicit OK from me** in the conversation for a specific action. It
   covers that action in that session only.
 
