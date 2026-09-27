@@ -12,8 +12,8 @@ back. Write it for the person deciding, not for the code:
 - Give a proposed default and the reason in one line.
 - Make it answerable in one reply ("A", "B", or a short sentence). If you
   cannot write the options yet, you are not ready to ask: find out more first.
-- Ask only what is mine to decide. Implementation choices behind it are yours:
-  decide and log them (P6).
+- Ask only what is mine to decide. Low-impact, reversible implementation
+  choices behind it are yours: decide and log them (P6).
 - In a batch, number the questions (Q1, Q2; reuse a register item's ID) so
   one reply answers all: "Q1 A, Q2 B".
 - Technical detail only when it changes the answer, in the Technical note.
