@@ -12,6 +12,8 @@ phone, and knows what comes next. The closeout goes in chat and in the PR
 ## 1. Gather
 
 - The PRs opened, their state, and the merge commit SHA of each merged one.
+  State what is finished from merged main, never from a branch or a
+  worker's report, and update the living plan (P17) to match.
 - The files a reader needs to see, pinned to that SHA (or the PR head SHA if
   not merged).
 - Proof: the checks on the final commit, with the CI run URL.
@@ -24,6 +26,17 @@ phone, and knows what comes next. The closeout goes in chat and in the PR
 
 Fill `templates/closeout.md` field by field. Keep each field to what a reader
 needs; leave out process detail.
+
+For **Continuation**:
+
+- **Continue this session** when the next step finishes the current task
+  with the same ownership and context and needs no new decision or
+  authority. A ready branch or open PR is not a reason to stop (P5).
+- **Start a new session** after merge and cleanup, when the next task is a
+  distinct objective, needs another worktree or owner, or would benefit from
+  fresh context.
+- **Wait for me** when the next step is a decision, production action or
+  other step that is mine.
 
 ## 3. Links (P18)
 
@@ -46,3 +59,8 @@ symlinked install. Fix each failure. A flagged token that is not a file
 reference (a command, a branch name) can stay. Without `gh` or network, rerun
 with `--offline` for the local checks and name the unchecked links under
 **Not verified**.
+
+## Origin
+
+A product repository, 2026-09: the done rule, blocked outcome, cleanup
+checklist, blocker owner and continuation routing came from its closeout.
