@@ -16,6 +16,7 @@ is in [policy/AGENTS.md](policy/AGENTS.md).
   is reviewed before merge. After merge, run `scripts/sync-policy.sh` so project copies
   match. After changing `roles/` or a `tiers.json`, run
   `python3 scripts/build-adapters.py`; never edit generated agents.
+- Run `make check` before opening a pull request; CI runs the same target.
 - Adapter facts cite the vendor doc URL and the date checked. Mark anything not
   confirmed against the official page as unverified.
 - Practices record where a lesson came from by kind of project and date, not
