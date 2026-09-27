@@ -1,6 +1,7 @@
 # Claude Code adapter
 
-Checked 2026-09-27 against https://code.claude.com/docs (pages cited inline).
+Checked 2026-09-27 against https://code.claude.com/docs/en/ (pages cited
+inline, relative to that URL).
 
 ## Packaging
 
@@ -19,8 +20,10 @@ marketplace (`.claude-plugin/marketplace.json`, plugin source `"."`), so
   `plugin.json` needs no `skills` key (plugins/manifest-reference.md, "How
   each key combines with its default location").
 - No `version` in either manifest, so the installed version is the commit SHA
-  and every merge is an update (plugins/loading.md, "How Claude Code computes
-  the version").
+  and every commit on the default branch becomes an available update
+  (plugins/loading.md, "How Claude Code computes the version"); how it
+  reaches a machine is under [Updates and running
+  sessions](#updates-and-running-sessions).
 - `hooks/hooks.json`: `SessionStart` on `startup|clear|compact` runs
   `session-start.sh`, whose stdout becomes context (hooks.md). It prints the
   policy only when the project lacks the synced block, so the policy never
@@ -57,26 +60,34 @@ also keep user-level agents with the same names, both sets appear; keep one.
 
 ### Updates and running sessions
 
-Checked 2026-09-27 against plugins/loading.md.
+Sources: plugins/loading.md, settings-reference.md
+(`extraKnownMarketplaces`), sub-agents.md.
 
 - A session loads plugins at startup and keeps that set. After an install
   or update, run `/reload-plugins` or start a new session. A session started
   before the install shows none of the plugin's skills or agents.
-- Marketplaces outside the vendor's own do not auto-update by default, so
-  the installed copy stays at the commit it was installed from. Set
-  `"autoUpdate": true` on the marketplace's `extraKnownMarketplaces` entry,
-  as in the snippet above; it works the same in user settings. Auto-update
-  runs up to ten minutes after the session's first message and applies from
-  the next session or `/reload-plugins`. To update by hand:
+- A marketplace added from GitHub, like this one, does not auto-update by
+  default, so the installed copy stays at the commit it was installed from.
+  Turn it on with `"autoUpdate": true` on the marketplace's
+  `extraKnownMarketplaces` entry in any settings file, as in the snippet
+  above, or with **Enable auto-update** under `/plugin` → Marketplaces. When
+  several settings files define the marketplace, the highest-precedence entry
+  is used whole, so a project entry without `autoUpdate` turns it off in that
+  project even when user settings turn it on. Auto-update runs up to ten
+  minutes after an interactive session's first message and applies from the
+  next session or `/reload-plugins`. To update by hand:
 
   ```
   claude plugin marketplace update agent-practices
   claude plugin update agent-practices@agent-practices
   ```
 
-- Removing user-level agents (`~/.claude/agents/`) takes them away from
-  sessions that are already running; plugin agents do not replace them until
-  those sessions reload. Observed 2026-09-27, not confirmed in the docs.
+- When moving from user-level agents to the plugin, a session started before
+  the install loses the user-level agents as soon as their files in
+  `~/.claude/agents/` are deleted, and gets the plugin agents only after
+  `/reload-plugins`. Claude Code watches that directory for added and edited
+  files (sub-agents.md, "Write subagent files"); removal from running
+  sessions was observed 2026-09-27 and is not stated in the docs.
 
 ## Tier mapping
 
