@@ -115,7 +115,7 @@ Never read, print, copy or commit a secret. Name it and where I place it.
 
 Do not invent requirements. Only I accept or overturn decisions. Record
 questions with a proposed default in the project's question register
-(`docs/questions.md`) and never ask the same one twice. P6 governs when to
+(`docs/questions.md`, from `templates/docs/questions.md`) and never ask the same one twice. P6 governs when to
 ask; this governs where it is recorded.
 
 ## P12. Primary sources
