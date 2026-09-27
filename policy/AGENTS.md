@@ -76,8 +76,9 @@ what could not be verified.
 
 - **Ask before building.** List the decisions that would change the result.
   Ask high-impact or user-visible ones in one batch, each with a proposed
-  default; decide and log low-impact, reversible ones. Many assumptions mean
-  the task is under-specified: ask.
+  default, written for the person deciding (`templates/question.md`); decide
+  and log low-impact, reversible ones. Many assumptions mean the task is
+  under-specified: ask.
 - **Acceptance before finishing.** When anything needs my acceptance, present
   an acceptance card (`templates/acceptance-card.md`): what changed,
   assumptions, visible evidence chosen with the `acceptance-evidence` skill.
