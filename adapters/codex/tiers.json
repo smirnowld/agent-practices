@@ -1,0 +1,15 @@
+{
+  "_source": "Models: https://developers.openai.com/api/docs/guides/latest-model (checked 2026-09-27). Codex model setting: https://learn.chatgpt.com/docs/config-file/config-reference (checked 2026-09-27). No moving latest alias documented in these sources.",
+  "models": {
+    "fast": "gpt-6-luna",
+    "standard": "gpt-6-sol",
+    "strong": "gpt-6-sol",
+    "strongest": "gpt-6-astra"
+  },
+  "effort": {
+    "low": "low",
+    "medium": "medium",
+    "high": "high",
+    "extra-high": "xhigh"
+  }
+}

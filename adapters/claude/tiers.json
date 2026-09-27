@@ -1,0 +1,10 @@
+{
+  "_source": "https://code.claude.com/docs/en/sub-agents.md (model aliases, effort values), checked 2026-09-27",
+  "models": { "fast": "sonnet", "standard": "opus", "strong": "fable", "strongest": "fable" },
+  "effort": { "low": "low", "medium": "medium", "high": "high", "extra-high": "xhigh" },
+  "tools": {
+    "read-only": "Read, Grep, Glob, Bash",
+    "read-only-web": "Read, Grep, Glob, Bash, WebFetch, WebSearch",
+    "write": null
+  }
+}

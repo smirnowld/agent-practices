@@ -1,0 +1,46 @@
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Generated adapters are up to date
+        run: python3 scripts/build-adapters.py --check
+
+      - name: Shell syntax
+        run: |
+          sh -n scripts/sync-policy.sh
+          sh -n adapters/claude/hooks/session-start.sh
+
+      - name: Policy sync self-test
+        run: |
+          set -eu
+          dir=$(mktemp -d)
+          printf '# Project\n\nOwn rules.\n' > "$dir/AGENTS.md"
+          sh scripts/sync-policy.sh "$dir"                 # insert
+          grep -q '^<!-- agent-practices:policy:begin' "$dir/AGENTS.md"
+          grep -q '^Own rules\.$' "$dir/AGENTS.md"
+          cp "$dir/AGENTS.md" "$dir/first"
+          sh scripts/sync-policy.sh "$dir"                 # resync is idempotent
+          cmp "$dir/AGENTS.md" "$dir/first"
+          sh scripts/sync-policy.sh --check "$dir"
+          # Malformed markers fail and leave the file alone.
+          bad=$(mktemp -d)
+          printf '<!-- agent-practices:policy:begin x -->\nold\n' > "$bad/AGENTS.md"
+          cp "$bad/AGENTS.md" "$bad/orig"
+          if sh scripts/sync-policy.sh "$bad"; then echo "malformed markers accepted"; exit 1; fi
+          cmp "$bad/AGENTS.md" "$bad/orig"

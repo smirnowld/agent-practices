@@ -1,0 +1,14 @@
+{
+  "name": "agent-practices",
+  "description": "Vendor-neutral agent policy, skills, roles and templates",
+  "owner": {
+    "name": "agent-practices"
+  },
+  "plugins": [
+    {
+      "name": "agent-practices",
+      "source": ".",
+      "description": "Policy, skills, roles and templates from agent-practices"
+    }
+  ]
+}
