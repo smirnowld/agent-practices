@@ -57,8 +57,8 @@ the shell, so read-only is enforced by the role's instructions, not by tools.
   at <effort>: <session id>" and waits; the parent switches it with the
   desktop app's session-model and session-effort tools.
 - Scheduled routines (`docs-drift-check`, `triage`, `issue-review`,
-  `project-setup` audit) run as local desktop-app scheduled tasks, one per project; a proposed session
-  appears as a chip. Local tasks fire only while the app is open and the
+  `project-setup` audit) run as local desktop-app scheduled tasks, one per
+  project; a proposed session appears as a chip. Local tasks fire only while the app is open and the
   machine awake; a missed run catches up once
   (https://code.claude.com/docs/en/desktop-scheduled-tasks, checked
   2026-09-27).

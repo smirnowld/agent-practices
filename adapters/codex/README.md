@@ -73,8 +73,8 @@ https://learn.chatgpt.com/docs/config-file/config-reference (checked
   and are not Codex configuration terms.
 - `skills/docs-drift-check/SKILL.md`, `skills/triage/SKILL.md`,
   `skills/issue-review/SKILL.md` and `skills/project-setup/SKILL.md` (audit
-  mode) describe recurring routines. Codex scheduled tasks can run these workflows, but
-  setup of their schedule, project list, and notification behavior remains a
+  mode) describe recurring routines. Codex scheduled tasks can run these
+  workflows, but setup of their schedule, project list, and notification behavior remains a
   manual task unless one is explicitly created.
 - `policy/AGENTS.md` says in P15 that closeouts name agents and models. Codex
   can provide those names; this is an instruction convention, not a Codex

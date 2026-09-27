@@ -48,16 +48,17 @@ get the new commits reviewed, then enable again with the new SHA.
 
 ## 4. Wait once
 
-Find the run of the workflow that produces the required check from step 1,
-on the reviewed commit, and block on it:
+Find the run behind the required check from step 1 on the reviewed commit
+(the run id is in the details URL, `.../actions/runs/RUN_ID/job/...`) and
+block on it:
 
 ```sh
-gh run list --commit REVIEWED_SHA --json databaseId,workflowName,name
+gh api 'repos/{owner}/{repo}/commits/REVIEWED_SHA/check-runs' --jq '.check_runs[] | select(.name=="CHECK") | .details_url'
 gh run watch RUN_ID --exit-status
 ```
 
-Just after a push the list can be empty; wait briefly and list once more. Do
-not poll. Do not rely on `gh pr checks --watch`: it exits at once when no
+Just after a push the check can be missing; wait briefly and look once
+more. Do not poll. Do not rely on `gh pr checks --watch`: it exits at once when no
 check has reported yet, and exits green when the checks that have reported
 pass before the others appear. A failed run: fix forward on the same PR (P6),
 then return to step 3.

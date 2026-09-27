@@ -48,8 +48,8 @@ Sort gaps into:
   docs from `templates/docs/`, `SECURITY.md`, Dependabot config, CI lanes,
   pinned actions, scanners, `make check`).
 - **Can fix through the host's API:** auto-merge, branch deletion, ruleset,
-  security features, issue labels (R6). These change settings: list them and get my OK first
-  (P9).
+  security features, issue labels (R6). These change settings: list them and
+  get my OK first (P9).
 - **Needs me:** accounts, paid plans, secrets, choosing a monitoring or
   hosting tool (then an ADR, P11).
 
