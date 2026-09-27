@@ -7,3 +7,4 @@ check:
 	sh -n scripts/test-sync.sh
 	sh -n adapters/claude/hooks/session-start.sh
 	sh scripts/test-sync.sh
+	sh scripts/test-check-links.sh

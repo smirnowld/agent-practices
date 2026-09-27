@@ -1,7 +1,7 @@
 # Closeout: <title>
 
-<!-- End of session (P15). For a reader with no context. Lives in the PR and
-chat, not the repo (P17). -->
+<!-- End of session (P15), written with the closeout skill. For a reader with
+no context. Lives in the PR and chat, not the repo (P17). -->
 
 **Outcome:** <done | partly done | abandoned> — <one sentence>
 

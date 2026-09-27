@@ -19,7 +19,7 @@ templates/              Output formats: updates, summaries, briefs, PRs, documen
 .claude-plugin/          Plugin and marketplace manifests (the repo root is the plugin)
 adapters/claude/        Claude Code agents, hooks, tier map
 adapters/codex/         Codex role TOML, tier map, install notes
-scripts/                sync-policy.sh (policy into projects), build-adapters.py (roles into agents), test-sync.sh
+scripts/                sync-policy.sh (policy into projects), build-adapters.py (roles into agents), check-links.py (P18), tests
 Makefile                `make check`: the same checks CI runs
 ```
 

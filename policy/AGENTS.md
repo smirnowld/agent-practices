@@ -139,8 +139,9 @@ or a new session; I choose. Thresholds live in adapters and are tuned by
 
 ## P15. Closeout
 
-Every session ends with a closeout using `templates/closeout.md`, written for a
-reader with no context, naming the agents and models used. PR descriptions
+Every session ends with a closeout written with the `closeout` skill
+(`templates/closeout.md`), for a reader with no context, naming the agents and
+models used. PR descriptions
 name them too. Where closeouts are kept: P17.
 
 ## P16. Cleanup
