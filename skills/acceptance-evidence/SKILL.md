@@ -22,7 +22,7 @@ tooling, CI, dependency bumps; say "n/a" on the PR instead.
 | 1. Screenshots | Static layout, copy, a few states | Before/after per changed screen and state (empty, error, long text, dark mode if supported), phone size first |
 | 2. Deployed preview | Flow across screens, interaction, real data matters | Preview URL plus the click path; screenshots of key steps as backup |
 | 3. Phone build | Native feel, gestures, device APIs, performance, notifications | Install link (TestFlight or equivalent) plus what to try |
-| Recording | Only motion that stills cannot show: animation, transitions, timing | Short clip for me to watch, attached; never a substitute for 1–3 |
+| Recording | Only motion that stills cannot show: animation, transitions, timing | Short clip for me to watch, on the private evidence page; never a substitute for 1–3 |
 
 Go up a level when the lower one would leave me guessing; go down when a
 higher one costs a build or deploy for a copy change. When unsure between two,
@@ -32,8 +32,9 @@ pick the lower and say what it does not show.
 
 - Capture from the real build or preview, not a mockup. Name each image by
   screen and state.
-- Deliver so it opens anywhere (P18): attach the images or upload them to the
-  PR; preview and build links must be reachable without the local machine.
+- Deliver so it opens anywhere (P18): put the images on a private published
+  page linked from the PR (`practices/record-keeping.md#visual-evidence`);
+  preview and build links must be reachable without the local machine.
 - Check every link resolves before sending.
 
 ## Report

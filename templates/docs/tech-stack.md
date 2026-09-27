@@ -23,6 +23,8 @@ Clients, API, Backend, Services we rent, Delivery and quality. -->
 
 ## Rules for adding dependencies
 
+- Exact version pins; a new dependency is justified in its PR, a novel one
+  (new runtime, framework, service or vendor) gets an ADR (P20)
 - <licence allow-list, maintenance signals, who approves>
 
 ## Known debts and upgrades due

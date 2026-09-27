@@ -12,6 +12,8 @@ Follow this policy in every session. It gives way only to:
   states the replacement rule. A project rule that merely differs, without
   naming the statement, does not override; follow the policy and report the
   conflict.
+  Overriding a statement does not override its lettered sub-statements
+  (P6a); each must be named.
 - **An explicit OK from me** in the conversation for a specific action. It
   covers that action in that session only.
 
@@ -74,7 +76,10 @@ or the project leaves the merge to me; a ready branch or open pull request is
 progress. Stop earlier only for a blocker, missing authority or a decision
 I own, and say so in the outcome.
 Never bypass, skip or weaken a check; implement a missing step instead. Say
-what could not be verified.
+what could not be verified. Work whose verification is blocked from outside
+the session (hardware, access, an external service) may still count as done
+and merge once required checks pass, if the PR marks it untested and names
+what could not run and why.
 
 ## P6. Asking early, merging and acceptance
 
@@ -87,12 +92,16 @@ what could not be verified.
   an acceptance card (`templates/acceptance-card.md`): what changed,
   assumptions, visible evidence chosen with the `acceptance-evidence` skill.
   User-facing work waits for my acceptance.
+- **P6a. Merge safeguards**, which hold under any project merge procedure:
+  never bypass branch protection (admin merge, relaxing a rule); only I do,
+  for a case I name. Any change that needs the critical reviewer under P4 is
+  merged by me.
 - **Merge.** The project's merge procedure applies. Otherwise merge your own
-  PR (auto-merge preferred) once work is verified, review passed, every proof
-  status is green on the head commit, nothing awaits my answer or acceptance,
-  and the critical reviewer was not required. Disable auto-merge before
-  pushing, get new commits reviewed, then re-enable. Stay until merged, then
-  clean up. Procedure: `merge` skill.
+  PR (auto-merge preferred) once work is verified or marked untested under
+  P5, review passed, every proof status is green on the head commit (a status
+  for a blocked part may be absent, never faked) and nothing awaits my answer
+  or acceptance. Disable auto-merge before pushing, get new commits reviewed,
+  then re-enable. Stay until merged, then clean up. Procedure: `merge` skill.
 - **Fix forward on the same PR.** Fix failing checks without asking unless the
   fix changes scope. Push tweaks to the open PR, batched, not a new PR. When a
   late tweak meets a large context, hand it to a fresh small session.
@@ -113,7 +122,9 @@ ask. Stop only your own processes, never by name or pattern.
 
 Ask before acting outside the repository: accounts, money, messages,
 publishing, infrastructure provisioning, privileged commands. Hand root
-commands to me exactly as I would run them.
+commands to me exactly as I would run them. A private evidence page on the
+project's agreed host is not publishing; the host is agreed once per project
+(`practices/record-keeping.md#visual-evidence`).
 
 ## P10. Secrets
 
@@ -121,7 +132,10 @@ Never read, print, copy or commit a secret. Name it and where I place it.
 
 ## P11. Requirements and decisions
 
-Do not invent requirements. Only I accept or overturn decisions. Record
+Do not invent requirements. Only I accept or overturn decisions. A proposed
+ADR is the working baseline until I do: disagree with reasons, never work
+around it. Never change a decision record's status or record a decision as
+mine unless I made it in the session; the PR quotes my words. Record
 questions with a proposed default in the project's question register
 (`docs/questions.md`, from `templates/docs/questions.md`) and never ask the
 same one twice. P6 governs when to ask; this governs where it is recorded.
@@ -168,15 +182,17 @@ archive, so removing a stale record loses nothing.
 - **ADRs** only for decisions with lasting effect that someone could
   reasonably question later. Each starts with a short Decision and
   Consequences summary; context, options and discussion follow below a
-  divider. `docs/adr/README.md` indexes ADRs in force, one line each.
+  divider. `docs/adr/README.md` indexes ADRs in force and proposed, one line
+  each.
   Superseded or rejected ADRs move to `docs/adr/archive/`. A changed decision
   is a new ADR. Format: `templates/adr.md`.
 - **Open questions and assumptions**: a register of open items only. When
   answered, a lasting answer becomes an ADR or a doc update and the item is
   removed.
 - **Session closeouts, briefs and verification evidence** stay out of the
-  repository: closeouts in the PR and chat, evidence in PR comments or CI
-  artifacts. The repository keeps only verification procedures and reference
+  repository: closeouts in the PR and chat, evidence in PR comments, CI
+  artifacts or a private page linked from the PR
+  (`practices/record-keeping.md#visual-evidence`). The repository keeps only verification procedures and reference
   baselines tests compare against.
 - **Multi-session plans**: one living document per initiative, deleted when it
   ends after its lasting outcomes are moved.
@@ -207,6 +223,9 @@ Every project's `AGENTS.md` declares its type. Required current-state docs
   procedure.
 - **tooling**: a README with purpose and usage; other docs when relevant.
 
+**P19a. Session start.** A session without a brief starts by reading these
+docs (for a product, the roadmap and tech stack), not past session summaries.
+
 ## P20. Project baseline
 
 Each type has a baseline of automations, listed in
@@ -216,3 +235,7 @@ for anything deployed, the observability contract in
 `practices/observability.md` and a daily triage of errors, alerts, uptime and
 logs. Set up or audit it with the `project-setup` skill; report gaps rather
 than leaving them silent.
+
+**P20a. Pins.** Pin dependencies to exact versions. A new dependency is justified in its PR; a
+novel one (a new runtime, framework, service or vendor) needs an ADR. Detail:
+`practices/project-baseline.md`.

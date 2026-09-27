@@ -52,7 +52,7 @@ A project that wants it for everyone adds to `.claude/settings.json`:
 }
 ```
 
-and imports the synced policy from `CLAUDE.md` with `@AGENTS.md`.
+and imports the synced policy from `CLAUDE.md` with `@AGENTS.md`; `CLAUDE.md` holds only that import (baseline R1).
 
 Plugin skills and agents are namespaced (`agent-practices:closeout`,
 `agent-practices:reviewer`) (plugins/manifest-reference.md, `name`). If you

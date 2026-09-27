@@ -10,7 +10,7 @@ project elsewhere maps each row to its host's equivalent.
 | # | Item | product | infrastructure | tooling |
 |---|---|---|---|---|
 | **Repository** |||||
-| R1 | `AGENTS.md` declares the type and carries the synced policy block | ✓ | ✓ | ✓ |
+| R1 | `AGENTS.md` declares the type and carries the synced policy block; vendor-specific agent files only import it | ✓ | ✓ | ✓ |
 | R2 | Required docs for the type (P19), with visuals for product docs | ✓ | ✓ | README |
 | R3 | Auto-merge allowed; head branches deleted on merge | ✓ | ✓ | ✓ |
 | R4 | Default-branch ruleset: pull request required, no deletion, no force push, one aggregate check pinned to GitHub Actions | ✓ | ✓ | ✓ |
@@ -20,11 +20,12 @@ project elsewhere maps each row to its host's equivalent.
 | C1 | Checks run on every PR and on the default branch | ✓ | ✓ | ✓ |
 | C2 | One aggregate job the ruleset requires; lanes skip only when not applicable, never fake green | ✓ | ✓ | ✓ |
 | C3 | The same checks run locally through one entry point (e.g. `make check`) | ✓ | ✓ | ✓ |
-| C4 | Third-party actions pinned to a commit SHA | ✓ | ✓ | ✓ |
+| C4 | Third-party actions pinned to a commit SHA with a comment ending in the version (`# vX.Y.Z`), enforced by a pin check | ✓ | ✓ | ✓ |
 | **Dependencies** |||||
 | D1 | Dependabot version updates, weekly, grouped per ecosystem, including GitHub Actions | ✓ | ✓ | ✓ |
 | D2 | Dependabot security updates on | ✓ | ✓ | ✓ |
 | D3 | Licence check against an allow-list | ✓ | — | when published |
+| D4 | Dependencies pinned to exact versions, lockfile committed | ✓ | ✓ | ✓ |
 | **Security** |||||
 | S1 | Secret scanning: GitHub's with push protection when public; a free scanner in CI (e.g. gitleaks) when private | ✓ | ✓ | ✓ |
 | S2 | Code scanning: GitHub CodeQL when public; a free scanner in CI (e.g. Semgrep Community Edition) when private | ✓ | when code | when code |
@@ -51,6 +52,19 @@ The CodeQL CLI's licence reportedly also excludes private code without the
 add-on (unverified).
 Private repositories therefore run open-source scanners as a CI lane; the
 only cost is CI minutes.
+
+## Pins and new dependencies
+
+- **Exact versions** (P20). Manifests name exact versions, not ranges, so a
+  build changes only through a reviewed PR. Update PRs move the pins.
+- **New dependencies.** The PR says why it is needed and why existing code or
+  dependencies do not cover it. A novel one (a new runtime, framework, service
+  or vendor) also gets an ADR, listed in the tech-stack doc.
+- **Action pins.** Write `uses: OWNER/ACTION@SHA # vX.Y.Z` with the version as
+  the last thing on the line. Dependabot rewrites the comment only when it
+  ends with the old version; any trailing text leaves a stale version next to
+  the new SHA. The pin check fails on a missing SHA or a comment that does not
+  end in a version. Learnt in a product repo, 2026-09-27.
 
 ## Dependency update PRs
 
