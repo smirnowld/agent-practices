@@ -14,6 +14,11 @@ vendor's own page.
 | Tiers | `claude/tiers.json` | `codex/tiers.json` |
 | Templates, practices | Read from the plugin root | Read from a local clone |
 
+A vendor's own agent file (for Claude Code, a project `CLAUDE.md`) only
+imports `AGENTS.md` (`@AGENTS.md`) and holds no rules of its own, so both
+agents read the same rules (baseline R1). Learnt in a product repo,
+2026-09-27.
+
 ## Why the synced copy stays
 
 Cloud sessions of both agents only clone the project. Claude cloud sessions

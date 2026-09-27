@@ -32,8 +32,9 @@ pick the lower and say what it does not show.
 
 - Capture from the real build or preview, not a mockup. Name each image by
   screen and state.
-- Deliver so it opens anywhere (P18): attach the images or upload them to the
-  PR; preview and build links must be reachable without the local machine.
+- Deliver so it opens anywhere (P18): put the images on a private published
+  page linked from the PR (`practices/record-keeping.md#visual-evidence`);
+  preview and build links must be reachable without the local machine.
 - Check every link resolves before sending.
 
 ## Report

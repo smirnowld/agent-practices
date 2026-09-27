@@ -6,7 +6,7 @@ skill. -->
 
 **What changed for the user:** <one to three bullets, user's words, not code>
 
-**Try it:** <P18 link to preview / build / attached screenshots, and the path to
+**Try it:** <P18 link to preview / build / screenshots page, and the path to
 click through>
 
 **Evidence:** <screenshots | deployed preview | phone build | recording>

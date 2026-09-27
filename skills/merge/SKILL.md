@@ -26,6 +26,9 @@ Keep the printed check name for step 4. Empty output (including a branch
 protected only by classic branch protection, which this endpoint does not
 show): do not merge; tell me the PR is ready and that I merge (baseline R4).
 
+Never merge with an admin override (`gh pr merge --admin`) or by relaxing the
+ruleset; a PR that cannot merge within the rules is handed to me (P6).
+
 ## 2. Pick the method
 
 In order: the method the project documents; else the ruleset's

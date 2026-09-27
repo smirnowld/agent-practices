@@ -27,4 +27,4 @@ Keep it under ~15 lines. -->
 
 ## Discussion
 
-<Evidence, links, open doubts. Link, don't paste; screenshots go in the PR.>
+<Evidence, links, open doubts. Link, don't paste; screenshots are linked from the PR.>

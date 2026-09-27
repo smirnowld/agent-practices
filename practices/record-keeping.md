@@ -24,6 +24,14 @@ starting points; adjust them from evidence.
 - A new ADR supersedes one: archive the old one in the same PR.
 - A question is answered: resolve it in the same PR.
 
+## Visual evidence
+
+Screenshots and other visual acceptance evidence go on a private published
+page (the agent host's own page feature, or any private host that opens on my
+phone, P18), linked from the PR. Agents' command-line tools cannot upload
+images as PR attachments, and committing them to the repo breaks the binaries
+budget above. Learnt in a product repo, 2026-09-27.
+
 ## Why
 
 Agents read docs on start. Oversized records cost tokens every session, bury
