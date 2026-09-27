@@ -28,6 +28,8 @@ P14; compaction thresholds themselves live in the adapters.
 - A new task gets a new session with a brief, not a fork: a fork inherits the
   history.
 - Delegated agents get a brief, not the transcript, and return conclusions.
+- Summarise tool output, except exact diffs and visual renders when the task
+  needs them.
 - Add machinery (for example re-injecting state after compaction) only when a
   measured case shows compaction losing a decision.
 
