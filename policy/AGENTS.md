@@ -54,7 +54,8 @@ Every change gets an independent review before merge, by a read-only agent
 with fresh context or by me. Reviewers never fix their own findings; blocking
 findings are fixed and the reviewer confirms the fix. Each non-blocking finding
 not fixed before merge gets a GitHub issue labelled `deferred-review`, linked
-from the PR.
+from the PR; a security finding in a public repository gets a private security
+advisory instead.
 
 - The reviewer's tier is at least the implementer's. It may be lower only for
   mechanical changes with objective checks (renames, copy, formatting) or
@@ -203,7 +204,8 @@ Every project's `AGENTS.md` declares its type. Required current-state docs
 
 Each type has a baseline of automations, listed in
 `practices/project-baseline.md`: CI with branch protection, dependency
-updates, security scanning, a weekly docs drift check, and, for anything
+updates, security scanning, a weekly docs drift check, an issue review, and,
+for anything
 deployed, the observability contract in `practices/observability.md` and a
 daily triage of errors, alerts, uptime and logs. Set up or audit it with the `project-setup` skill; report gaps rather
 than leaving them silent.

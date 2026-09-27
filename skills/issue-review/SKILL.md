@@ -14,30 +14,37 @@ session only when there is an action to take.
 
 ## 1. Select (fast tier)
 
-List open issues with labels, linked PRs and last activity:
+Since the last run (or 3 days), check whether any issue changed or the
+default branch had merges. Neither, and no issue is due for its 30-day
+review: report "no changes" and stop.
+
+Otherwise list open issues:
 
 ```sh
-gh issue list --state open --limit 200 --json number,title,labels,updatedAt,createdAt,url
+gh issue list --state open --limit 500 --json number,title,labels,createdAt,updatedAt,url,closedByPullRequestsReferences
 ```
 
-Review in priority order (labels in baseline R6): unprioritised first, then
-`p1`, `p2`, `p3`. Each run covers issues that are new or changed since the
-last run, every unprioritised or `p1` issue, and every issue not reviewed in
-the last 30 days. No issues selected: report "no changes" and stop.
+If 500 come back, say the list was truncated and review the highest
+priorities first. Select issues that are new or changed since the last run,
+issues a merge since the last run may address (it names the issue, or touches
+the files or area the issue names; a cheap match on titles, bodies and changed
+paths), and any issue not reviewed in the last 30 days. Review in priority order
+(labels in baseline R6): unprioritised first, then `p1`, `p2`, `p3`.
 
 ## 2. Check relevance (standard tier)
 
 For each selected issue, from evidence only:
 
 - **Addressed:** a merged PR or commit since the issue was opened fixes it
-  (search PRs and commits for the issue number, the files and the symbols it
-  names; read the code it points at on the default branch).
+  (linked PRs; PRs and commits naming the issue number, files or symbols;
+  the code it points at on the default branch).
 - **Obsolete:** the code, feature or decision it concerns is gone or was
-  overturned (ADRs, `docs/questions.md`).
+  overturned (ADRs and `docs/questions.md`, where present).
 - **Duplicate:** another open issue says the same; keep the older or fuller
   one.
 - **Roll up:** it fits an item already planned: a row in `docs/plan.md` or
-  the roadmap, or an open issue or PR that item links. Name the item.
+  the roadmap where present, or an open issue or PR that item links. Name the
+  item.
 - **Still open:** none of the above.
 
 Cite the evidence for each verdict (PR, commit or file link, P18). Unsure
@@ -56,13 +63,16 @@ prioritised like any other.
 |---|---|
 | Nothing to change | One line: "issues current", with counts by priority |
 | Closures, roll-ups, duplicates or label changes only | Proposed session: apply them after my OK, fast tier |
-| Open `p1` issue not in planned work | Proposed session that asks me whether to plan it or start it |
-| A verdict needs my decision (scope, requirement, overturning a decision, P11) | Ask me in the report; do not propose the change |
+| Open `p1` issue not in planned work | Proposed session that asks me first whether to plan or start it |
+| A verdict needs my decision (scope, requirement, overturning a decision) | Proposed session that asks me first and records the question (P11); do not propose the change |
+
+Ask about an issue once. The log records what was asked; later runs only
+count it until the issue changes or I answer.
 
 ## 5. Report
 
 One line per issue acted on: `#N — verdict — action — evidence`. Then counts
 by priority and the oldest `p1`. Use `templates/brief.md` for the proposed
-session. Store the report where the routine keeps its log, with the run date
-and the issues reviewed, so the next run can select. Report the run's token
-use.
+session. Store the report where the routine keeps its log, with the run date,
+the issues reviewed and the questions asked, so the next run can select.
+Report the run's token use.

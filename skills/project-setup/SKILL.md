@@ -48,7 +48,7 @@ Sort gaps into:
   docs from `templates/docs/`, `SECURITY.md`, Dependabot config, CI lanes,
   pinned actions, scanners, `make check`).
 - **Can fix through the host's API:** auto-merge, branch deletion, ruleset,
-  security features. These change settings: list them and get my OK first
+  security features, issue labels (R6). These change settings: list them and get my OK first
   (P9).
 - **Needs me:** accounts, paid plans, secrets, choosing a monitoring or
   hosting tool (then an ADR, P11).
@@ -74,4 +74,4 @@ recorded in the PR description with the command used.
   routine proposes a session with a brief (`templates/brief.md`) for a setup
   session covering the "can fix" list.
 - For a new project: the routine entries to add (routines
-  T1–T3 that apply), for me to paste; the skill does not edit that list.
+  T1–T4 that apply), for me to paste; the skill does not edit that list.
