@@ -154,7 +154,9 @@ models used. PR descriptions name them too. Where closeouts are kept: P17.
 ## P16. Cleanup
 
 After merge or abandonment, update your local default branch and remove
-your own worktrees, branches and local resources without asking.
+your own worktrees, branches and local resources without asking. Shut down
+any simulator or emulator the session created once no other claim remains
+(P7); delete it only if it holds no data anyone needs.
 
 ## P17. Record keeping
 
