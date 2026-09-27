@@ -19,7 +19,7 @@ import subprocess
 import sys
 
 MD_LINK = re.compile(r"\]\(([^)\s]+)\)")
-TOKEN = re.compile(r"`([^`\s]+)`|(?<![\w/`])((?:\.{0,2}/)?[\w.-]+(?:/[\w.@-]+)+/?)")
+TOKEN = re.compile(r"`([^`\s]+)`|(?<![\w/`~])((?:~|\.{0,2})?/?[\w.-]+(?:/[\w.@-]+)+/?)")
 EXT = r"\.[A-Za-z][A-Za-z0-9]{0,4}"
 FILE_PATH = re.compile(
     rf"^(?:~|\.{{0,2}})/?(?:[\w.@-]+/)*[\w@-][\w.@-]*{EXT}(?::\d+)?$"
@@ -57,22 +57,32 @@ def resolves(path):
 
 
 def linked(token, line):
-    """True if a GitHub blob or tree URL on the line points at this path."""
+    """True if a link on the line covers this path: a blob or tree URL to it,
+    or a PR files view or commit, which P18 allows for diffs."""
     path = re.sub(r":\d+$", "", token).rstrip("/")
     path = re.sub(r"^(\./)+", "", path)
     for m in GH.finditer(line):
         owner, repo, kind, rest = m.groups()
+        if kind in ("pull", "commit"):
+            return True
         if kind not in ("blob", "tree"):
             continue
         target = rest.rstrip(TRAILING).partition("/")[2].rstrip("/")
-        if target and (target == path or path.endswith("/" + target)):
+        if target and (target == path or path.endswith("/" + target)
+                       or target.endswith("/" + path)):
             return True
     return False
 
 
 def check(text, offline):
     errors = []
+    fenced = False
     for n, line in enumerate(text.splitlines(), 1):
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if fenced:
+            continue
         for target in MD_LINK.findall(line):
             if not target.startswith("https://"):
                 errors.append(f"{n}: link target is not an https URL: {target}")
