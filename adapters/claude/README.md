@@ -55,7 +55,9 @@ the shell, so read-only is enforced by the role's instructions, not by tools.
 - Model check (P2d): a session started from a brief whose model or effort
   differs from the brief's Model line sends its parent "Switch me to <model>
   at <effort>: <session id>" and waits; the parent switches it with the
-  desktop app's session-model and session-effort tools.
+  desktop app's session-model and session-effort tools, replies "Switched;
+  continue with the brief." and does nothing else that turn. With no
+  reachable parent, the session asks me to switch it with `/model` and stops.
 - Scheduled routines (`docs-drift-check`, `triage`, `issue-review`,
   `project-setup` audit) run as local desktop-app scheduled tasks, one per
   project; a proposed session appears as a chip. Local tasks fire only while the app is open and the
@@ -65,8 +67,43 @@ the shell, so read-only is enforced by the role's instructions, not by tools.
 - Local-only paths are not links (P18): cite a GitHub URL pinned to a commit,
   or attach the file.
 - Context: the compaction threshold is `autoCompactWindow` in user settings
-  (model-config.md); tuned per `practices/context-efficiency.md`.
+  (model-config.md); tuned per `practices/context-efficiency.md`. Before
+  suggesting compaction, check `/context`; suggest
+  `/compact keep: goal, decisions, owned files, proof status, next step`.
+  Record `/usage` totals for measured trials outside this repository (P17).
+
+## Cloud sessions
+
+Plugins do not load in cloud sessions (see
+[adapters/README.md](../README.md#why-the-synced-copy-stays)). The cloud
+environment's setup script installs the skills instead. Observed 2026-09-27:
+setup runs in `/home/user` with `HOME=/root`, the project is cloned to
+`/home/user/REPO`, and skills in `$HOME/.claude/skills/` and the root line in
+`$HOME/.claude/CLAUDE.md` load in the session. Setup script:
+
+```bash
+#!/bin/bash
+log=/tmp/setup.log
+{
+  echo "pwd: $(pwd) HOME: $HOME"
+  git clone --depth 1 https://github.com/OWNER/agent-practices /opt/agent-practices \
+    && mkdir -p "$HOME/.claude/skills" \
+    && cp -R /opt/agent-practices/skills/. "$HOME/.claude/skills/" \
+    && echo "agent-practices root (templates, practices, policy): /opt/agent-practices" >> "$HOME/.claude/CLAUDE.md" \
+    && echo "copied: $(ls "$HOME/.claude/skills" | tr '\n' ' ')"
+} >"$log" 2>&1
+exit 0
+```
+
+It always exits 0 so a failed clone never blocks the session; read
+`/tmp/setup.log` if skills are missing. The policy still comes from the
+project's synced `AGENTS.md`; roles are not installed, so delegated work uses
+general agents briefed with the role file. Environments can be created and
+edited in the desktop app; on 2026-09-27 starting a cloud session from the
+desktop app failed ("Failed to fetch") while the web worked.
 
 ## Not verified
 
 - Whether the desktop app's scheduled tasks can be defined from a repo file.
+- Whether the cloud paths above (`/home/user`, `HOME=/root`) are stable
+  across environment images; the setup script logs them.

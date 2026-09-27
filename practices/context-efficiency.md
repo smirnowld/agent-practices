@@ -15,6 +15,7 @@ P14; compaction thresholds themselves live in the adapters.
   when needed.
 - **Large tool output.** Full logs, file dumps and repeated status polls. Keep
   logs on disk and bring back only the result, failing lines and the path.
+  Keep exact diffs and visual renders when the task needs them.
 
 ## Rules of thumb
 

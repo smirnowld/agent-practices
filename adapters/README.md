@@ -21,9 +21,11 @@ do not load plugins, even when the project's settings declare them
 (https://code.claude.com/docs/en/settings.md, "Settings in cloud sessions",
 checked 2026-09-27). Codex cloud's plugin and skill loading is undocumented.
 So the policy reaches every session only through the project's own
-`AGENTS.md`, kept current by `scripts/sync-policy.sh`. Skills, roles and
-templates are not available in cloud sessions. Setup scripts have network
-access on both, so cloning this repo during setup may work (unverified).
+`AGENTS.md`, kept current by `scripts/sync-policy.sh`. Skills and templates
+reach Claude cloud sessions only through the environment's setup script,
+which clones this repository (verified 2026-09-27; see
+[claude/README.md](claude/README.md#cloud-sessions)); roles do not. For Codex
+cloud the same approach is unverified.
 
 ## Keeping adapters current
 
