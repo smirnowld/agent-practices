@@ -8,7 +8,7 @@ vendor's own page.
 |---|---|---|
 | Policy, local | Plugin `SessionStart` hook prints it, unless the project carries the synced copy | Global `AGENTS.md` pointing here, or the synced project copy |
 | Policy, project and cloud | Synced block in the project's `AGENTS.md`, imported from `CLAUDE.md` | Synced block in the project's `AGENTS.md`, read natively |
-| Skills | Plugin (repo-root `skills/`) | `.agents/skills` (user or repo level) |
+| Skills | Plugin (repo-root `skills/`); cloud: setup script | `.agents/skills` (user or repo level) |
 | Roles | Generated `claude/agents/*.md` in the plugin | Generated `codex/agents/*.toml`, copied to `~/.codex/agents/` or `.codex/agents/` |
 | Routines | Desktop scheduled tasks | Desktop scheduled tasks |
 | Tiers | `claude/tiers.json` | `codex/tiers.json` |
@@ -21,11 +21,11 @@ do not load plugins, even when the project's settings declare them
 (https://code.claude.com/docs/en/settings.md, "Settings in cloud sessions",
 checked 2026-09-27). Codex cloud's plugin and skill loading is undocumented.
 So the policy reaches every session only through the project's own
-`AGENTS.md`, kept current by `scripts/sync-policy.sh`. Skills and templates
-reach Claude cloud sessions only through the environment's setup script,
-which clones this repository (verified 2026-09-27; see
-[claude/README.md](claude/README.md#cloud-sessions)); roles do not. For Codex
-cloud the same approach is unverified.
+`AGENTS.md`, kept current by `scripts/sync-policy.sh`. For Claude cloud
+sessions the adapter's setup script clones this repository and installs
+skills and roles (observed working for skills 2026-09-27; see
+[claude/README.md](claude/README.md#cloud-sessions)). For Codex cloud the
+same approach is unverified.
 
 ## Keeping adapters current
 
