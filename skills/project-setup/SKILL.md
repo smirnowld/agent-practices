@@ -38,6 +38,9 @@ For R1, a present block must also be current: run
 clone. A stale copy is "partial: policy block out of date" and proposes a
 sync session.
 
+For R6, run `scripts/ensure-labels.sh --check <owner/repo>` (read-only; exit
+1 names each label missing or different). Any gap is "partial" or "missing".
+
 In audit mode, stop here and deliver the report (step 5).
 
 ## 3. Plan the fixes (setup mode)
@@ -49,7 +52,8 @@ Sort gaps into:
   pinned actions, scanners, `make check`).
 - **Can fix through the host's API:** auto-merge, branch deletion, ruleset,
   security features, issue labels (R6). These change settings: list them and
-  get my OK first (P9).
+  get my OK first (P9). Labels are applied with
+  `scripts/ensure-labels.sh <owner/repo>`, which is idempotent.
 - **Needs me:** accounts, paid plans, secrets, choosing a monitoring or
   hosting tool (then an ADR, P11).
 
