@@ -72,8 +72,9 @@ Sources: plugins/loading.md, settings-reference.md
   `extraKnownMarketplaces` entry in any settings file, as in the snippet
   above, or with **Enable auto-update** under `/plugin` → Marketplaces. When
   several settings files define the marketplace, the highest-precedence entry
-  is used whole, so a project entry without `autoUpdate` turns it off in that
-  project even when user settings turn it on. Auto-update runs up to ten
+  is used whole, so a project entry without `autoUpdate` hides the
+  user-settings value in that project (inferred from both pages, not
+  tested). Auto-update runs up to ten
   minutes after an interactive session's first message and applies from the
   next session or `/reload-plugins`. To update by hand:
 
