@@ -58,7 +58,8 @@ gh pr merge PR --auto --METHOD --match-head-commit REVIEWED_SHA
 `--match-head-commit` makes GitHub refuse the merge if the branch moved past
 the reviewed commit. A PR that is already mergeable (checks green, nothing
 pending) cannot get auto-merge; merge it directly with the same
-`--match-head-commit` and go to step 5. Before any later push: `gh pr merge PR --disable-auto`,
+`--match-head-commit` and go to step 5. Before any later push:
+`gh pr merge PR --disable-auto`,
 get the new commits reviewed, then enable again with the new SHA.
 
 ## 4. Wait once
