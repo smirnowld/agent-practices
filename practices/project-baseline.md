@@ -18,7 +18,7 @@ project elsewhere maps each row to its host's equivalent.
 | R6 | Issue labels: `deferred-review`, and priorities `p1` (blocks planned work, or risks users or data), `p2` (belongs in the current or next phase), `p3` (when convenient) | ✓ | ✓ | ✓ |
 | **CI** |||||
 | C1 | Checks run on every PR and on the default branch | ✓ | ✓ | ✓ |
-| C2 | One aggregate job the ruleset requires; lanes skip only when not applicable, never fake green | ✓ | ✓ | ✓ |
+| C2 | One aggregate job the ruleset requires; lanes skip only when not applicable, never fake green (note below) | ✓ | ✓ | ✓ |
 | C3 | The same checks run locally through one entry point (e.g. `make check`) | ✓ | ✓ | ✓ |
 | C4 | Third-party actions pinned to a commit SHA with a comment ending in the version (`# vX.Y.Z`), enforced by a pin check | ✓ | ✓ | ✓ |
 | **Dependencies** |||||
@@ -91,3 +91,12 @@ report R4 as "not available: plan" and note that I merge.
 Consistent automation means the routines, reviews and dashboards work the
 same in every project, gaps are visible instead of silent, and a new project
 reaches a known-good state in one session.
+
+**C2 note: aggregate gate conditions.** A gate with `if: ${{ !cancelled() }}`
+still runs when a job it needs times out: `cancelled()` describes the run,
+not the results in `needs`. A gate is skipped only when its own condition is
+false (a skipped required check counts as passing, which is the danger). A
+gate still waiting when its run is cancelled reports cancelled, which blocks
+the merge. Don't switch such a gate to `always()` for the timeout reason.
+Origin: a CI infrastructure repo, 2026-09, both cases measured with a
+throwaway workflow.
