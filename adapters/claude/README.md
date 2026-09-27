@@ -61,7 +61,7 @@ also keep user-level agents with the same names, both sets appear; keep one.
 ### Updates and running sessions
 
 Sources: plugins/loading.md, settings-reference.md
-(`extraKnownMarketplaces`), sub-agents.md.
+(`extraKnownMarketplaces`), env-vars.md, sub-agents.md.
 
 - A session loads plugins at startup and keeps that set. After an install
   or update, run `/reload-plugins` or start a new session. A session started
@@ -81,6 +81,22 @@ Sources: plugins/loading.md, settings-reference.md
   ```
   claude plugin marketplace update agent-practices
   claude plugin update agent-practices@agent-practices
+  ```
+
+- `DISABLE_AUTOUPDATER=1` (and likewise `DISABLE_UPDATES=1` or
+  `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1`) turns off the whole plugin
+  auto-update pass and hides the **Enable auto-update** toggle, whatever
+  `autoUpdate` says, unless `FORCE_AUTOUPDATE_PLUGINS=1` is also set
+  (plugins/loading.md, "Which marketplaces and plugins auto-update";
+  env-vars.md). The desktop app starts Claude Code with
+  `DISABLE_AUTOUPDATER=1` (observed 2026-09-27 in the process environment,
+  not stated in the docs). So in the desktop app, add this to user settings
+  (`~/.claude/settings.json`) as well as setting `autoUpdate`; the variable
+  was seen to reach desktop sessions, but an update arriving that way is not
+  yet tested:
+
+  ```json
+  { "env": { "FORCE_AUTOUPDATE_PLUGINS": "1" } }
   ```
 
 - When moving from user-level agents to the plugin, a session started before
