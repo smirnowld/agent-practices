@@ -69,9 +69,10 @@ advisory instead.
 ## P5. Proof
 
 Work is done only when the project's required checks pass on the final commit.
-Done also means merged, with local main updated and cleanup finished (P16);
-a ready branch or open pull request is progress. Stop earlier only for a
-blocker, missing authority or a decision I own, and say so in the outcome.
+Done also means merged, or handed to me when P6 or the project leaves the
+merge to me, with cleanup finished (P16); a ready branch or open pull request
+is progress. Stop earlier only for a blocker, missing authority or a decision
+I own, and say so in the outcome.
 Never bypass, skip or weaken a check; implement a missing step instead. Say
 what could not be verified.
 
@@ -152,8 +153,8 @@ models used. PR descriptions name them too. Where closeouts are kept: P17.
 
 ## P16. Cleanup
 
-After merge or abandonment, remove your own worktrees, branches and local
-resources without asking.
+After merge or abandonment, update your local default branch and remove
+your own worktrees, branches and local resources without asking.
 
 ## P17. Record keeping
 

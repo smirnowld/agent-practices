@@ -17,17 +17,17 @@ no context. Lives in the PR and chat, not the repo (P17). -->
 advisory links for security findings (P4), and other follow-ups with where
 they are tracked; or "none">
 
-**Blocked on:** <each blocker or decision and who resolves it, recorded in
-the question register (P11); or "none">
+**Blocked on:** <each blocker or decision and who resolves it, decisions in
+the question register (P11), other blockers where tracked; or "none">
 
 **Agents and models:** <role — model at effort — what it did>
 
-**Cleanup:** <state of each: review, PR, CI, merge, local main updated,
+**Cleanup:** <state of each: review, PR, CI, merge, local default branch updated,
 remote branch, local branch, worktree, other resources released>
 
 **Next:** <one recommended next task, why it is next and what it depends on;
 or "none">
 
 **Continuation:** <continue this session | start a new session | wait for me>
-— <why>. <When there is a next task: a ready-to-paste brief
+— <why>. <For a new session: a ready-to-paste brief
 (`templates/brief.md`)>
