@@ -12,8 +12,8 @@ phone, and knows what comes next. The closeout goes in chat and in the PR
 ## 1. Gather
 
 - The PRs opened, their state, and the merge commit SHA of each merged one.
-  State what is finished from merged main, never from a branch or a
-  worker's report, and update the living plan (P17), if any, to match.
+  State what is finished from the merged default branch, never from a
+  branch or a worker's report, and update the living plan (P17), if any, to match.
 - The files a reader needs to see, pinned to that SHA (or the PR head SHA if
   not merged).
 - Proof: the checks on the final commit, with the CI run URL.
