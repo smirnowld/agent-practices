@@ -60,8 +60,8 @@ Order: CI and the aggregate check first, then the ruleset that requires it
 
 One PR for repository files, grouped commits per section of the checklist.
 New docs start from the templates, with only facts that are known; unknowns
-go to the question register or my open points, never invented. CI must pass on
-the PR, including new lanes; a new scanner's first findings are reported, not
+go to the question register (`templates/docs/questions.md`) or my open
+points, never invented. CI must pass on the PR, including new lanes; a new scanner's first findings are reported, not
 suppressed. Review per P4; security lanes and rulesets are release-critical
 work for the reviewer choice. Host settings are applied after my OK and
 recorded in the PR description with the command used.

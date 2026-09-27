@@ -11,7 +11,7 @@ starting points; adjust them from evidence.
 | ADR total | ~10 KB; longer evidence goes in the PR |
 | ADR index (`docs/adr/README.md`) | One line per ADR in force |
 | ADRs in force | Review when over 25; many may be superseded |
-| Question register (`docs/questions.md`) | 30 open items or 20 KB |
+| Question register (`docs/questions.md`, template `templates/docs/questions.md`) | 30 open items or 20 KB |
 | Current-state doc | 40 KB per file; split by topic beyond that |
 | Living plan | 20 KB; one per initiative |
 | Binaries in `docs/` | None, except diagrams a doc embeds (< 200 KB each) |
