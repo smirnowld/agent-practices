@@ -13,8 +13,8 @@ no context. Lives in the PR and chat, not the repo (P17). -->
 
 **Records updated:** <docs, ADRs, question register changed in place; or "none">
 
-**Deferred:** <non-blocking review findings and follow-ups, with where they
-are tracked>
+**Deferred:** <review findings as issue links, or advisory links for security
+findings (P4), and other follow-ups with where they are tracked; or "none">
 
 **Agents and models:** <role — model at effort — what it did>
 
