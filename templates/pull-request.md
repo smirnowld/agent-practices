@@ -17,7 +17,7 @@
 ## Review
 
 - <role — model at effort> — <passed | findings fixed and confirmed>
-- Deferred non-blocking findings: <list, or "none">
+- Deferred non-blocking findings: <issue links (P4), or "none">
 
 ## Agents and models
 

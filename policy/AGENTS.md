@@ -52,7 +52,9 @@ cover, and redoes work only where evidence is missing or suspicious.
 
 Every change gets an independent review before merge, by a read-only agent
 with fresh context or by me. Reviewers never fix their own findings; blocking
-findings are fixed and the reviewer confirms the fix.
+findings are fixed and the reviewer confirms the fix. Each non-blocking finding
+not fixed before merge gets a GitHub issue labelled `deferred-review`, linked
+from the PR.
 
 - The reviewer's tier is at least the implementer's. It may be lower only for
   mechanical changes with objective checks (renames, copy, formatting) or
@@ -84,7 +86,7 @@ what could not be verified.
   status is green on the head commit, nothing awaits my answer or acceptance,
   and the critical reviewer was not required. Disable auto-merge before
   pushing, get new commits reviewed, then re-enable. Stay until merged, then
-  clean up.
+  clean up. Procedure: `merge` skill.
 - **Fix forward on the same PR.** Fix failing checks without asking unless the
   fix changes scope. Push tweaks to the open PR, batched, not a new PR. When a
   late tweak meets a large context, hand it to a fresh small session.

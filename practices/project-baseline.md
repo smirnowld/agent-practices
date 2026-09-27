@@ -15,6 +15,7 @@ project elsewhere maps each row to its host's equivalent.
 | R3 | Auto-merge allowed; head branches deleted on merge | ✓ | ✓ | ✓ |
 | R4 | Default-branch ruleset: pull request required, no deletion, no force push, one aggregate check pinned to GitHub Actions | ✓ | ✓ | ✓ |
 | R5 | Public repos: licence, `SECURITY.md`, private vulnerability reporting on | when public | when public | when public |
+| R6 | Issue labels: `deferred-review`, and priorities `p1` (blocks planned work, or risks users or data), `p2` (belongs in the current or next phase), `p3` (when convenient) | ✓ | ✓ | ✓ |
 | **CI** |||||
 | C1 | Checks run on every PR and on the default branch | ✓ | ✓ | ✓ |
 | C2 | One aggregate job the ruleset requires; lanes skip only when not applicable, never fake green | ✓ | ✓ | ✓ |
@@ -37,6 +38,7 @@ project elsewhere maps each row to its host's equivalent.
 | T1 | Weekly docs drift check (`docs-drift-check`) | ✓ | ✓ | when docs beyond README |
 | T2 | Daily triage of errors, alerts, uptime and logs (`triage`) | when deployed | ✓ | — |
 | T3 | Baseline audit (`project-setup`, audit mode), monthly | ✓ | ✓ | ✓ |
+| T4 | Open issues reviewed every three days (`issue-review`) | ✓ | ✓ | ✓ |
 
 ## Security scanning cost
 
