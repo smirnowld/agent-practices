@@ -1,3 +1,7 @@
 - **New `templates/docs/questions.md`:** the register.
 - [AGENTS.md](policy/AGENTS.md)
 - [main](https://github.com/o/r/blob/main/README.md)
+- Edited templates/closeout.md in place.
+- `src/app.ts` see https://github.com/o/r/blob/0123456789abcdef0123456789abcdef01234567/src/app.tsx
+- `scripts/` changed.
+- [short](https://github.com/o/r/blob/0123abc/README.md)

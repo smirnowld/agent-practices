@@ -27,23 +27,22 @@ needs; leave out process detail.
 
 ## 3. Links (P18)
 
-- PRs, issues, commits and CI runs: full `https://github.com/...` URLs.
-- Files and lines: `https://github.com/OWNER/REPO/blob/SHA/PATH#L12`, with
-  a 40-character commit SHA, never a branch name.
-- A path in backticks is only a label next to its link, on the same line.
-  Paths on their own may be turned into local links by the chat client,
-  which break once the session ends or the working directory changes.
-- Not pushed yet: push first, or attach the file.
+Follow P18. The rule this skill adds: a path in backticks or plain text is
+only a label next to its link, on the same line. On its own, a chat client
+may turn it into a local link that breaks once the session ends or the
+working directory changes.
 
 ## 4. Check before sending
 
-Save the draft to a scratch file and run the link check from the
-agent-practices root:
+Save the draft to a scratch file and run the link check that ships next to
+this skill, with an absolute path to the draft:
 
 ```
-python3 scripts/check-links.py DRAFT_FILE
+python3 SKILL_DIR/../../scripts/check-links.py /ABSOLUTE/PATH/DRAFT.md
 ```
 
-It fails on non-URL link targets, bare paths, branch-pinned file links and
-GitHub URLs that do not resolve. Fix every failure, then send. If the check
-cannot run (no `gh`, no network), say so under **Not verified**.
+`SKILL_DIR` is the folder holding this file; the path works through a
+symlinked install. Fix each failure. A flagged token that is not a file
+reference (a command, a branch name) can stay. Without `gh` or network, rerun
+with `--offline` for the local checks and name the unchecked links under
+**Not verified**.

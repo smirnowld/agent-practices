@@ -1,26 +1,41 @@
 #!/usr/bin/env python3
 """Check links in text meant for the owner (P18): a closeout, PR body or update.
 
-Usage: check-links.py [--offline] [FILE]   (reads stdin without FILE)
+Usage: check-links.py [--offline] FILE   (reads stdin without FILE)
 
 Fails on:
 - a Markdown link whose target is not an https URL;
-- a file path in backticks with no GitHub URL for it on the same line;
-- a GitHub blob or tree URL pinned to a branch instead of a commit SHA;
+- a file path, in backticks or plain text, with no GitHub link to that file
+  on the same line (a file path has an extension or ends in "/"; a bare name
+  needs a common extension; branches, versions and owner/repo names are not
+  paths);
+- a GitHub blob or tree URL not pinned to a full commit SHA;
 - a GitHub URL that does not resolve (skipped with --offline).
 Resolving uses `gh api`, so private repositories work when gh is signed in.
 """
 import re
+import shutil
 import subprocess
 import sys
 
 MD_LINK = re.compile(r"\]\(([^)\s]+)\)")
-CODE = re.compile(r"`([^`\s]+)`")
-PATHLIKE = re.compile(r"^[\w.${}~-]*(/[\w.@${}-]+)+/?(:\d+)?$|^[\w.-]+\.\w{1,5}(:\d+)?$")
+TOKEN = re.compile(r"`([^`\s]+)`|(?<![\w/`])((?:\.{0,2}/)?[\w.-]+(?:/[\w.@-]+)+/?)")
+EXT = r"\.[A-Za-z][A-Za-z0-9]{0,4}"
+FILE_PATH = re.compile(
+    rf"^(?:~|\.{{0,2}})/?(?:[\w.@-]+/)*[\w@-][\w.@-]*{EXT}(?::\d+)?$"
+    rf"|^(?:~|\.{{0,2}})/?(?:[\w.@-]+/)+$"
+)
+VERSION = re.compile(r"^v?\d+(\.\d+)+$")
+# A name with no folder counts as a file only with a common extension.
+KNOWN_EXT = re.compile(
+    r"\.(md|txt|py|sh|js|ts|tsx|jsx|json|ya?ml|toml|html|css|swift|kt|go|rs|rb"
+    r"|java|sql|cfg|conf|ini|env|lock|mjs|cjs|xml|svg|png)(?::\d+)?$"
+)
 GH = re.compile(
     r"https://github\.com/([\w.-]+)/([\w.-]+)/"
-    r"(blob|tree|pull|issues|commit|actions/runs)/([^\s)#?>]+)"
+    r"(blob|tree|pull|issues|commit|actions/runs)/([^\s)#?>`]+)"
 )
+TRAILING = ".,;:*_'\""
 SHA = re.compile(r"^[0-9a-f]{40}$")
 
 
@@ -28,18 +43,31 @@ def api_path(owner, repo, kind, rest):
     if kind in ("blob", "tree"):
         ref, _, path = rest.partition("/")
         return f"repos/{owner}/{repo}/contents/{path}?ref={ref}"
-    if kind == "pull":
-        return f"repos/{owner}/{repo}/pulls/{rest.split('/')[0]}"
-    if kind == "issues":
-        return f"repos/{owner}/{repo}/issues/{rest.split('/')[0]}"
-    if kind == "commit":
-        return f"repos/{owner}/{repo}/commits/{rest}"
-    return f"repos/{owner}/{repo}/actions/runs/{rest.split('/')[0]}"
+    first = rest.split("/")[0]
+    return {
+        "pull": f"repos/{owner}/{repo}/pulls/{first}",
+        "issues": f"repos/{owner}/{repo}/issues/{first}",
+        "commit": f"repos/{owner}/{repo}/commits/{first}",
+    }.get(kind, f"repos/{owner}/{repo}/actions/runs/{first}")
 
 
 def resolves(path):
     r = subprocess.run(["gh", "api", "--silent", path], capture_output=True)
     return r.returncode == 0
+
+
+def linked(token, line):
+    """True if a GitHub blob or tree URL on the line points at this path."""
+    path = re.sub(r":\d+$", "", token).rstrip("/")
+    path = re.sub(r"^(\./)+", "", path)
+    for m in GH.finditer(line):
+        owner, repo, kind, rest = m.groups()
+        if kind not in ("blob", "tree"):
+            continue
+        target = rest.rstrip(TRAILING).partition("/")[2].rstrip("/")
+        if target and (target == path or path.endswith("/" + target)):
+            return True
+    return False
 
 
 def check(text, offline):
@@ -48,24 +76,34 @@ def check(text, offline):
         for target in MD_LINK.findall(line):
             if not target.startswith("https://"):
                 errors.append(f"{n}: link target is not an https URL: {target}")
-        for token in CODE.findall(line):
-            if "://" in token or not PATHLIKE.match(token):
+        prose = MD_LINK.sub(" ", line)
+        prose = GH.sub(" ", re.sub(r"https?://\S+", " ", prose))
+        for m in TOKEN.finditer(prose):
+            token = (m.group(1) or m.group(2)).rstrip(TRAILING)
+            if VERSION.match(token) or not FILE_PATH.match(token):
                 continue
-            bare = token.split(":")[0].rstrip("/")
-            if not any(bare in m.group(0) for m in GH.finditer(line)):
+            if "/" not in token and not KNOWN_EXT.search(token):
+                continue
+            if not linked(token, line):
                 errors.append(f"{n}: path without a GitHub link on the line: {token}")
         for m in GH.finditer(line):
             owner, repo, kind, rest = m.groups()
+            rest = rest.rstrip(TRAILING)
+            url = m.group(0).rstrip(TRAILING)
             if kind in ("blob", "tree") and not SHA.match(rest.split("/")[0]):
-                errors.append(f"{n}: pinned to a branch, not a commit SHA: {m.group(0)}")
+                errors.append(f"{n}: not pinned to a full commit SHA: {url}")
             elif not offline and not resolves(api_path(owner, repo, kind, rest)):
-                errors.append(f"{n}: does not resolve: {m.group(0)}")
+                errors.append(f"{n}: does not resolve: {url}")
     return errors
 
 
 def main(argv):
     offline = "--offline" in argv
     args = [a for a in argv if a != "--offline"]
+    if not offline and not shutil.which("gh"):
+        print("error: gh not found; rerun with --offline for the local checks",
+              file=sys.stderr)
+        return 2
     text = open(args[0]).read() if args else sys.stdin.read()
     errors = check(text, offline)
     for e in errors:
