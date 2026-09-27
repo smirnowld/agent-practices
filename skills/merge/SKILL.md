@@ -46,12 +46,18 @@ commits with PR numbers mean squash).
 
 ## 3. Enable auto-merge
 
+An auto-mode permission classifier may refuse a merge until a reviewer
+verdict exists in the session. Run the review first, then merge in the
+foreground; don't retry a combined watch-and-merge command after a refusal.
+
 ```sh
 gh pr merge PR --auto --METHOD --match-head-commit REVIEWED_SHA
 ```
 
 `--match-head-commit` makes GitHub refuse the merge if the branch moved past
-the reviewed commit. Before any later push: `gh pr merge PR --disable-auto`,
+the reviewed commit. A PR that is already mergeable (checks green, nothing
+pending) cannot get auto-merge; merge it directly with the same
+`--match-head-commit`. Before any later push: `gh pr merge PR --disable-auto`,
 get the new commits reviewed, then enable again with the new SHA.
 
 ## 4. Wait once
@@ -68,7 +74,8 @@ gh run watch RUN_ID --exit-status
 Just after a push the check can be missing; wait briefly and look once
 more. Do not poll. Do not rely on `gh pr checks --watch`: it exits at once when no
 check has reported yet, and exits green when the checks that have reported
-pass before the others appear. A failed run: fix forward on the same PR (P6),
+pass before the others appear. If no run appears for the check while CI is
+running, take the id from `gh run list --branch BRANCH` and block on that. A failed run: fix forward on the same PR (P6),
 then return to step 3.
 
 ## 5. Confirm and clean up

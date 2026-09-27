@@ -62,7 +62,9 @@ advisory instead.
 - The reviewer's tier is at least the implementer's. It may be lower only for
   mechanical changes with objective checks (renames, copy, formatting) or
   simple docs. Security, data loss, concurrency, auth, payments, migrations and
-  release-critical work always get the critical reviewer. A reviewer from a
+  release-critical work always get the critical reviewer. A migration is
+  checked against every build still running (an installed mobile app changes
+  only when a new build is installed), not only against its own branch. A reviewer from a
   different model family adds independence where available.
 - The brief states risk level and focus. Docs reviews check implications:
   missing or broken references, contradictions between documents, stale
@@ -88,6 +90,10 @@ what could not run and why.
   default, written for the person deciding (`templates/question.md`); decide
   and log low-impact, reversible ones. Many assumptions mean the task is
   under-specified: ask.
+- **Plan in increments.** Plan short, demoable increments with honest ranges.
+  My review time is not the planning constraint; list external lead times
+  (approvals, enrolment, legal) separately. Size relatively; don't ask me to
+  rule on estimate arithmetic.
 - **Acceptance before finishing.** When anything needs my acceptance, present
   an acceptance card (`templates/acceptance-card.md`): what changed,
   assumptions, visible evidence chosen with the `acceptance-evidence` skill.
@@ -116,7 +122,10 @@ release at closeout, and stop them only when no other claim remains. Procedure:
 
 Uncommitted changes, worktrees, branches and processes you did not create
 belong to someone else. Never stash, reset, clean, revert, delete or kill them;
-ask. Stop only your own processes, never by name or pattern.
+ask. Stop only your own processes, never by name or pattern. A deleted
+session whose worktree holds uncommitted work may be another agent's live
+work: leave it, and don't back it up or resume it unless I say it was
+abandoned.
 
 ## P9. Outside the repo
 
@@ -129,6 +138,9 @@ project's agreed host is not publishing; the host is agreed once per project
 ## P10. Secrets
 
 Never read, print, copy or commit a secret. Name it and where I place it.
+Never open env or secret files with file read, write or edit tools: the
+harness can echo later edits, secrets included, into the transcript. Check a
+key in the shell and print only a status code or a match count.
 
 ## P11. Requirements and decisions
 
