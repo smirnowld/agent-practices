@@ -33,6 +33,11 @@ host's API, workflow run URL. Report per `practices/project-baseline.md`
 missing. Rows that depend on external services (O1–O4) are checked from the
 observability manifest and a live health call; `triage` owns the signals.
 
+For R1, a present block must also be current: run
+`scripts/sync-policy.sh --check <project>` from a local agent-practices
+clone. A stale copy is "partial: policy block out of date" and proposes a
+sync session.
+
 In audit mode, stop here and deliver the report (step 5).
 
 ## 3. Plan the fixes (setup mode)
