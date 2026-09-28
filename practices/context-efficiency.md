@@ -18,6 +18,7 @@ P14; compaction thresholds themselves live in the adapters.
 
 ## Rules of thumb
 
+- Locate the relevant section before reading a whole file.
 - Set the compaction point well below the model's window, in the adapter.
   Agents with a heavier startup load need a higher point.
 - Never shrink the context window to force compaction; move the compaction
@@ -28,6 +29,7 @@ P14; compaction thresholds themselves live in the adapters.
 - A new task gets a new session with a brief, not a fork: a fork inherits the
   history.
 - Delegated agents get a brief, not the transcript, and return conclusions.
+- When a late tweak meets a large context, hand it to a fresh small session.
 - Summarise tool output, except exact diffs and visual renders when the task
   needs them.
 - Add machinery (for example re-injecting state after compaction) only when a

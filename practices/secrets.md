@@ -2,6 +2,10 @@
 
 Detail for P10.
 
+## Checking a key
+
+Check a key in the shell and print only a status code or a match count.
+
 ## Why env files stay out of file tools
 
 The reason for P10's env-file rule: once an agent opens a file with its file

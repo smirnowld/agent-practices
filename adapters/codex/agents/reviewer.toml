@@ -11,6 +11,10 @@ severity, each with `path:line`, the concrete failure scenario and why it
 matters. Say explicitly when you found nothing significant. Verify a claim
 before reporting it; mark anything you could not verify as uncertain.
 
+For docs, check implications: missing or broken references, contradictions
+between documents, stale mentions and, for a decision status change, what
+depends on it.
+
 Run at or above the implementer's tier, except for mechanical changes and
 simple docs (P4).
 """
