@@ -9,7 +9,7 @@ starting points; adjust them from evidence.
 |---|---|
 | ADR summary (above the divider) | ~15 lines |
 | ADR total | ~10 KB; longer evidence goes in the PR |
-| ADR index (`docs/adr/README.md`) | One line per ADR in force or proposed |
+| ADR index (`docs/adr/README.md`, template `templates/docs/adr-index.md`, checked by baseline C5) | One line per ADR in force or proposed |
 | ADRs in force | Review when over 25; many may be superseded |
 | Question register (`docs/questions.md`, template `templates/docs/questions.md`) | 30 open items or 20 KB |
 | Current-state doc | 40 KB per file; split by topic beyond that |
@@ -21,7 +21,11 @@ starting points; adjust them from evidence.
 
 - A closeout finds a record over budget: run `docs-gardening` in a separate
   PR, or note it as deferred if the session is nearly done.
-- A new ADR supersedes one: archive the old one in the same PR.
+- A new ADR supersedes one: in the same PR, set the old one's status to
+  superseded, move it to the archive and remove its index row. The ADR check
+  (baseline C5) catches a superseded status left in place or an archived ADR
+  still listed, not an old ADR whose status was never changed. The index
+  scheme and check came from a product repo, in use since 2026-09.
 - A question is answered: resolve it in the same PR.
 
 ## Visual evidence
