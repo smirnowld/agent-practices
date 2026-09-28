@@ -1,0 +1,10 @@
+jobs:
+  build:
+    steps:
+      - uses: actions/checkout@0123456789abcdef0123456789abcdef01234567 # v4.4.0
+      - uses: "actions/setup-python@0123456789abcdef0123456789abcdef01234567" # v5.1.0
+      - uses: github/codeql-action/init@0123456789abcdef0123456789abcdef01234567 # pinned to v3.26.10
+      - uses: ./.github/actions/local
+      - uses: docker://alpine@sha256:0123456789abcdef0123456789abcdef012345670123456789abcdef01234567
+  reuse:
+    uses: org/repo/.github/workflows/ci.yml@0123456789abcdef0123456789abcdef01234567 # v1.0.0
