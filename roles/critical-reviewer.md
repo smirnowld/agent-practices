@@ -13,3 +13,12 @@ ordering, migration and rollback safety, failure and retry paths. Report
 findings ranked by severity, each with `path:line`, a concrete exploit or
 failure scenario, and what evidence would settle it. Say explicitly when you
 found nothing significant.
+
+Scope is the diff named in the brief and every path that reaches it: callers,
+the data it writes, the migration it depends on. Follow those paths as far as
+the risk requires and no further; do not re-explore the repository. Aim to
+finish within about 30 responses; if the change needs more, report what was
+covered and what was not.
+
+The caller does not lower the tier in this file's header: the categories in P4
+always get this role at its own tier.

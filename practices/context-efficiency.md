@@ -15,9 +15,26 @@ P14; compaction thresholds themselves live in the adapters.
   when needed.
 - **Large tool output.** Full logs, file dumps and repeated status polls.
 
+## Reading code
+
+- Locate once (search or a symbol index), then read the section whole in one
+  call: the function or block and the lines it needs around it. Do not page
+  through one file in successive windows; each window is another response
+  carrying the whole context, and the section gets read twice.
+- Read a file once per session. If it is needed again after a compaction, the
+  progress update names it and the section, so the next read is one call.
+- A question over more than about three files, or over history, goes to an
+  explorer at the fast tier with the question and a bound; it returns the
+  conclusion with `path:line`, not the files.
+- Ask the tool for the result, not the file: a build error's message, a test's
+  failing lines, one grep with the pattern, not a listing to scan.
+
+Evidence: five product-repo M sessions measured in 2026-09 made 125 to 165
+read-style shell calls each, mostly windows over the same files, at about
+120k context per call.
+
 ## Rules of thumb
 
-- Locate the relevant section before reading a whole file.
 - Keep full logs on disk; report the result, failing lines and log path.
 - Set the compaction point well below the model's window, in the adapter.
   Agents with a heavier startup load need a higher point.
