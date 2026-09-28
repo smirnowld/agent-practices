@@ -42,7 +42,7 @@ For R6, run `scripts/ensure-labels.sh --check <owner/repo>` (read-only; exit
 1 names each label missing or different). Any gap is "partial" or "missing".
 
 For C4, run `scripts/check-action-pins.py <project>` from a local
-agent-practices clone (exit 1 names each unpinned `uses:`). "Present" also
+agent-practices clone (exit 1 names each unpinned `uses:`; exit 2 means the path is wrong or holds no workflow). "Present" also
 needs the project's `make check` to run the check; the script has no
 dependencies, so setup copies it into the project's `scripts/`. A copy that
 differs from the agent-practices version is "partial: pin check out of date";

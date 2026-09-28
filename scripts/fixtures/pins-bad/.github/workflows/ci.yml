@@ -15,5 +15,6 @@ jobs:
       - uses: &co actions/checkout@v4
       - uses: actions/checkout@0123456789ABCDEF0123456789ABCDEF01234567 # v4.4.0
       - uses: actions/checkout@0123456789abcdef0123456789abcdef01234567# v4.4.0
+      - {name: "step #1", uses: actions/checkout@v4}
   reuse:
     uses: org/repo/.github/workflows/ci.yml@main # v1.0.0
