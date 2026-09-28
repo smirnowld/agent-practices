@@ -7,7 +7,9 @@ check:
 	sh -n scripts/test-sync.sh
 	sh -n scripts/ensure-labels.sh
 	sh -n scripts/test-ensure-labels.sh
+	sh -n scripts/test-check-action-pins.sh
 	sh -n adapters/claude/hooks/session-start.sh
 	sh scripts/test-sync.sh
 	sh scripts/test-ensure-labels.sh
 	sh scripts/test-check-links.sh
+	sh scripts/test-check-action-pins.sh

@@ -41,6 +41,13 @@ sync session.
 For R6, run `scripts/ensure-labels.sh --check <owner/repo>` (read-only; exit
 1 names each label missing or different). Any gap is "partial" or "missing".
 
+For C4, run `scripts/check-action-pins.py <project>` from a local
+agent-practices clone (exit 1 names each unpinned `uses:`). "Present" also
+needs the project's `make check` to run the check; the script has no
+dependencies, so setup copies it into the project's `scripts/`. A copy that
+differs from the agent-practices version is "partial: pin check out of date";
+setup replaces it.
+
 In audit mode, stop here and deliver the report (step 5).
 
 ## 3. Plan the fixes (setup mode)
@@ -49,7 +56,7 @@ Sort gaps into:
 
 - **Can fix in the repo:** files (`AGENTS.md` type line and policy block,
   docs from `templates/docs/`, `SECURITY.md`, Dependabot config, CI lanes,
-  pinned actions, scanners, `make check`).
+  pinned actions and the pin check, scanners, `make check`).
 - **Can fix through the host's API:** auto-merge, branch deletion, ruleset,
   security features, issue labels (R6). These change settings: list them and
   get my OK first (P9). Labels are applied with

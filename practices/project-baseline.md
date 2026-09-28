@@ -20,7 +20,7 @@ project elsewhere maps each row to its host's equivalent.
 | C1 | Checks run on every PR and on the default branch | ✓ | ✓ | ✓ |
 | C2 | One aggregate job the ruleset requires; lanes skip only when not applicable, never fake green (note below) | ✓ | ✓ | ✓ |
 | C3 | The same checks run locally through one entry point (e.g. `make check`) | ✓ | ✓ | ✓ |
-| C4 | Third-party actions pinned to a commit SHA with a comment ending in the version (`# vX.Y.Z`), enforced by a pin check | ✓ | ✓ | ✓ |
+| C4 | Actions, first-party included, pinned to a commit SHA with a comment ending in the version (`# vX.Y.Z`), enforced by a pin check | ✓ | ✓ | ✓ |
 | **Dependencies** |||||
 | D1 | Dependabot version updates, weekly, grouped per ecosystem, including GitHub Actions | ✓ | ✓ | ✓ |
 | D2 | Dependabot security updates on | ✓ | ✓ | ✓ |
