@@ -20,18 +20,19 @@ P14; compaction thresholds themselves live in the adapters.
 - Locate once (search or a symbol index), then read the section whole in one
   call: the function or block and the lines it needs around it. Do not page
   through one file in successive windows; each window is another response
-  carrying the whole context, and the section gets read twice.
-- Read a file once per session. If it is needed again after a compaction, the
-  progress update names it and the section, so the next read is one call.
-- A question over more than about three files, or over history, goes to an
-  explorer at the fast tier with the question and a bound; it returns the
-  conclusion with `path:line`, not the files.
+  carrying the whole context.
+- Do not re-read what is still in context and unchanged; re-read after the
+  file changed or after a compaction.
+- A parent session's question over more than about three files, or over
+  history, goes to an explorer with the question and a bound, unless the
+  parent already holds the context (P2b); the explorer returns the conclusion
+  with `path:line`, not the files.
 - Ask the tool for the result, not the file: a build error's message, a test's
   failing lines, one grep with the pattern, not a listing to scan.
 
-Evidence: five product-repo M sessions measured in 2026-09 made 125 to 165
-read-style shell calls each, mostly windows over the same files, at about
-120k context per call.
+Evidence: five product-repo sessions measured in 2026-09, each expected to be
+one slice, made 125 to 165 read-style shell calls, mostly windows over the
+same files, at about 120k context per call.
 
 ## Rules of thumb
 

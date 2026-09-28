@@ -25,7 +25,7 @@ Effort (reasoning budget): low, medium, high, extra-high.
 | Review of mechanical change or simple docs | fast / medium |
 | Review of normal change | standard / high (never below the implementer) |
 | Docs review with implications (ADR status, cross-doc) | standard / high |
-| Critical review | strongest / extra-high |
+| Critical review | strongest / extra-high; the caller never lowers it |
 | Parent session coordinating a written plan | standard / medium |
 | Planning or analysis session | strong or strongest, chosen by me |
 
