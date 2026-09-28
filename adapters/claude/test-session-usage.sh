@@ -3,7 +3,7 @@
 # streamed chunks of one message count once, a response without a usage
 # block counts, compactions and their starting context are read from the
 # boundary record, read-style calls, waits, images, large results and
-# re-read files are counted, the subagent is found through its meta file,
+# re-read files are counted (a `Read` and a `sed -n` of one file add up), the subagent is found through its meta file,
 # `--row` prints one table row, and an unknown or ambiguous id exits 2.
 set -eu
 dir=$(dirname "$0")
@@ -24,7 +24,7 @@ for needle in \
 done
 
 row=$(python3 "$dir/session-usage.py" abcd1234-0000-0000-0000-000000000001 --row)
-want="| 2026-01-01 | Claude Code | <project and slice> | parent model-a; reviewer model-b | 5 (+2 in subagents) | 10 / 295k / 980 | 1 | 1h30m | <proof done> | <rework> |"
+want="| 2026-01-01 | Claude Code | <project and slice> | parent model-a; reviewer model-b | 5 (+2 in subagents) | 10 / 295k / 12k / 980 | 1 | 1h30m | <proof done> | <rework> |"
 [ "$row" = "$want" ] || { echo "error: row differs:" >&2; echo "$row" >&2; exit 1; }
 
 # The transcript path works too.

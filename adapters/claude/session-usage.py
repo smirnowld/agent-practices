@@ -14,17 +14,22 @@ context each response carried (input + cache read + cache write; mean by
 quarter of the session, and the largest), compactions with the context they
 started from, elapsed time, and what the tool calls were spent on: images
 returned, tool results over 5,000 characters, read-style shell calls
-(`sed -n`, `grep`, `cat`, `head`, `tail`, `rg`, `find`, `ls`), waits
-(`sleep`), and files opened more than twice through `Read` or `sed -n`.
+(`sed -n`, `grep`, `cat`, `head`, `tail`, `rg`, `find`, `ls`; `sed -i` and
+`find -delete` are not reads), waits (any `sleep`), and files opened more than
+twice through `Read` or `sed -n` (paths made absolute against the record's
+working directory, so both count for the same file).
 
-`--row` prints instead one Markdown row for the trial log in
+`--row` prints instead one Markdown row for the trial log described in
 practices/context-efficiency.md (columns: date, agent, slice, model,
-responses, input / cache read / output, compactions, elapsed, proof, rework);
-slice, proof and rework are left as placeholders to fill in.
+responses, input / cache read / cache write / output, compactions including
+subagents, elapsed, proof, rework); slice, proof and rework are left as
+placeholders to fill in.
 
 Exits 2 when the session cannot be found or the prefix is ambiguous.
 Usage figures come from the API usage block on each assistant message; a
-response with no usage block counts as a response with zero tokens.
+message streamed in several chunks takes the last chunk's block, and a
+response with no usage block counts as a response with zero tokens and is
+left out of the context figures.
 """
 import collections
 import datetime
@@ -38,7 +43,8 @@ import sys
 
 READ_CMDS = {"sed", "grep", "cat", "head", "tail", "rg", "find", "ls"}
 LARGE_RESULT = 5000
-SED_PATH_RE = re.compile(r"sed\s+-n\s+(?:'[^']*'|\"[^\"]*\"|\S+)\s+([^\s;&|)]+)")
+SED_PATH_RE = re.compile(r"sed\s+(?:-[a-zA-Z]+\s+)*(?:'[^']*'|\"[^\"]*\"|[^\s'\"-]\S*)((?:\s+(?:'[^']*'|\"[^\"]*\"|[^\s;&|)]+))+)")
+SLEEP_RE = re.compile(r"(?:^|[\s;&|(])sleep\s+\d")
 
 
 def config_dir():
@@ -69,18 +75,51 @@ def records(path):
                 continue
 
 
-def first_word(command):
-    # Skip a leading `cd X &&`/`;` and shell variable assignments.
-    command = re.sub(r"^\s*cd\s+\S+\s*(?:&&|;)\s*", "", command)
+def first_words(command):
+    """The command word and its arguments, after a leading `cd X &&`/`;`,
+    an opening subshell bracket and shell variable assignments."""
     try:
         words = shlex.split(command, posix=True)
     except ValueError:
         words = command.split()
-    for w in words:
-        if re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", w):
-            continue
-        return os.path.basename(w)
-    return ""
+    words = [w.lstrip("(") for w in words]
+    words = [w for w in words if w]
+    if words and words[0] == "cd":
+        for i, w in enumerate(words[1:], 1):
+            if w in ("&&", ";", "||"):
+                words = words[i + 1:]
+                break
+    while words and re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", words[0]):
+        words = words[1:]
+    return [os.path.basename(words[0])] + words[1:] if words else []
+
+
+def is_read(words):
+    if not words or words[0] not in READ_CMDS:
+        return False
+    if words[0] == "sed" and any(w.startswith("-i") for w in words[1:]):
+        return False
+    if words[0] == "find" and "-delete" in words:
+        return False
+    return True
+
+
+def sed_paths(command, cwd):
+    if "sed" not in command or " -n" not in command:
+        return []
+    lead = re.match(r"\s*\(?cd\s+(/\S+)\s*(?:&&|;)", command)
+    if lead:
+        cwd = lead.group(1)
+    out = []
+    for group in SED_PATH_RE.findall(command):
+        try:
+            names = shlex.split(group)
+        except ValueError:
+            names = group.split()
+        for n in names:
+            if not n.startswith("-"):
+                out.append(n if os.path.isabs(n) or not cwd else os.path.join(cwd, n))
+    return out
 
 
 def timestamp(rec):
@@ -102,7 +141,8 @@ def measure(path):
         "read_calls": 0, "waits": 0, "file_reads": collections.Counter(),
         "first": None, "last": None,
     }
-    seen = set()
+    usage_by_id = {}
+    order = []
     for rec in records(path):
         ts = timestamp(rec)
         if ts:
@@ -115,19 +155,15 @@ def measure(path):
         content = msg.get("content") if isinstance(msg.get("content"), list) else []
         if rec.get("type") == "assistant":
             mid = msg.get("id")
-            if mid not in seen:
-                seen.add(mid)
+            if mid not in usage_by_id:
+                order.append(mid)
                 m["responses"] += 1
                 m["models"][msg.get("model") or "?"] += 1
-                u = msg.get("usage") or {}
-                inp = u.get("input_tokens") or 0
-                cr = u.get("cache_read_input_tokens") or 0
-                cw = u.get("cache_creation_input_tokens") or 0
-                m["input"] += inp
-                m["cache_read"] += cr
-                m["cache_write"] += cw
-                m["output"] += u.get("output_tokens") or 0
-                m["contexts"].append(inp + cr + cw)
+            # A streamed message repeats its id; the last chunk carries the
+            # final output count.
+            if msg.get("usage") is not None or mid not in usage_by_id:
+                usage_by_id[mid] = msg.get("usage")
+            cwd = rec.get("cwd") or ""
             for c in content:
                 if c.get("type") != "tool_use":
                     continue
@@ -136,15 +172,15 @@ def measure(path):
                     name += ":" + str(inp.get("subagent_type") or "general")
                 elif name == "Bash":
                     cmd = inp.get("command") or ""
-                    fw = first_word(cmd)
-                    if fw in READ_CMDS:
+                    if is_read(first_words(cmd)):
                         m["read_calls"] += 1
-                    if fw == "sleep" or re.search(r"(?:^|[;&|]\s*)sleep\s", cmd):
+                    if SLEEP_RE.search(cmd):
                         m["waits"] += 1
-                    for p in SED_PATH_RE.findall(cmd):
-                        m["file_reads"][p] += 1
+                    for p in sed_paths(cmd, cwd):
+                        m["file_reads"][os.path.normpath(p)] += 1
                 elif name == "Read" and inp.get("file_path"):
-                    m["file_reads"][inp["file_path"]] += 1
+                    p = inp["file_path"]
+                    m["file_reads"][os.path.normpath(p if os.path.isabs(p) or not cwd else os.path.join(cwd, p))] += 1
                 m["tools"][name] += 1
         elif rec.get("type") == "user":
             for c in content:
@@ -153,10 +189,25 @@ def measure(path):
                 body = c.get("content")
                 if isinstance(body, list):
                     m["images"] += sum(1 for b in body if isinstance(b, dict) and b.get("type") == "image")
-                n = len(body) if isinstance(body, str) else len(json.dumps(body))
+                    # Text size only: image data is counted under images.
+                    n = sum(len(b.get("text") or "") for b in body if isinstance(b, dict) and b.get("type") == "text")
+                else:
+                    n = len(body) if isinstance(body, str) else len(json.dumps(body))
                 if n > LARGE_RESULT:
                     m["large_results"] += 1
                     m["large_chars"] += n
+    for mid in order:
+        u = usage_by_id.get(mid)
+        if not u:
+            continue
+        inp = u.get("input_tokens") or 0
+        cr = u.get("cache_read_input_tokens") or 0
+        cw = u.get("cache_creation_input_tokens") or 0
+        m["input"] += inp
+        m["cache_read"] += cr
+        m["cache_write"] += cw
+        m["output"] += u.get("output_tokens") or 0
+        m["contexts"].append(inp + cr + cw)
     return m
 
 
@@ -195,8 +246,11 @@ def quarters(contexts):
     n = len(contexts)
     if n < 4:
         return [sum(contexts) // n] if n else []
-    q = n // 4
-    return [sum(contexts[i * q:(i + 1) * q]) // q for i in range(4)]
+    out = []
+    for i in range(4):
+        part = contexts[i * n // 4:(i + 1) * n // 4]
+        out.append(sum(part) // len(part))
+    return out
 
 
 def report(path, m, subs):
@@ -232,13 +286,13 @@ def row(m, subs):
     by_role = collections.Counter((role.split(":")[-1], models(s)) for role, _, s in subs)
     for (role, name), n in by_role.items():
         model += f"; {role} {name}" + (f" x{n}" if n > 1 else "")
-    total_cr = m["cache_read"] + sum(s["cache_read"] for _, _, s in subs)
-    total_out = m["output"] + sum(s["output"] for _, _, s in subs)
-    total_in = m["input"] + sum(s["input"] for _, _, s in subs)
+    def total(key):
+        return m[key] + sum(s[key] for _, _, s in subs)
     resp = str(m["responses"]) + (f" (+{sum(s['responses'] for _, _, s in subs)} in subagents)" if subs else "")
+    comp = len(m["compactions"]) + sum(len(s["compactions"]) for _, _, s in subs)
     print(f"| {date} | Claude Code | <project and slice> | {model} | {resp} | "
-          f"{k(total_in)} / {k(total_cr)} / {k(total_out)} | {len(m['compactions'])} | "
-          f"{elapsed(m)} | <proof done> | <rework> |")
+          f"{k(total('input'))} / {k(total('cache_read'))} / {k(total('cache_write'))} / {k(total('output'))} | "
+          f"{comp} | {elapsed(m)} | <proof done> | <rework> |")
 
 
 def main(argv):
