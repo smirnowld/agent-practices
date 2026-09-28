@@ -9,5 +9,9 @@ ask me about it.
   not a single number that looks precise.
 - **Size relatively.** Compare work with work already done ("about twice the
   last slice") rather than computing absolute hours.
+- **Size in responses.** An increment is at most an M slice
+  (`practices/model-sizing.md`, "Size in responses"); anything larger is
+  planned as steps before a session starts, not split by the session once it
+  is over budget.
 
 Cross-project lesson, 2026-09; moved out of policy P6 on 2026-09-28.

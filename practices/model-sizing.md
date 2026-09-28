@@ -29,11 +29,37 @@ Effort (reasoning budget): low, medium, high, extra-high.
 | Parent session coordinating a written plan | standard / medium |
 | Planning or analysis session | strong or strongest, chosen by me |
 
+## Size in responses
+
+A brief is sized by the responses it will take, not by hours. Each response
+re-sends the whole context, so cost is the response count times the context
+each carries, and the context grows until compaction; a slice that ran to 400
+responses cost at least twice one of 200. Budgets, counted from the first
+response of the session or agent that does the work:
+
+| Size | Responses | Compactions | If it looks larger |
+|---|---|---|---|
+| S | up to 100 | 0 or 1 | fine as one slice |
+| M | up to 200 | up to 2 | plan it as steps, each with its own proof |
+| L | over 200 | — | never one slice: split into M steps, each to a fresh implementer or a new session with its own brief |
+
+The brief states the budget (`templates/brief.md`). A session that reaches it
+gives a progress update and stops, even mid-plan; the parent or I decide
+whether the rest is a new step. Compare with slices already measured (see
+`practices/context-efficiency.md`, "Measuring a change") rather than guessing
+from the number of files.
+
+Evidence: five product-repo M briefs measured in 2026-09 ran 290 to 430
+responses each with five to seven compactions; the parent session's turn
+count, not who did the work, was the cost driver, since a delegated
+implementer's turns cost about the same as the parent's.
+
 ## Signals to go up
 
 Repeated failed attempts, unclear root cause, many interacting files, a
 reviewer finding the implementer missed something basic, anything in the P4
-critical list.
+critical list. A slice past its response budget is a signal to split, not to
+go up a tier.
 
 ## Signals to go down
 

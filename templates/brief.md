@@ -5,6 +5,7 @@ not reasoning. The receiver must not need the sender's transcript. -->
 
 **Model:** <tier> at <effort>  <!-- adapter maps tier to a model; P2d check -->
 **Risk:** <low | normal | critical: category>  <!-- sets the reviewer, P4 -->
+**Budget:** <S | M>: <N> responses, <N> compactions  <!-- practices/model-sizing.md, "Size in responses" -->
 **Repo / branch / worktree:** <path>, <branch from base>
 
 ## Goal
@@ -44,4 +45,4 @@ not reasoning. The receiver must not need the sender's transcript. -->
 ## Handoff
 
 <Where the result goes (PR URL, message to parent), what to report, when to stop
-and ask.>
+and ask. At the budget: progress update, then stop.>
