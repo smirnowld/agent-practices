@@ -21,5 +21,6 @@ Table rows inside code fences are ignored too:
 ```
 
 ~~~
+```
 | [0096](0096-in-tildes.md) | Example | Accepted |
 ~~~
