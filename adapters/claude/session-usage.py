@@ -105,6 +105,7 @@ def is_read(words):
 
 
 def sed_paths(command, cwd):
+    command = command.split("<<", 1)[0]  # a heredoc body is data, not a command
     if "sed" not in command or " -n" not in command:
         return []
     lead = re.match(r"\s*\(?cd\s+(/\S+)\s*(?:&&|;)", command)
