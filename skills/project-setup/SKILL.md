@@ -46,9 +46,10 @@ For C4 and C5, run `scripts/check-action-pins.py <project>` and
 `scripts/check-adrs.py <project>` from a local agent-practices clone. Exit 1
 names each failing line (an unpinned `uses:`; an ADR status, numbering or
 index problem); exit 2 means the path is wrong or holds no workflow, or
-no `docs/adr/`, which makes C5 "n/a: no ADRs" rather than a failure. "Present" also needs the project's check entry point (`make
-check`) to run each check; the scripts have no dependencies, so setup copies
-them into the project's `scripts/`. A copy that differs from the
+no `docs/adr/`, which makes C5 "n/a: no ADRs" rather than a failure.
+"Present" also needs the project's check entry point (`make check`) to run
+each check; the scripts have no dependencies, so setup copies them into the
+project's `scripts/`. A copy that differs from the
 agent-practices version is "partial: check out of date"; setup replaces it.
 
 In audit mode, stop here and deliver the report (step 5).
