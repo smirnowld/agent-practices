@@ -41,5 +41,6 @@ A threshold or instruction change is kept only if it saves context without
 costing quality. Compare at least three similar slices before and after,
 recording per slice: model, responses, input / cached / output tokens,
 compaction count, elapsed time, proof completed, and rework caused by lost
-context. Use the agent's own usage reporting or any usage dashboard you
-have; keep the raw log outside the repo and record only the conclusion here.
+context. Use the adapter's usage measurement where it has one (see
+`adapters/README.md`), else the agent's own usage reporting; keep the raw log
+outside the repo and record only the conclusion here.

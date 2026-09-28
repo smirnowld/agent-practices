@@ -12,6 +12,7 @@ vendor's own page.
 | Roles | Generated `claude/agents/*.md` in the plugin | Generated `codex/agents/*.toml`, copied to `~/.codex/agents/` or `.codex/agents/` |
 | Routines | Desktop scheduled tasks | Desktop scheduled tasks |
 | Tiers | `claude/tiers.json` | `codex/tiers.json` |
+| Usage measurement | `claude/session-usage.py` over the local transcript | Not available |
 | Templates, practices | Read from the plugin root | Read from a local clone |
 
 ## Why the synced copy stays
