@@ -13,6 +13,7 @@ fields. Using the template is mandatory; empty sections may be omitted.
 | `closeout.md` | End of session (P15) | PR and chat |
 | `pull-request.md` | PR description | PR |
 | `adr.md` | Lasting decision, summary above the divider (P17) | `docs/adr/` |
+| `docs/adr-index.md` | ADR index and status meanings (P17) | `docs/adr/README.md` |
 | `docs/questions.md` | Open questions register, open items only (P11, P17) | Project `docs/` |
 | `docs/spec.md` | Current-state description of a feature | Project `docs/` |
 | `docs/runbook.md` | Repeatable operational procedure | Project `docs/` |
