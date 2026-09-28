@@ -5,7 +5,7 @@ not reasoning. The receiver must not need the sender's transcript. -->
 
 **Model:** <tier> at <effort>  <!-- adapter maps tier to a model; P2d check -->
 **Risk:** <low | normal | critical: category>  <!-- sets the reviewer, P4 -->
-**Budget:** <S | M>: <N> responses, <N> compactions  <!-- practices/model-sizing.md, "Size in responses" -->
+**Size:** <S | M>  <!-- response budget: practices/model-sizing.md, "Size in responses" -->
 **Repo / branch / worktree:** <path>, <branch from base>
 
 ## Goal

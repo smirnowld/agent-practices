@@ -31,28 +31,25 @@ Effort (reasoning budget): low, medium, high, extra-high.
 
 ## Size in responses
 
-A brief is sized by the responses it will take, not by hours. Each response
-re-sends the whole context, so cost is the response count times the context
-each carries, and the context grows until compaction; a slice that ran to 400
-responses cost at least twice one of 200. Budgets, counted from the first
-response of the session or agent that does the work:
+A brief is sized by the responses it will take. Each response re-sends the
+whole context, so cost is the response count times the context each carries,
+and the context grows until compaction; a slice that ran to 400 responses cost
+at least twice one of 200. The count covers the session that does the work
+and every agent it delegates to, since a delegated implementer's responses
+cost about the same as the parent's.
 
-| Size | Responses | Compactions | If it looks larger |
-|---|---|---|---|
-| S | up to 100 | 0 or 1 | fine as one slice |
-| M | up to 200 | up to 2 | plan it as steps, each with its own proof |
-| L | over 200 | — | never one slice: split into M steps, each to a fresh implementer or a new session with its own brief |
+| Size | Responses | How it runs |
+|---|---|---|
+| S | up to 100 | one slice |
+| M | up to 200 | one slice, planned as steps that each end in proof |
+| L | over 200 | never one slice: split into M steps before the session starts, each to a fresh implementer or a new session with its own brief |
 
-The brief states the budget (`templates/brief.md`). A session that reaches it
-gives a progress update and stops, even mid-plan; the parent or I decide
-whether the rest is a new step. Compare with slices already measured (see
-`practices/context-efficiency.md`, "Measuring a change") rather than guessing
-from the number of files.
-
-Evidence: five product-repo M briefs measured in 2026-09 ran 290 to 430
-responses each with five to seven compactions; the parent session's turn
-count, not who did the work, was the cost driver, since a delegated
-implementer's turns cost about the same as the parent's.
+The brief names the size (`templates/brief.md`). Whether to continue past the
+budget is a decision I own (P5): a session that reaches it gives a progress
+update and stops, even mid-plan, and the parent or I decide whether the rest
+is a new step. Compactions are not budgeted; more than about one per 100
+responses means each response carries too much and the reading rules in
+`practices/context-efficiency.md` apply.
 
 ## Signals to go up
 
@@ -69,3 +66,8 @@ snapshot, lint); output is formulaic.
 ## Evidence log
 
 Forks: record notable outcomes (tier too weak or wasteful) here.
+
+- 2026-09, product repos: five briefs expected to be one slice ran 290 to
+  430 responses each with five to seven compactions. The total response
+  count, not who made the responses, was the cost driver. Led to "Size in
+  responses".
