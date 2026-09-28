@@ -81,7 +81,9 @@ Never bypass, skip or weaken a check; implement a missing step instead. Say
 what could not be verified. Work whose verification is blocked from outside
 the session (hardware, access, an external service) may still count as done
 and merge once required checks pass, if the PR marks it untested and names
-what could not run and why.
+what could not run and why. Blocked means no path in the project can run the
+check. A CI lane that runs on request (a label such as `ci:full`, a manual
+run) is not blocked: ask for that run instead of merging untested.
 
 ## P6. Asking early, merging and acceptance
 
@@ -90,10 +92,9 @@ what could not run and why.
   default, written for the person deciding (`templates/question.md`); decide
   and log low-impact, reversible ones. Many assumptions mean the task is
   under-specified: ask.
-- **Plan in increments.** Plan short, demoable increments with honest ranges.
-  My review time is not the planning constraint; list external lead times
-  (approvals, enrolment, legal) separately. Size relatively; don't ask me to
-  rule on estimate arithmetic.
+- **Plan in increments** (`practices/planning.md`). My review time is not the
+  planning constraint; list external lead times (approvals, enrolment, legal)
+  separately. Don't ask me to rule on estimate arithmetic.
 - **Acceptance before finishing.** When anything needs my acceptance, present
   an acceptance card (`templates/acceptance-card.md`): what changed,
   assumptions, visible evidence chosen with the `acceptance-evidence` skill.
@@ -132,15 +133,14 @@ abandoned.
 Ask before acting outside the repository: accounts, money, messages,
 publishing, infrastructure provisioning, privileged commands. Hand root
 commands to me exactly as I would run them. A private evidence page on the
-project's agreed host is not publishing; the host is agreed once per project
-(`practices/record-keeping.md#visual-evidence`).
+project's agreed host is not publishing (P17).
 
 ## P10. Secrets
 
 Never read, print, copy or commit a secret. Name it and where I place it.
-Never open env files holding secrets with file read, write or edit tools: the
-harness can echo later edits, secrets included, into the transcript. Check a
-key in the shell and print only a status code or a match count.
+Never open env files holding secrets with file read, write or edit tools
+(why: `practices/secrets.md`). Check a key in the shell and print only a status
+code or a match count.
 
 ## P11. Requirements and decisions
 
@@ -203,9 +203,9 @@ archive, so removing a stale record loses nothing.
   removed.
 - **Session closeouts, briefs and verification evidence** stay out of the
   repository: closeouts in the PR and chat, evidence in PR comments, CI
-  artifacts or a private page linked from the PR
-  (`practices/record-keeping.md#visual-evidence`). The repository keeps only verification procedures and reference
-  baselines tests compare against.
+  artifacts or a private page on the project's agreed host, linked from the PR
+  (`practices/record-keeping.md#visual-evidence`). The repository keeps only
+  verification procedures and reference baselines tests compare against.
 - **Multi-session plans**: one living document per initiative, deleted when it
   ends after its lasting outcomes are moved.
 - **Consolidate** at every closeout, and with the `docs-gardening` skill when a
