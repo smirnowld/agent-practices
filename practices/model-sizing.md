@@ -35,19 +35,20 @@ A brief is sized by the responses it will take. Each response re-sends the
 whole context, so cost is the response count times the context each carries,
 and the context grows until compaction; a slice that ran to 400 responses cost
 at least twice one of 200. The count covers the session that does the work
-and every agent it delegates to, since a delegated implementer's responses
-cost about the same as the parent's.
+and every agent it delegates to except review, since a delegated
+implementer's responses cost about the same as the parent's; review is
+mandatory (P4) and budgeted in its role.
 
 | Size | Responses | How it runs |
 |---|---|---|
 | S | up to 100 | one slice |
-| M | up to 200 | one slice, planned as steps that each end in proof |
+| M | up to 200 | one slice, planned as phases that each end in proof |
 | L | over 200 | never one slice: split into M steps before the session starts, each to a fresh implementer or a new session with its own brief |
 
 The brief names the size (`templates/brief.md`). Whether to continue past the
 budget is a decision I own (P5): a session that reaches it gives a progress
-update and stops, even mid-plan, and the parent or I decide whether the rest
-is a new step. Compactions are not budgeted; more than about one per 100
+update and stops, even mid-plan; I decide whether the rest is a new step,
+and a parent may only propose it. Compactions are not budgeted; more than about one per 100
 responses means each response carries too much and the reading rules in
 `practices/context-efficiency.md` apply.
 
