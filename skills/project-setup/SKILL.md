@@ -15,7 +15,8 @@ Two modes, same checklist: `practices/project-baseline.md`.
 - Repo type (product, infrastructure, tooling) from `AGENTS.md`. Missing:
   propose one with the reason and ask me (P6); do not assume.
 - Public or private; hosting plan (see R4 in `practices/project-baseline.md`).
-- Deployed or not; holds user data or not; has code beyond docs.
+- Deployed or not; holds user data or not; has code beyond docs; has
+  `docs/adr/`.
 - Languages and package ecosystems, for Dependabot and scanners.
 - Existing CI entry point and aggregate check name.
 
@@ -45,7 +46,7 @@ For C4 and C5, run `scripts/check-action-pins.py <project>` and
 `scripts/check-adrs.py <project>` from a local agent-practices clone. Exit 1
 names each failing line (an unpinned `uses:`; an ADR status, numbering or
 index problem); exit 2 means the path is wrong or holds no workflow, or no
-`docs/adr/`. "Present" also needs the project's check entry point (`make
+`docs/adr/`, which makes C5 "n/a: no ADRs" rather than a failure. "Present" also needs the project's check entry point (`make
 check`) to run each check; the scripts have no dependencies, so setup copies
 them into the project's `scripts/`. A copy that differs from the
 agent-practices version is "partial: check out of date"; setup replaces it.

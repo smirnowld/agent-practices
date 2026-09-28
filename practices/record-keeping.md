@@ -21,9 +21,11 @@ starting points; adjust them from evidence.
 
 - A closeout finds a record over budget: run `docs-gardening` in a separate
   PR, or note it as deferred if the session is nearly done.
-- A new ADR supersedes one: archive the old one and update the index in the
-  same PR; the ADR check (baseline C5) fails otherwise. The index scheme and
-  check came from a product repo, in use since 2026-09.
+- A new ADR supersedes one: in the same PR, set the old one's status to
+  superseded, move it to the archive and remove its index row. The ADR check
+  (baseline C5) catches a superseded status left in place or an archived ADR
+  still listed, not an old ADR whose status was never changed. The index
+  scheme and check came from a product repo, in use since 2026-09.
 - A question is answered: resolve it in the same PR.
 
 ## Visual evidence

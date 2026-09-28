@@ -20,10 +20,11 @@ for needle in \
   "README.md:10: lists 0011-phantom.md, which does not exist" \
   "README.md:11: lists archived 0004-wrong-place-accepted.md; archived ADRs leave the index" \
   "README.md:12: lists archived 0008-archived-bare.md; archived ADRs leave the index" \
+  "README.md:8: lists 0005-dup-a.md as Accepted, but its Status line says proposed" \
 ; do
   echo "$out" | grep -q "$needle" || { echo "error: not reported: $needle" >&2; echo "$out" >&2; exit 1; }
 done
-[ "$(echo "$out" | wc -l)" -eq 11 ] || {
+[ "$(echo "$out" | wc -l)" -eq 12 ] || {
   echo "error: unexpected lines reported" >&2; echo "$out" >&2; exit 1; }
 
 # A docs/adr/ with ADRs but no README.md fails with "missing index". Built
@@ -36,6 +37,15 @@ out=$(python3 "$dir/check-adrs.py" "$tmp") && {
   echo "error: missing index passed" >&2; exit 1; }
 echo "$out" | grep -q "^docs/adr/README.md: missing index$" || {
   echo "error: missing index not reported" >&2; echo "$out" >&2; exit 1; }
+
+# Numbering starts at 0001: a tree holding only 0002 reports ADR-0001 missing.
+mkdir -p "$tmp/gap/docs/adr"
+printf '# B decision\n\n**Status:** accepted\n' > "$tmp/gap/docs/adr/0002-b-decision.md"
+printf '| [0002](0002-b-decision.md) | B decision | Accepted |\n' > "$tmp/gap/docs/adr/README.md"
+out=$(python3 "$dir/check-adrs.py" "$tmp/gap") && {
+  echo "error: numbering from 0002 passed" >&2; exit 1; }
+[ "$out" = "docs/adr: ADR-0001 missing: gap in numbering" ] || {
+  echo "error: ADR-0001 gap not reported alone" >&2; echo "$out" >&2; exit 1; }
 
 # A missing directory, or one with no docs/adr directory, exits 2 rather than
 # passing.

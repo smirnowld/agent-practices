@@ -19,8 +19,9 @@ duplicate and every gap fails.
 
 docs/adr/README.md must list every active ADR (a Markdown table row linking
 its file), must not list an archived ADR, and every link it has to an ADR
-file must resolve. Links in prose outside table rows are ignored, as are
-lines inside code fences.
+file must resolve; a link may carry a `#anchor` or a title. Each row's last
+cell must equal the ADR's status (case-insensitive). Links in prose outside
+table rows are ignored, as are lines inside ``` or ~~~ code fences.
 
 Prints `path:line: reason` for each failure (path relative to DIR; line is
 omitted where there is no specific line). Exits 1 if there are any failures,
@@ -79,10 +80,10 @@ def check_status(path, label, rel, failures):
             break
     if status_value is None:
         failures.append(f"{rel}: missing **Status:** line")
-        return
+        return None
     if not is_recognised(status_value):
         failures.append(f"{rel}:{status_line}: status outside the set: {status_value}")
-        return
+        return None
     if label == "active" and belongs_in_archive(status_value):
         failures.append(
             f"{rel}:{status_line}: superseded/rejected status in docs/adr/; move to docs/adr/archive/"
@@ -91,6 +92,7 @@ def check_status(path, label, rel, failures):
         failures.append(
             f"{rel}:{status_line}: proposed/accepted status in docs/adr/archive/"
         )
+    return status_value.lower() if label == "active" and belongs_in_active(status_value) else None
 
 
 def check_numbering(numbered, root, failures):
@@ -108,24 +110,31 @@ def check_numbering(numbered, root, failures):
             failures.append(f"docs/adr: ADR-{num:04d} missing: gap in numbering")
 
 
-def check_index(root, adr_dir, active_names, archive_names, failures):
+def check_index(root, adr_dir, active_names, archive_names, statuses, failures):
     readme = adr_dir / "README.md"
     rel_readme = readme.relative_to(root)
     if not readme.is_file():
         failures.append(f"{rel_readme}: missing index")
         return
     listed_active = set()
-    fenced = False
+    fence = None
     for n, line in enumerate(readme.read_text().splitlines(), 1):
-        if line.lstrip().startswith("```"):
-            fenced = not fenced
+        stripped = line.lstrip()
+        marker = stripped[:3]
+        if marker in ("```", "~~~"):
+            if fence is None:
+                fence = marker
+            elif fence == marker:
+                fence = None
             continue
-        if fenced:
+        if fence is not None:
             continue
-        if not line.lstrip().startswith("|"):
+        if not stripped.startswith("|"):
             continue
+        cells = [c.strip() for c in stripped.strip().strip("|").split("|")]
+        row_status = cells[-1].lower() if cells else ""
         for target in LINK_RE.findall(line):
-            clean = target
+            clean = target.split()[0].split("#")[0] if target.split() else ""
             if clean.startswith("./"):
                 clean = clean[2:]
             basename = clean.rsplit("/", 1)[-1]
@@ -144,6 +153,12 @@ def check_index(root, adr_dir, active_names, archive_names, failures):
                 )
             else:
                 listed_active.add(basename)
+                expected = statuses.get(basename)
+                if expected and row_status != expected:
+                    failures.append(
+                        f"{rel_readme}:{n}: lists {basename} as {cells[-1] or 'blank'}, "
+                        f"but its Status line says {expected}"
+                    )
     for name in sorted(active_names - listed_active):
         failures.append(f"{rel_readme}: does not list {name}")
 
@@ -163,6 +178,7 @@ def main():
     numbered = []
     active_names = set()
     archive_names = set()
+    statuses = {}
 
     for label, dir_path, names in (
         ("active", adr_dir, active_names),
@@ -176,10 +192,12 @@ def main():
                 continue
             names.add(path.name)
             numbered.append((path, int(m.group(1))))
-            check_status(path, label, rel, failures)
+            status = check_status(path, label, rel, failures)
+            if status:
+                statuses[path.name] = status
 
     check_numbering(numbered, root, failures)
-    check_index(root, adr_dir, active_names, archive_names, failures)
+    check_index(root, adr_dir, active_names, archive_names, statuses, failures)
 
     if failures:
         for f in failures:
