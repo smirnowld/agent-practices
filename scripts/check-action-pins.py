@@ -55,28 +55,14 @@ def candidates(root):
         return [p for p in root.rglob("*") if not SKIP_DIRS.intersection(p.relative_to(root).parts)]
 
 
-def strip_comment(line):
-    """The line without its YAML comment: a `#` at the start or after
-    whitespace, outside quotes. A quote opens a string only at the start of a
-    value, so the apostrophe in `don't` does not; `\\"` and `''` are escapes."""
-    quote = None
-    i = 0
-    while i < len(line):
-        c = line[i]
-        prev = line[i - 1] if i else " "
-        if quote == '"' and c == "\\":
-            i += 1
-        elif quote and c == quote:
-            if quote == "'" and line[i + 1:i + 2] == "'":
-                i += 1
-            else:
-                quote = None
-        elif not quote and c in "'\"" and (prev.isspace() or prev in "[{,"):
-            quote = c
-        elif not quote and c == "#" and prev.isspace():
-            return line[:i]
-        i += 1
-    return line
+def without_comment(line):
+    """The part of the line a `uses` key can be in. In block style the key
+    comes before any value, so cutting at the first ` #` is safe. A flow
+    style line (braces, brackets, commas) is kept whole: a quoted `#` there
+    could come before the key."""
+    if any(c in line for c in "{}[],"):
+        return line
+    return "" if line.lstrip().startswith("#") else line.split(" #")[0]
 
 
 def files(root):
@@ -107,7 +93,7 @@ def main():
             m = USES.match(line)
             if m:
                 reason = check_line(m.group(2), m.group(3))
-            elif ANY_USES.search(strip_comment(line)):
+            elif ANY_USES.search(without_comment(line)):
                 reason = UNRECOGNISED
             else:
                 continue

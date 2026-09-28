@@ -7,7 +7,7 @@ dir=$(dirname "$0")
 python3 "$dir/check-action-pins.py" "$dir/fixtures/pins-good"
 out=$(python3 "$dir/check-action-pins.py" "$dir/fixtures/pins-bad") && {
   echo "error: bad fixture passed" >&2; exit 1; }
-expected="4 5 6 7 8 9 10 11 12 13 15 16 17 18 19 20 22"
+expected="4 5 6 7 8 9 10 11 12 13 15 16 17 18 19 20 21 22 24 26"
 for n in $expected; do
   echo "$out" | grep -q "ci.yml:$n: " || { echo "error: line $n not reported" >&2; echo "$out" >&2; exit 1; }
 done

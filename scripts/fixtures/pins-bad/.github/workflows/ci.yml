@@ -18,5 +18,9 @@ jobs:
       - {name: "step #1", uses: actions/checkout@v4}
       - {name: don't, run: 'echo #1', uses: actions/checkout@v4}
       - {name: "say \" #hi", uses: actions/checkout@v4}
+      - {name: a 'b, run: 'echo #1', uses: actions/checkout@v4}
+      - {"name":"x #1", uses: actions/checkout@v4}
+      - {name: "multi
+          line #x", uses: actions/checkout@v4}
   reuse:
     uses: org/repo/.github/workflows/ci.yml@main # v1.0.0
