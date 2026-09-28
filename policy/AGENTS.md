@@ -159,7 +159,7 @@ projects, the project otherwise. Tool memory and chat history are caches.
 
 ## P14. Context efficiency
 
-Follow the rules of thumb in `practices/context-efficiency.md` (reading,
+Follow the rules in `practices/context-efficiency.md` (reading,
 logs, handoffs). At checkpoints (end of a phase, after merge, before a new
 task, or past the compaction point set in the adapter) give a progress update
 (`templates/progress-update.md`) and suggest compaction or a new session; I
