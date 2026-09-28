@@ -44,7 +44,9 @@ For R6, run `scripts/ensure-labels.sh --check <owner/repo>` (read-only; exit
 For C4, run `scripts/check-action-pins.py <project>` from a local
 agent-practices clone (exit 1 names each unpinned `uses:`). "Present" also
 needs the project's `make check` to run the check; the script has no
-dependencies, so setup copies it into the project's `scripts/`.
+dependencies, so setup copies it into the project's `scripts/`. A copy that
+differs from the agent-practices version is "partial: pin check out of date";
+setup replaces it.
 
 In audit mode, stop here and deliver the report (step 5).
 
