@@ -8,3 +8,10 @@ jobs:
       - uses: docker://alpine@sha256:0123456789abcdef0123456789abcdef012345670123456789abcdef01234567
   reuse:
     uses: org/repo/.github/workflows/ci.yml@0123456789abcdef0123456789abcdef01234567 # v1.0.0
+  commented:
+    steps:
+      # - uses: actions/cache@v3
+      - run: make  # uses: nothing
+      - uses: actions/setup-node@0123456789abcdef0123456789abcdef01234567 # v4.0.2
+        with:
+          cache-uses: true
