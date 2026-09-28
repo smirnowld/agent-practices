@@ -12,7 +12,9 @@ version. Local actions (`./...`) are exempt; `docker://` images must be pinned
 to a `@sha256:` digest.
 
 Fails closed: a line with a `uses` key in any other form (flow mapping, quoted
-key, value on the next line, anchor) is reported, not skipped.
+key, value on the next line, anchor) is reported, not skipped. It reads lines,
+not YAML: a key spelled deliberately to evade it (`? uses`, an escaped name)
+is not caught.
 
 Prints `path:line: reason` for each failure and exits 1 if there are any.
 Exits 2 if DIR is not a directory or holds no workflow or action file, so a
@@ -60,9 +62,11 @@ def without_comment(line):
     comes before any value, so cutting at the first ` #` is safe. A flow
     style line (braces, brackets, commas) is kept whole: a quoted `#` there
     could come before the key."""
+    if line.lstrip().startswith("#"):
+        return ""
     if any(c in line for c in "{}[],"):
         return line
-    return "" if line.lstrip().startswith("#") else line.split(" #")[0]
+    return line.split(" #")[0]
 
 
 def files(root):
