@@ -13,12 +13,12 @@ P14; compaction thresholds themselves live in the adapters.
   call. Duplicated or reference-only material in instruction files is pure
   cost: keep instruction files to rules, move facts into docs that are read
   when needed.
-- **Large tool output.** Full logs, file dumps and repeated status polls. Keep
-  logs on disk and bring back only the result, failing lines and the path.
+- **Large tool output.** Full logs, file dumps and repeated status polls.
 
 ## Rules of thumb
 
 - Locate the relevant section before reading a whole file.
+- Keep full logs on disk; report the result, failing lines and log path.
 - Set the compaction point well below the model's window, in the adapter.
   Agents with a heavier startup load need a higher point.
 - Never shrink the context window to force compaction; move the compaction

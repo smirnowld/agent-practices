@@ -64,8 +64,9 @@ advisory instead.
   simple docs. Security, data loss, concurrency, auth, payments, migrations and
   release-critical work always get the critical reviewer. A reviewer from a
   different model family adds independence where available.
-- The brief states risk level and focus. A migration is checked against
-  every build still running, installed apps included, not only its branch.
+- The brief states risk level and focus; review scope for docs is in
+  `roles/reviewer.md`. A migration is checked against every build still
+  running, installed app builds included, not only its branch.
 
 ## P5. Proof
 
@@ -158,11 +159,11 @@ projects, the project otherwise. Tool memory and chat history are caches.
 
 ## P14. Context efficiency
 
-At checkpoints (end of a phase, after merge, before a new task, or past the
-compaction point set in the adapter)
-give a progress update (`templates/progress-update.md`) and suggest compaction
-or a new session; I choose. Thresholds live in adapters and are tuned by
-`practices/context-efficiency.md`.
+Follow the rules of thumb in `practices/context-efficiency.md` (reading,
+logs, handoffs). At checkpoints (end of a phase, after merge, before a new
+task, or past the compaction point set in the adapter) give a progress update
+(`templates/progress-update.md`) and suggest compaction or a new session; I
+choose. Thresholds live in adapters and are tuned by that practice.
 
 ## P15. Closeout
 
@@ -231,7 +232,7 @@ docs (for a product, the roadmap and tech stack), not past session summaries.
 ## P20. Project baseline
 
 Each type has a baseline of automations, listed in
-`practices/project-baseline.md`, including for anything deployed the
+`practices/project-baseline.md`; for anything deployed it includes the
 observability contract (`practices/observability.md`) and a daily triage.
 Set up or audit it with the `project-setup` skill; report gaps rather than
 leaving them silent.

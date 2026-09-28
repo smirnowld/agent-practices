@@ -73,8 +73,8 @@ Typical cost: a container VM left running for days, holding one idle service.
 - If it says others hold it: leave it, and mention it in the handoff.
 - If you see a claim or usage you can't explain: ask its session or me; never force it.
 - Never delete data or profiles without my explicit say-so.
-- Shut down any simulator or emulator the session created once no other claim remains; delete it only if it holds
-  no data anyone needs.
+- Shut down any simulator or emulator the session created once no other claim remains. Delete it only if it holds
+  nothing but this session's own builds; anything else falls under rule 7.
 - In a parallel round sharing one simulator or emulator, one owner builds and installs the app once; lanes only
   run the bundler or dev server against it and never build.
 
