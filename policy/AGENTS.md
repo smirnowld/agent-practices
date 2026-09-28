@@ -64,11 +64,9 @@ advisory instead.
   simple docs. Security, data loss, concurrency, auth, payments, migrations and
   release-critical work always get the critical reviewer. A reviewer from a
   different model family adds independence where available.
-- The brief states risk level and focus. Docs reviews check implications:
-  missing or broken references, contradictions between documents, stale
-  mentions and, for a decision status change, what depends on it. A migration
-  is checked against every build still running (an installed mobile app
-  changes only when a new build is installed), not only against its branch.
+- The brief states risk level and focus; review scope for docs is in
+  `roles/reviewer.md`. A migration is checked against every build still
+  running, installed app builds included, not only its branch.
 
 ## P5. Proof
 
@@ -107,11 +105,9 @@ run) is not blocked: ask for that run instead of merging untested.
   PR (auto-merge preferred) once work is verified or marked untested under
   P5, review passed, every proof status is green on the head commit (a status
   for a blocked part may be absent, never faked) and nothing awaits my answer
-  or acceptance. Disable auto-merge before pushing, get new commits reviewed,
-  then re-enable. Stay until merged, then clean up. Procedure: `merge` skill.
+  or acceptance. Procedure: `merge` skill.
 - **Fix forward on the same PR.** Fix failing checks without asking unless the
-  fix changes scope. Push tweaks to the open PR, batched, not a new PR. When a
-  late tweak meets a large context, hand it to a fresh small session.
+  fix changes scope. Push tweaks to the open PR, batched, not a new PR.
 
 ## P7. Shared resources
 
@@ -139,8 +135,7 @@ project's agreed host is not publishing (P17).
 
 Never read, print, copy or commit a secret. Name it and where I place it.
 Never open env files holding secrets with file read, write or edit tools
-(why: `practices/secrets.md`). Check a key in the shell and print only a status
-code or a match count.
+(why and how to check a key: `practices/secrets.md`).
 
 ## P11. Requirements and decisions
 
@@ -164,12 +159,11 @@ projects, the project otherwise. Tool memory and chat history are caches.
 
 ## P14. Context efficiency
 
-Locate the relevant section before reading a whole file. Keep full logs on
-disk; report the result, failing lines and log path. At checkpoints (end of a
-phase, after merge, before a new task, or past the compaction point set in the adapter)
-give a progress update (`templates/progress-update.md`) and suggest compaction
-or a new session; I choose. Thresholds live in adapters and are tuned by
-`practices/context-efficiency.md`.
+Follow the rules of thumb in `practices/context-efficiency.md` (reading,
+logs, handoffs). At checkpoints (end of a phase, after merge, before a new
+task, or past the compaction point set in the adapter) give a progress update
+(`templates/progress-update.md`) and suggest compaction or a new session; I
+choose. Thresholds live in adapters and are tuned by that practice.
 
 ## P15. Closeout
 
@@ -179,10 +173,9 @@ models used. PR descriptions name them too. Where closeouts are kept: P17.
 
 ## P16. Cleanup
 
-After merge or abandonment, update your local default branch and remove
-your own worktrees, branches and local resources without asking. Shut down
-any simulator or emulator the session created once no other claim remains
-(P7); delete it only if it holds no data anyone needs.
+After merge or abandonment, update your local default branch, remove your
+own worktrees and branches and release your local resources (P7) without
+asking.
 
 ## P17. Record keeping
 
@@ -192,10 +185,8 @@ archive, so removing a stale record loses nothing.
 - **Current-state docs** (specs, guides, runbooks) are updated in place; a
   closeout updates them rather than adding documents.
 - **ADRs** only for decisions with lasting effect that someone could
-  reasonably question later. Each starts with a short Decision and
-  Consequences summary; context, options and discussion follow below a
-  divider. `docs/adr/README.md` indexes ADRs in force and proposed, one line
-  each.
+  reasonably question later. `docs/adr/README.md` indexes ADRs in force and
+  proposed, one line each.
   Superseded or rejected ADRs move to `docs/adr/archive/`. A changed decision
   is a new ADR. Format: `templates/adr.md`.
 - **Open questions and assumptions**: a register of open items only. When
@@ -241,12 +232,10 @@ docs (for a product, the roadmap and tech stack), not past session summaries.
 ## P20. Project baseline
 
 Each type has a baseline of automations, listed in
-`practices/project-baseline.md`: CI with branch protection, dependency
-updates, security scanning, a weekly docs drift check, an issue review, and,
-for anything deployed, the observability contract in
-`practices/observability.md` and a daily triage of errors, alerts, uptime and
-logs. Set up or audit it with the `project-setup` skill; report gaps rather
-than leaving them silent.
+`practices/project-baseline.md`; for anything deployed it includes the
+observability contract (`practices/observability.md`) and a daily triage.
+Set up or audit it with the `project-setup` skill; report gaps rather than
+leaving them silent.
 
 **P20a. Pins.** Pin dependencies to exact versions. A new dependency is justified in its PR; a
 novel one (a new runtime, framework, service or vendor) needs an ADR. Detail:
