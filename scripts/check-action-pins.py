@@ -12,9 +12,13 @@ version. Local actions (`./...`) are exempt; `docker://` images must be pinned
 to a `@sha256:` digest.
 
 Fails closed: a line with a `uses` key in any other form (flow mapping, quoted
-key, value on the next line, anchor) is reported, not skipped.
+key, value on the next line, anchor) is reported, not skipped. It reads lines,
+not YAML: a key spelled deliberately to evade it (`? uses`, an escaped name)
+is not caught.
 
 Prints `path:line: reason` for each failure and exits 1 if there are any.
+Exits 2 if DIR is not a directory or holds no workflow or action file, so a
+mistyped path never reads as a pass.
 """
 import pathlib
 import re
@@ -53,6 +57,18 @@ def candidates(root):
         return [p for p in root.rglob("*") if not SKIP_DIRS.intersection(p.relative_to(root).parts)]
 
 
+def without_comment(line):
+    """The part of the line a `uses` key can be in. In block style the key
+    comes before any value, so cutting at the first ` #` is safe. A flow
+    style line (braces, brackets, commas) is kept whole: a quoted `#` there
+    could come before the key."""
+    if line.lstrip().startswith("#"):
+        return ""
+    if any(c in line for c in "{}[],"):
+        return line
+    return line.split(" #")[0]
+
+
 def files(root):
     found = set()
     for path in candidates(root):
@@ -68,13 +84,20 @@ def files(root):
 
 def main():
     root = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else ".")
+    if not root.is_dir():
+        print(f"error: {root} is not a directory", file=sys.stderr)
+        return 2
+    found = files(root)
+    if not found:
+        print(f"error: no workflow or action file under {root}; pass the repository root", file=sys.stderr)
+        return 2
     failures = 0
-    for path in files(root):
+    for path in found:
         for n, line in enumerate(path.read_text().splitlines(), 1):
             m = USES.match(line)
             if m:
                 reason = check_line(m.group(2), m.group(3))
-            elif not line.lstrip().startswith("#") and ANY_USES.search(line.split(" #")[0]):
+            elif ANY_USES.search(without_comment(line)):
                 reason = UNRECOGNISED
             else:
                 continue
