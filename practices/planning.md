@@ -10,4 +10,4 @@ ask me about it.
 - **Size relatively.** Compare work with work already done ("about twice the
   last slice") rather than computing absolute hours.
 
-Moved out of policy P6, 2026-09-28, to keep policy short.
+Cross-project lesson, 2026-09; moved out of policy P6 on 2026-09-28.

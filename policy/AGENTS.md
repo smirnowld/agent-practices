@@ -82,8 +82,8 @@ what could not be verified. Work whose verification is blocked from outside
 the session (hardware, access, an external service) may still count as done
 and merge once required checks pass, if the PR marks it untested and names
 what could not run and why. Blocked means no path in the project can run the
-check. A lane CI runs on request (a label such as `ci:full`, a manual run) is
-not blocked: ask for that run instead of merging untested.
+check. A CI lane that runs on request (a label such as `ci:full`, a manual
+run) is not blocked: ask for that run instead of merging untested.
 
 ## P6. Asking early, merging and acceptance
 
