@@ -121,6 +121,14 @@ the shell, so read-only is enforced by the role's instructions, not by tools.
   continue with the brief." and does nothing else that turn. With no
   reachable parent, the session asks me to switch it with `/model` and
   `/effort` and stops.
+- Chips (P2c): a session proposed to me as a desktop-app chip
+  (`spawn_task`, and a scheduled routine's proposed session) is a brief. Its
+  prompt is filled from [`templates/brief.md`](../../templates/brief.md),
+  Model line first, not written as a free-form task. The chip cannot set model
+  or effort (the tool takes a title, a summary, a prompt and a directory;
+  observed 2026-09-29, unverified against vendor docs), so its summary names
+  them for me to pick when I start it, and the started session runs the model
+  check above.
 - Scheduled routines (`docs-drift-check`, `triage`, `issue-review`,
   `project-setup` audit) run as local desktop-app scheduled tasks, one per
   project; a proposed session appears as a chip. Local tasks fire only while the app is open and the
