@@ -57,16 +57,25 @@ def candidates(root):
 
 def strip_comment(line):
     """The line without its YAML comment: a `#` at the start or after
-    whitespace, outside quotes."""
+    whitespace, outside quotes. A quote opens a string only at the start of a
+    value, so the apostrophe in `don't` does not; `\\"` and `''` are escapes."""
     quote = None
-    for i, c in enumerate(line):
-        if quote:
-            if c == quote:
+    i = 0
+    while i < len(line):
+        c = line[i]
+        prev = line[i - 1] if i else " "
+        if quote == '"' and c == "\\":
+            i += 1
+        elif quote and c == quote:
+            if quote == "'" and line[i + 1:i + 2] == "'":
+                i += 1
+            else:
                 quote = None
-        elif c in "'\"":
+        elif not quote and c in "'\"" and (prev.isspace() or prev in "[{,"):
             quote = c
-        elif c == "#" and (i == 0 or line[i - 1].isspace()):
+        elif not quote and c == "#" and prev.isspace():
             return line[:i]
+        i += 1
     return line
 
 
