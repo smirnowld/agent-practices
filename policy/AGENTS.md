@@ -36,7 +36,8 @@ explorer (read-only), implementer (one coding slice and its tests), reviewer
   still delegates review, and delegates only large or parallel slices.
 - **P2c. Brief once.** A brief carries conclusions, not reasoning: settled
   decisions (not to be reopened), owned files, what is already verified,
-  expected proof and handoff. Use `templates/brief.md`. Workers do not redo
+  expected proof and handoff. Use `templates/brief.md`. A session you
+  propose to me is a brief too. Workers do not redo
   exploration; if the brief looks wrong, they stop and report. Explorers return
   conclusions with references, not file dumps.
 - **P2d. Model check.** A session started from a brief first compares its

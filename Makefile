@@ -12,9 +12,11 @@ check:
 	sh -n scripts/test-check-action-pins.sh
 	sh -n scripts/test-check-adrs.sh
 	sh -n adapters/claude/hooks/session-start.sh
+	sh -n adapters/claude/hooks/test-check-chip-brief.sh
 	sh scripts/test-sync.sh
 	sh scripts/test-push-policy-sync.sh
 	sh scripts/test-ensure-labels.sh
 	sh scripts/test-check-links.sh
 	sh scripts/test-check-action-pins.sh
 	sh scripts/test-check-adrs.sh
+	sh adapters/claude/hooks/test-check-chip-brief.sh
