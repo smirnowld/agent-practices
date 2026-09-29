@@ -58,7 +58,8 @@ same files, at about 120k context per call.
 A threshold or instruction change is kept only if it saves context without
 costing quality. Compare at least three similar slices before and after.
 Take each slice's model, responses, input / cached / output tokens,
-compaction count and elapsed time from the usage collector's per-session
-data; judge proof completed and rework caused by lost context from the
-sessions themselves. Never record usage figures by hand, in the repo or
-elsewhere; keep only the conclusion here.
+compaction count and elapsed time from a usage collector: a tool outside
+this repository that reads each session's transcripts and records its usage
+automatically. Without one, do not run the comparison. Judge proof completed
+and rework caused by lost context from the sessions themselves. Keep no
+hand-made usage log; only the conclusion lands here.
