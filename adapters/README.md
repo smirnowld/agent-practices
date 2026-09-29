@@ -36,9 +36,10 @@ same approach is unverified.
 - Policy: when a policy PR merges, the `sync-policy` workflow runs
   `scripts/push-policy-sync.sh` over the projects in the Actions variable
   `POLICY_SYNC_REPOS`. Each project gets one sync PR with auto-merge on; a
-  later policy change updates that PR instead of opening another, and the PR
-  closes itself once the default branch is current. The workflow also runs
-  weekly, retrying failures.
+  later policy change updates that PR instead of opening another, and the
+  next run closes it if the default branch caught up another way. The
+  workflow also runs weekly, retrying failures; to run it at once, `gh
+  workflow run sync-policy`.
 - Re-check vendor facts when an adapter misbehaves or at the monthly audit.
 
 Details: [claude/README.md](claude/README.md), [codex/README.md](codex/README.md).

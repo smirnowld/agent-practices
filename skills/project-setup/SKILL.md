@@ -39,8 +39,10 @@ For R1, a present block must also be current: run
 clone, and check that the project is listed in agent-practices' Actions
 variable `POLICY_SYNC_REPOS` (`gh variable get POLICY_SYNC_REPOS --repo
 <agent-practices>`). A stale copy or a missing listing is "partial"; setup
-adds the listing (a host setting, P9), then starts the `sync-policy`
-workflow (`gh workflow run sync-policy`) to bring the copy current.
+appends the project to the listing (a host setting, P9; `gh variable set`
+replaces the whole value, so read it first), then starts the workflow with
+`gh workflow run sync-policy --repo <agent-practices>` to bring the copy
+current.
 
 For R6, run `scripts/ensure-labels.sh --check <owner/repo>` (read-only; exit
 1 names each label missing or different). Any gap is "partial" or "missing".

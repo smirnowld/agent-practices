@@ -4,7 +4,8 @@ name: sync-policy
 # variable POLICY_SYNC_REPOS (space-separated OWNER/REPO): one sync PR per
 # project, updated in place, auto-merge on. See scripts/push-policy-sync.sh.
 # Needs the secret POLICY_SYNC_TOKEN: a fine-grained token with Contents and
-# Pull requests read-write on those projects. Skipped where the variable is
+# Pull requests read-write on those projects (one token per resource owner:
+# a list spanning a user and an organisation needs a GitHub App token instead). Skipped where the variable is
 # unset, so forks do nothing until they configure it.
 
 on:
@@ -28,7 +29,8 @@ concurrency:
 jobs:
   sync:
     name: sync
-    if: vars.POLICY_SYNC_REPOS != ''
+    # main only: a dispatch on another ref would push unreviewed policy.
+    if: vars.POLICY_SYNC_REPOS != '' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -44,4 +46,5 @@ jobs:
           git config --global user.name "agent-practices sync"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # shellcheck disable=SC2086 # REPOS is a space-separated list
+          [ -n "$(echo $REPOS)" ] || { echo "POLICY_SYNC_REPOS is blank"; exit 1; }
           sh scripts/push-policy-sync.sh $REPOS
