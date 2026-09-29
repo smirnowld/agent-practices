@@ -36,8 +36,11 @@ observability manifest and a live health call; `triage` owns the signals.
 
 For R1, a present block must also be current: run
 `scripts/sync-policy.sh --check <project>` from a local agent-practices
-clone. A stale copy is "partial: policy block out of date" and proposes a
-sync session.
+clone, and check that the project is listed in agent-practices' Actions
+variable `POLICY_SYNC_REPOS` (`gh variable get POLICY_SYNC_REPOS --repo
+<agent-practices>`). A stale copy or a missing listing is "partial"; setup
+adds the listing (a host setting, P9), then starts the `sync-policy`
+workflow (`gh workflow run sync-policy`) to bring the copy current.
 
 For R6, run `scripts/ensure-labels.sh --check <owner/repo>` (read-only; exit
 1 names each label missing or different). Any gap is "partial" or "missing".
