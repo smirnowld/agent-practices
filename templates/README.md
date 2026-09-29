@@ -18,8 +18,8 @@ fields. Using the template is mandatory; empty sections may be omitted.
 | `docs/spec.md` | Current-state description of a feature | Project `docs/` |
 | `docs/runbook.md` | Repeatable operational procedure | Project `docs/` |
 | `docs/roadmap.md` | Product direction by phase (P19) | Project `docs/` |
-| `docs/plan.md` | Current phase at a glance; the only place for status (P19) | Project `docs/` |
-| `docs/phase-plan.md` | The current phase's open work packages, no status (P19) | Project `docs/plans/phase-N.md` |
+| `docs/plan.md` | Current phase at a glance, with its status (P19) | Project `docs/` |
+| `docs/phase-plan.md` | The current phase's open work packages (P19) | Project `docs/plans/phase-N.md` |
 | `docs/architecture.md` | How the system fits together (P19) | Project `docs/` |
 | `docs/tech-stack.md` | Choices, version policy, decisions (P19) | Project `docs/` |
 | `docs/visuals.md` | Spec for the HTML visuals of those four docs | Project `docs/visuals/` |

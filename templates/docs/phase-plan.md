@@ -1,18 +1,15 @@
 # Phase <N> work packages: <name>
 
-<!-- Product repos (P19), stored as docs/plans/phase-<N>.md. What the open
-packages of the current phase must deliver, the rules for running them and
-the estimate. No status: status, progress and pull request links live only in
-plan.md, whose rows map to these package IDs. A package leaves this file when
-it merges; its outcome lives in the code, contracts, ADRs and READMEs, and
-git keeps the rest. Written by the planning session and accepted by me before
-the first brief. Deleted when the phase ends, after its lasting outcomes move
-to the roadmap and docs. Budget: 30 KB. -->
+<!-- Product repos (P19), stored as docs/plans/phase-<N>.md: the phase's
+living plan (P17). Scope of the open packages, no status; what belongs here
+and when a package leaves: practices/planning.md, "Two files per phase".
+Budget: practices/record-keeping.md. -->
 
 <Accepted by me on DATE; packages added later name their source.> Each work
-package is one agent, one lane and one pull request (or a small series), with
-criteria a reviewer can check. Size: S = <measure>, M = <measure>; an L
-package is split before it is briefed. At a glance: [plan.md](../plan.md).
+package is one agent and one pull request (or a small series), with criteria
+a reviewer can check. Package IDs are `WP` plus a number that continues
+across phases and is never reused. Size per `practices/model-sizing.md`; an L
+package is split before it is briefed. Status: [plan.md](../plan.md).
 
 **Goal:** <what the user can see or do when this phase ends>
 
@@ -20,11 +17,13 @@ package is split before it is briefed. At a glance: [plan.md](../plan.md).
 
 ## Order and dependencies
 
-<!-- Open packages only; every dependency not listed has merged. -->
+<!-- Open packages only; every dependency not listed has merged. AREA is the
+project's own split of work (a lane, a platform, a component), if it has
+one. -->
 
 ```
-<Lane>:   WP<A> ─► WP<B>   <what each delivers, a few words>
-<Lane>:   WP<C>            <what it delivers>
+AREA:   WPA ─► WPB   what each delivers, a few words
+AREA:   WPC          what it delivers
 ```
 
 **Parallelism rule:** <which packages may run at the same time and which
@@ -32,11 +31,8 @@ must wait, with the shared files or resources that force the order>.
 
 ## Completion states
 
-<!-- How a package, and the phase, is reported: never a bare "done" where
-part of it depends on something outside the repository. -->
-
 - **Engineering complete:** <every criterion that depends only on the repository is met and verified>.
-- **Externally blocked:** <the rest needs an account, a third party or someone's data; that work is written, marked untested, and the blocker named>.
+- **Externally blocked:** <the rest needs an account, a third party or someone's data; that work is written, marked untested (P5), and the blocker named>.
 
 The phase is **engineering complete** when <...>. It is **finished** when <...>.
 
@@ -48,31 +44,30 @@ The phase is **engineering complete** when <...>. It is **finished** when <...>.
 
 ## Open packages
 
-### WP<N> <Lane>: <what it delivers> (<lane>, <size>; <ADR link if any>)
+<!-- A package merged as engineering complete stays here, reduced to its
+externally blocked criteria, until it is finished. -->
+
+### WP<N>: <what it delivers> (<area, if any>; <size>; <ADR link, if any>)
 
 <Scope in a few sentences: what it builds, where the logic lives, what it
 must not do. Name the decision or question it rests on.>
 
-Done when: <criteria a reviewer can check, demoable where the project
-demands it>.
+Done when: <criteria a reviewer can check>.
 
 ## Parked packages
 
-<!-- Omit if none. A package paused by my decision, with the condition that
-brings it back. -->
+<!-- Omit if none. Parking is a scope decision of mine and is recorded only
+here; plan.md shows "Parked" and links this section. -->
 
-### WP<N> <Lane>: <what it would deliver> (<lane>, <size>)
+### WP<N>: <what it would deliver> (<area, if any>; <size>)
 
 Briefed only if <condition> (<my decision, date, link>). <Scope and "Done
 when", kept so it can be briefed without replanning.>
 
 ## Estimate
 
-<Packages by size, planned agent-days, the longest chain, and the calendar
-range with what the measurement does not cover (practices/planning.md).>
+<!-- As accepted; not updated as packages leave, so the end-of-phase review
+can compare (practices/planning.md). -->
 
-## Review at the end of the phase
-
-<Re-measure, compare with the estimate, move lasting outcomes into the
-roadmap and current-state docs, and write the next phase's plan in this
-shape.>
+<Packages by size, the longest chain of dependent packages, and the calendar
+range with what it leaves out (acceptance, review rounds, outside inputs).>

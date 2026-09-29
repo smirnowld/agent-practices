@@ -222,9 +222,8 @@ ADRs) must open on my phone and laptop after the session ends.
 Every project's `AGENTS.md` declares its type. Required current-state docs
 (templates in `templates/docs/`) are kept true under P17:
 
-- **product**: roadmap, current phase plan, architecture, tech stack. The
-  phase plan is two files: `docs/plan.md` holds all status,
-  `docs/plans/phase-N.md` the open packages' scope and no status.
+- **product**: roadmap, current phase plan (two files, [`practices/planning.md`](../practices/planning.md)),
+  architecture, tech stack.
 - **infrastructure**: inventory (what runs where), runbooks, recovery
   procedure.
 - **tooling**: a README with purpose and usage; other docs when relevant.
