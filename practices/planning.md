@@ -36,7 +36,8 @@ a Packages column.
 keeps docs out of that pull request (a separate docs lane), its `AGENTS.md`
 names who does it; the closeout checks it happened. A package merged as
 engineering complete but externally blocked (P5) stays, reduced to its
-blocked criteria, until it is finished.
+blocked criteria, until it is finished; the session that notices the input
+arrived (or its closeout) then sets Done and removes it.
 
 **At the end of the phase:** compare the result with the estimate (kept as
 accepted), move lasting outcomes into the roadmap and current-state docs,

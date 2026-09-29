@@ -67,7 +67,8 @@ when", kept so it can be briefed without replanning.>
 ## Estimate
 
 <!-- As accepted; not updated as packages leave, so the end-of-phase review
-can compare (practices/planning.md). -->
+can compare (practices/planning.md). A package added later is added with
+its source, so the review can tell the two apart. -->
 
 <Packages by size, the longest chain of dependent packages, and the calendar
 range with what it leaves out (acceptance, review rounds, outside inputs).>

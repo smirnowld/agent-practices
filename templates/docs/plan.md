@@ -20,6 +20,7 @@ flowchart LR
   classDef done fill:#cfe8cf,stroke:#3a7d3a
   classDef active fill:#fff1c2,stroke:#b58900
   classDef blocked fill:#f6cccc,stroke:#b03030
+  classDef parked fill:#eeeeee,stroke:#999999,stroke-dasharray:4
   A[OUTCOME A]:::done --> B[OUTCOME B]:::active
   A --> C[OUTCOME C]:::blocked
   B --> D[OUTCOME D]
@@ -31,8 +32,8 @@ flowchart LR
 <!-- One row per deliverable, in user terms, with one status; split a
 deliverable only where its packages' statuses differ. Status: Done, In
 review, In progress, Ready, Not started, Blocked: <why>, Engineering
-complete: <what is externally blocked>, Parked (link the phase plan's
-section; the reason lives there). Needs = open packages only. Link = PR or
+complete and Parked (both link the phase plan's section, where the
+blocked criteria or the reason live). Needs = open packages only. Link = PR or
 issue URL, or the package's section in the phase plan as a SHA permalink
 (P18) until a PR exists. -->
 

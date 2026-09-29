@@ -15,7 +15,7 @@ starting points; adjust them from evidence.
 | Current-state doc | 40 KB per file; split by topic beyond that |
 | Living plan | 20 KB; one per initiative |
 | Phase status (`docs/plan.md`) | 20 KB |
-| Phase work packages (`docs/plans/phase-N.md`, the phase's living plan) | 30 KB |
+| Phase work packages (`docs/plans/phase-N.md`, the phase's living plan) | 30 KB, in place of the living-plan budget |
 | Binaries in `docs/` | None, except diagrams a doc embeds (< 200 KB each) |
 | Session, closeout, brief, verification logs | None in the repo |
 
