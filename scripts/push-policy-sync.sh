@@ -10,8 +10,8 @@
 #   - copy stale: point the sync branch at one commit on top of the default
 #     branch and force-push it, open the sync PR if none is open (otherwise the
 #     open one is updated in place), and enable auto-merge on it.
-# The sync branch belongs to this script; commits pushed to it by hand are
-# replaced on the next run. Auto-merge is enabled only for a single commit on
+# The sync branch belongs to this script; a commit pushed to it by hand is
+# replaced on the next run unless its tree is exactly the one this run builds. Auto-merge is enabled only for a single commit on
 # the default branch that changes nothing but the policy block in AGENTS.md,
 # pinned to that commit; otherwise the PR is left open for a person.
 #
@@ -95,7 +95,7 @@ sync_one() {
     enable_auto_merge
     return 0
   fi
-  git -C "$dir" push --quiet --force origin "$branch"
+  git -C "$dir" push --quiet --force origin "HEAD:refs/heads/$branch"
 
   body="Syncs the policy block in \`AGENTS.md\` to agent-practices at [$rev]($source/commit/$rev).
 
@@ -158,6 +158,9 @@ guard() {
 # checks the pin again at merge time is unverified. gh merges at once when the
 # PR is already mergeable (no required check pending: CLEAN, UNSTABLE or
 # HAS_HOOKS); otherwise GitHub merges once the project's required checks pass.
+# The squash subject and body are fixed here, so a later edit to the PR's
+# title or description (or a kept commit's message) does not reach the
+# default branch; whether GitHub keeps them until merge time is unverified.
 # Retried on every run, so turning the project's setting on later takes effect.
 enable_auto_merge() {
   if [ $safe = 0 ]; then
@@ -165,6 +168,7 @@ enable_auto_merge() {
     return 0
   fi
   if ! err=$(gh pr merge "$pr" --repo "$repo" --auto --squash \
+      --subject "$title" --body "Synced from $source/commit/$rev" \
       --match-head-commit "$head" 2>&1 >/dev/null); then
     echo "$repo: auto-merge could not be enabled on #$pr; it needs review: $err" >&2
   fi

