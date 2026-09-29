@@ -56,9 +56,9 @@ same files, at about 120k context per call.
 ## Measuring a change
 
 A threshold or instruction change is kept only if it saves context without
-costing quality. Compare at least three similar slices before and after,
-recording per slice: model, responses, input / cached / output tokens,
-compaction count, elapsed time, proof completed, and rework caused by lost
-context. Use the adapter's usage measurement where it has one (see
-`adapters/README.md`), else the agent's own usage reporting; keep the raw log
-outside the repo and record only the conclusion here.
+costing quality. Compare at least three similar slices before and after.
+Take each slice's model, responses, input / cached / output tokens,
+compaction count and elapsed time from the usage collector's per-session
+data; judge proof completed and rework caused by lost context from the
+sessions themselves. Never record usage figures by hand, in the repo or
+elsewhere; keep only the conclusion here.

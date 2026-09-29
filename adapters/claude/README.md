@@ -142,16 +142,7 @@ the shell, so read-only is enforced by the role's instructions, not by tools.
   suggesting compaction, check `/context`; suggest
   `/compact keep: goal, decisions, owned files, proof status, next step`
   (https://code.claude.com/docs/en/claude-code-on-the-web.md, "Manage
-  context"). `session-usage.py` supplies the figures for
-  [measuring a change](../../practices/context-efficiency.md#measuring-a-change):
-  `python3 adapters/claude/session-usage.py SESSION` (id, id prefix or
-  transcript path; `--row` prints the trial-log row) reads the local
-  transcript (`<config dir>/projects/<project>/<id>.jsonl`, subagents under
-  `<id>/subagents/`; format observed 2026-09-29, not a documented interface)
-  and reports responses, per-response context by quarter, compactions with
-  their starting context, cache read split parent/subagent, and where the
-  calls went: read-style shell calls, waits, images, large results, files
-  opened more than twice.
+  context").
 
 ## Cloud sessions
 
