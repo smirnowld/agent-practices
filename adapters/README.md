@@ -35,7 +35,9 @@ same approach is unverified.
   `--check`.
 - Policy: when a policy PR merges, the `sync-policy` workflow runs
   `scripts/push-policy-sync.sh` over the projects in the Actions variable
-  `POLICY_SYNC_REPOS`. Each project gets one sync PR with auto-merge on; a
+  `POLICY_SYNC_REPOS`. Each project gets one sync PR. Auto-merge goes on,
+  pinned to the sync commit, only when that commit changes nothing but the
+  policy block in `AGENTS.md`; otherwise the PR stays open for review. A
   later policy change updates that PR instead of opening another, and the
   next run closes it if the default branch caught up another way. The
   workflow also runs weekly, retrying failures; to run it at once, `gh
