@@ -27,7 +27,11 @@ marketplace (`.claude-plugin/marketplace.json`, plugin source `"."`), so
 - `hooks/hooks.json`: `SessionStart` on `startup|clear|compact` runs
   `session-start.sh`, whose stdout becomes context (hooks.md). It prints the
   policy only when the project lacks the synced block, so the policy never
-  loads twice.
+  loads twice. `PreToolUse` on `mcp__ccd_session__spawn_task` runs
+  `check-chip-brief.py` (see Chips below); it denies with
+  `hookSpecificOutput.permissionDecision: "deny"`, and on its own errors
+  exits 0 so the call proceeds (hooks.md, checked 2026-09-29). It needs
+  `python3`; without it the hook fails and chips go through unchecked.
 
 ## Install
 
