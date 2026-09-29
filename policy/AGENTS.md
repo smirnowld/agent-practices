@@ -98,10 +98,6 @@ run) is not blocked: ask for that run instead of merging untested.
   an acceptance card (`templates/acceptance-card.md`): what changed,
   assumptions, visible evidence chosen with the `acceptance-evidence` skill.
   User-facing work waits for my acceptance.
-- **P6b. Signal when waiting.** A turn that ends on my decision or
-  acceptance asks through the tool's structured question prompt, not prose
-  alone, so the session shows as waiting. A turn that ends with a closeout or
-  a hand-off to me sends a notification. Mapping: adapter.
 - **P6a. Merge safeguards**, which hold under any project merge procedure:
   never bypass branch protection (admin merge, relaxing a rule); only I do,
   for a case I name. Any change that needs the critical reviewer under P4 is
@@ -113,6 +109,10 @@ run) is not blocked: ask for that run instead of merging untested.
   or acceptance. Procedure: `merge` skill.
 - **Fix forward on the same PR.** Fix failing checks without asking unless the
   fix changes scope. Push tweaks to the open PR, batched, not a new PR.
+- **P6b. Signal when waiting.** A turn that ends on my decision or
+  acceptance asks through the tool's structured question prompt, not prose
+  alone, so the session shows as waiting. A turn that ends with a closeout or
+  a hand-off to me sends a notification. Mapping: adapter.
 
 ## P7. Shared resources
 

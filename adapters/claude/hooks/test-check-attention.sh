@@ -47,6 +47,41 @@ transcript PushNotification; passes '# Closeout: Fix badge'
 # A signal from an earlier turn does not count for this one.
 transcript ''; blocks '# Closeout: Fix badge' '' 'PushNotification'
 
+# An early clarifying question does not cover a closeout written after my answer.
+printf '%s\n' '{"type":"user","message":{"content":"build it"}}' \
+  '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"q1","name":"AskUserQuestion"}]}}' \
+  '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"q1"}]}}' \
+  '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"b1","name":"Bash"}]}}' >"$tmp/t.jsonl"
+blocks '# Closeout: Fix badge' '' 'PushNotification'
+# Another tool result after the signal keeps it; a notification wakes nothing.
+printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"go"}]}}' \
+  '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"p1","name":"PushNotification"}]}}' \
+  '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"p1"}]}}' \
+  '{"type":"user","isMeta":true,"message":{"content":"meta"}}' \
+  '{"type":"user","isCompactSummary":true,"message":{"content":"summary"}}' \
+  '{"type":"user","message":{"content":"<task-notification>done</task-notification>"}}' \
+  '[1]' >"$tmp/t.jsonl"
+passes '# Closeout: Fix badge'
+# A list of text parts is a typed message and resets the turn.
+printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"p1","name":"PushNotification"}]}}' \
+  '{"type":"user","message":{"content":[{"type":"text","text":"next"}]}}' >"$tmp/t.jsonl"
+blocks '# Closeout: Fix badge' '' 'ToolSearch'
+
+transcript Bash
+for none in '**Waiting on me:** none' '**Waiting on me:** n/a' '**Waiting on me:** *nothing*' '**Waiting on me:** _None_'; do
+  passes "$none"
+done
+passes 'The template:
+
+```markdown
+# Closeout: <title>
+**Decision needed:** accept
+```'
+blocks '```
+x
+```
+# Acceptance: Real card' '' 'AskUserQuestion'
+
 for bad in 'not json' '{"last_assistant_message":"# Closeout: x"}' '{"last_assistant_message":"# Closeout: x","transcript_path":"/nonexistent"}'; do
   err=$(printf '%s\n' "$bad" | python3 "$hook" 2>&1 >/dev/null) || { echo "error: hook exited non-zero on: $bad" >&2; exit 1; }
   echo "$err" | grep -q "check-attention: skipped" || { echo "error: no stderr note on: $bad" >&2; exit 1; }

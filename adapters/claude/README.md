@@ -148,12 +148,19 @@ the shell, so read-only is enforced by the role's instructions, not by tools.
   as finished. So a decision or acceptance is asked with `AskUserQuestion`
   (an acceptance card as accept / change / reject, proposed first) after the
   card is shown, and a closeout or a hand-off to me (a merge I own, a command
-  to run) ends with `PushNotification`, one line under 200 characters. The
-  tool skips it while I am at the session. The `Stop` hook
-  ([`hooks/check-attention.py`](hooks/check-attention.py)) blocks a turn
-  once when its final message holds an acceptance card, question, "Decision
-  needed", a "Waiting on me" line other than "nothing", or a closeout
-  heading and the turn called neither tool. Whether the app's
+  to run) ends with `PushNotification`, one line under 200 characters; the
+  tool skips it while I am at the session (both from the tool's own
+  description, observed 2026-09-29, unverified against vendor docs). Both
+  can be deferred tools, loaded with ToolSearch `select:NAME` first. The
+  `Stop` hook ([`hooks/check-attention.py`](hooks/check-attention.py))
+  blocks a turn once when its final message, outside code fences, holds an
+  acceptance card, question, "Decision needed", a "Waiting on me" line other
+  than "nothing" or "none", or a closeout heading, and neither tool was
+  called since my last message or my last answer to `AskUserQuestion`. It
+  finds that boundary in the transcript by entry shape (observed, not
+  documented). If the plugin is enabled for headless (`-p`) or SDK runs,
+  where `AskUserQuestion` may be unavailable, the one forced extra turn
+  there is unverified. Whether the app's
   finished-session notification reaches me, and whether phone pushes are on,
   are my app settings (settings-reference.md, `preferredNotifChannel`;
   remote-control.md, "Mobile push notifications"; not checked on this
