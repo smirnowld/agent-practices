@@ -11,9 +11,10 @@
 #     branch and force-push it, open the sync PR if none is open (otherwise the
 #     open one is updated in place), and enable auto-merge on it.
 # The sync branch belongs to this script; a commit pushed to it by hand is
-# replaced on the next run unless its tree is exactly the one this run builds. Auto-merge is enabled only for a single commit on
-# the default branch that changes nothing but the policy block in AGENTS.md,
-# pinned to that commit; otherwise the PR is left open for a person.
+# replaced on the next run unless its tree is exactly the one this run builds.
+# Auto-merge is enabled only for a single commit on the default branch that
+# changes nothing but the policy block in AGENTS.md, pinned to that commit;
+# otherwise the PR is left open for a person.
 #
 # Needs GH_TOKEN (or a gh login) that can push branches and write pull requests
 # in every project. Exit status: 0 all fine, 1 a project failed, 2 usage error.
