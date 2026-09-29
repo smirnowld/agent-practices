@@ -33,8 +33,13 @@ same approach is unverified.
 - Roles and tier maps: edit `roles/` or a `tiers.json`, run
   `python3 scripts/build-adapters.py`, commit the output. CI runs it with
   `--check`.
-- Policy: after a policy PR merges, run `scripts/sync-policy.sh` over the
-  project checkouts and open a PR in each.
+- Policy: when a policy PR merges, the `sync-policy` workflow runs
+  `scripts/push-policy-sync.sh` over the projects in the Actions variable
+  `POLICY_SYNC_REPOS`. Each project gets one sync PR with auto-merge on; a
+  later policy change updates that PR instead of opening another, and the
+  next run closes it if the default branch caught up another way. The
+  workflow also runs weekly, retrying failures; to run it at once, `gh
+  workflow run sync-policy`.
 - Re-check vendor facts when an adapter misbehaves or at the monthly audit.
 
 Details: [claude/README.md](claude/README.md), [codex/README.md](codex/README.md).
