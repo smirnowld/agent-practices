@@ -13,8 +13,8 @@
 #
 # A file whose markers are malformed (missing, duplicated or out of order) is
 # reported and never modified. Files with CRLF line endings are handled: lines
-# are compared without the trailing CR, and a file whose first line ends in CRLF
-# is written back with CRLF on every line (mixed endings become CRLF).
+# are compared without the trailing CR, lines outside the block keep their own
+# endings, and the block takes CRLF when the file's first line ends in CRLF.
 #
 # Exit status: 0 all fine, 1 a file is stale (--check) or could not be synced,
 # 2 usage error or the policy cannot be synced from this checkout.
@@ -146,28 +146,29 @@ for dir in "$@"; do
         (nb == 1 && ne == 1 ? ", out of order or not on their own line" : "")
     }' "$cur")
   case "$verdict" in
-    insert)
-      { [ -s "$cur" ] && { cat "$cur"; echo; }; cat "$block"; } > "$new" ;;
-    replace)
-      awk -v b="$begin" -v e="$end" -v blk="$block" '
-        index($0, b) == 1 { while ((getline l < blk) > 0) print l; skip = 1; next }
-        skip && $0 == e { skip = 0; next }
-        !skip' "$cur" > "$new" ;;
+    insert | replace) ;;
     *)
       echo "error: $file: malformed sync markers ($verdict); not modified" >&2
       status=1; continue ;;
   esac
+  # Lines outside the block are copied byte for byte (endings included); the
+  # block is replaced, or appended after a blank line.
+  eol='\n'; [ $crlf = 1 ] && eol='\r\n'
+  src="$file"; [ -f "$file" ] || src=/dev/null
+  awk -v b="$begin" -v e="$end" -v blk="$block" -v eol="$eol" -v mode="$verdict" '
+    function put() { while ((getline l < blk) > 0) printf "%s" eol, l }
+    { s = $0; sub(/\r$/, "", s) }
+    mode == "replace" && index(s, b) == 1 { put(); skip = 1; next }
+    skip && s == e { skip = 0; next }
+    !skip
+    END { if (mode == "insert") { if (NR > 0) printf eol; put() } }' "$src" > "$tmp/out"
+  awk '{ sub(/\r$/, ""); print }' "$tmp/out" > "$new"
 
   if [ -f "$file" ] && norm "$cur" > "$tmp/a" && norm "$new" > "$tmp/b" && cmp -s "$tmp/a" "$tmp/b"; then
     echo "up to date: $file"
   elif [ $check = 1 ]; then
     echo "stale: $file"; status=1
   else
-    if [ $crlf = 1 ]; then
-      awk '{ printf "%s\r\n", $0 }' "$new" > "$tmp/out"
-    else
-      cp "$new" "$tmp/out"
-    fi
     cat "$tmp/out" > "$file"   # keep the file's inode and permissions
     echo "synced: $file"
   fi
