@@ -16,4 +16,13 @@ printf '<!-- agent-practices:policy:begin x -->\nold\n' > "$bad/AGENTS.md"
 cp "$bad/AGENTS.md" "$bad/orig"
 if sh scripts/sync-policy.sh "$bad"; then echo "malformed markers accepted"; exit 1; fi
 cmp "$bad/AGENTS.md" "$bad/orig"
+# Mixed line endings: lines outside the block keep theirs, byte for byte.
+mix=$(mktemp -d)
+printf '# P\r\nLF line\n<!-- agent-practices:policy:begin x -->\r\nold\n<!-- agent-practices:policy:end -->\nafter\n' \
+  > "$mix/AGENTS.md"
+sh scripts/sync-policy.sh "$mix" > /dev/null
+if grep -q '^old' "$mix/AGENTS.md"; then echo "block not replaced"; exit 1; fi
+outside() { sed '/^<!-- agent-practices:policy:begin/,/^<!-- agent-practices:policy:end -->/d' "$1"; }
+printf '# P\r\nLF line\nafter\n' > "$mix/want"
+outside "$mix/AGENTS.md" | cmp - "$mix/want"
 echo "sync self-test passed"
