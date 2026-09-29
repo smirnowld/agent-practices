@@ -32,6 +32,10 @@ marketplace (`.claude-plugin/marketplace.json`, plugin source `"."`), so
   `hookSpecificOutput.permissionDecision: "deny"`, and on its own errors
   exits 0 so the call proceeds (hooks.md, checked 2026-09-29). It needs
   `python3`; without it the hook fails and chips go through unchecked.
+  `Stop` runs `check-attention.py` (see Waiting on me below); it blocks with
+  top-level `decision: "block"` and a `reason`, reads the final text from
+  `last_assistant_message` and skips when `stop_hook_active` is true or
+  `background_tasks` is not empty (hooks.md, "Stop", checked 2026-09-29).
 
 ## Install
 
@@ -138,6 +142,22 @@ the shell, so read-only is enforced by the role's instructions, not by tools.
   and returns the template so the retry is one call. The hook fires on the
   desktop app's `mcp__ccd_session__spawn_task` (observed 2026-09-29 with a
   test chip; unverified against vendor docs).
+- Waiting on me (P6b): the desktop app shows a session as needing input
+  only while a permission prompt, `AskUserQuestion` or another input prompt
+  is open (agent-view.md, checked 2026-09-29); a turn ending in prose counts
+  as finished. So a decision or acceptance is asked with `AskUserQuestion`
+  (an acceptance card as accept / change / reject, proposed first) after the
+  card is shown, and a closeout or a hand-off to me (a merge I own, a command
+  to run) ends with `PushNotification`, one line under 200 characters. The
+  tool skips it while I am at the session. The `Stop` hook
+  ([`hooks/check-attention.py`](hooks/check-attention.py)) blocks a turn
+  once when its final message holds an acceptance card, question, "Decision
+  needed", a "Waiting on me" line other than "nothing", or a closeout
+  heading and the turn called neither tool. Whether the app's
+  finished-session notification reaches me, and whether phone pushes are on,
+  are my app settings (settings-reference.md, `preferredNotifChannel`;
+  remote-control.md, "Mobile push notifications"; not checked on this
+  machine).
 - Scheduled routines (`docs-drift-check`, `triage`, `issue-review`,
   `project-setup` audit) run as local desktop-app scheduled tasks, one per
   project; a proposed session appears as a chip. Local tasks fire only while the app is open and the

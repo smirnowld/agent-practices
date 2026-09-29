@@ -62,6 +62,12 @@ reference (a command, a branch name) can stay. Without `gh` or network, rerun
 with `--offline` for the local checks and name the unchecked links under
 **Not verified**.
 
+## 5. Signal
+
+Send the closeout, then signal per P6b: a notification with the outcome, or,
+when the continuation is **Wait for me** on a decision, the structured
+question prompt. The adapter names the tools.
+
 ## Origin
 
 A product repository, 2026-09: the done rule, blocked outcome, cleanup
