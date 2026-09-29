@@ -76,6 +76,9 @@ https://learn.chatgpt.com/docs/config-file/config-reference (checked
   mode) describe recurring routines. Codex scheduled tasks can run these
   workflows, but setup of their schedule, project list, and notification behavior remains a
   manual task unless one is explicitly created.
+- P6b asks for a structured question prompt and a notification when a turn
+  ends waiting on me. No Codex equivalent was checked; unverified, so a Codex
+  session ends with the card or closeout in chat.
 - `policy/AGENTS.md` says in P15 that closeouts name agents and models. Codex
   can provide those names; this is an instruction convention, not a Codex
   feature or schema field.
