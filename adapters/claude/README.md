@@ -128,7 +128,12 @@ the shell, so read-only is enforced by the role's instructions, not by tools.
   effort (it takes a title, a summary, a prompt and a directory; observed
   2026-09-29, unverified against vendor docs), so the chip's summary repeats
   the Model line's model and effort for me to pick when I start it, and the
-  started session runs the model check above.
+  started session runs the model check above. A `PreToolUse` hook
+  ([`hooks/check-chip-brief.py`](hooks/check-chip-brief.py)) denies a
+  `spawn_task` prompt without the brief's heading, Model line, Goal and Proof,
+  and returns the template so the retry is one call. The hook fires on the
+  desktop app's `mcp__ccd_session__spawn_task` (observed 2026-09-29 with a
+  test chip; unverified against vendor docs).
 - Scheduled routines (`docs-drift-check`, `triage`, `issue-review`,
   `project-setup` audit) run as local desktop-app scheduled tasks, one per
   project; a proposed session appears as a chip. Local tasks fire only while the app is open and the
