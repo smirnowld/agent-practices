@@ -28,6 +28,9 @@ Since the last run (or 7 days):
    the observability manifest naming endpoints or files that are gone;
    docs over the budgets in `practices/record-keeping.md`; visuals in
    `docs/visuals/` older than the doc they draw (`project-visuals`).
+   For a product: a merged package still in `docs/plans/phase-N.md`, or a
+   status there (it belongs in `docs/plan.md` only, `practices/planning.md`);
+   a `docs/plan.md` row not showing a merged or open pull request's status.
 
 No candidates and no mechanical failures: report "no drift" and stop.
 

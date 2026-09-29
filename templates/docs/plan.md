@@ -1,14 +1,16 @@
 # Phase <N>: <name>
 
 <!-- The current phase, at a glance (P19). One screen should tell me where
-it stands. Plain words: name items by what they deliver, not by internal IDs
-or module names. Detail per item (files, acceptance criteria, commands) lives
-in briefs and PRs, not here. Replaced when the phase ends, after its outcomes
-move to the roadmap and docs. Budget: 20 KB. -->
+it stands. This file owns status: every session that changes a package's
+status updates it here, and only here. What each package must deliver lives
+in docs/plans/phase-<N>.md (templates/docs/phase-plan.md), which carries no
+status. Plain words: rows name what they deliver; the Packages column maps
+them to that file's package IDs, the only IDs used. Replaced when the phase
+ends, after its outcomes move to the roadmap and docs. Budget: 20 KB. -->
 
 **Goal:** <what the user can see or do when this phase ends>
 **Status:** <on track | at risk | blocked> — <one sentence why>
-**Progress:** <done>/<total> items · **Started:** <date> · **Expected:** <date range>
+**Progress:** <done>/<total> packages · **Started:** <date> · **Expected:** <date range>
 **Waiting on me:** <decision or acceptance, with link — or "nothing">
 
 ## Order
@@ -28,14 +30,17 @@ flowchart LR
 
 ## Items
 
-<!-- One row per deliverable, in user terms. Status: Done, In review, In
-progress, Ready, Blocked, Not started. Link = PR or issue URL (P18). -->
+<!-- One row per deliverable, in user terms, with one status. Group done
+packages; give each open package its own row. Status: Done, In review, In
+progress, Ready, Not started, Blocked: <why>, Parked: <why>. Needs = open
+packages only. Link = PR or issue URL (P18), or the package's section in
+the phase plan until a PR exists. -->
 
-| # | Delivers | Status | Needs | Link |
+| Delivers | Packages | Status | Needs | Link |
 |---|---|---|---|---|
-| 1 | <plain-language outcome> | Done | — | <PR URL> |
-| 2 | <outcome> | In progress | 1 | <PR URL> |
-| 3 | <outcome> | Blocked: <why> | 1, 2 | <issue URL> |
+| <plain-language outcome> | WP<A>, WP<B> | Done | — | <PR URL> |
+| <outcome> | WP<C> | In progress | — | <PR URL> |
+| <outcome> | WP<D> | Blocked: <why> | WP<C> | <phase plan section URL> |
 
 ## Acceptance
 
