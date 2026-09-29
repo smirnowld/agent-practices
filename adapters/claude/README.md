@@ -155,7 +155,7 @@ the shell, so read-only is enforced by the role's instructions, not by tools.
   `Stop` hook ([`hooks/check-attention.py`](hooks/check-attention.py))
   blocks a turn once when its final message, outside code fences, holds an
   acceptance card, question, "Decision needed", a "Waiting on me" line other
-  than "nothing" or "none", or a closeout heading, and neither tool was
+  than "nothing", "none" or "n/a", or a closeout heading, and neither tool was
   called since my last message or my last answer to `AskUserQuestion`. It
   finds that boundary in the transcript by entry shape (observed, not
   documented). If the plugin is enabled for headless (`-p`) or SDK runs,

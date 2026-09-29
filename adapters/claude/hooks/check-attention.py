@@ -7,8 +7,9 @@ message carries an acceptance card, a question, a decision or a closeout and
 neither AskUserQuestion nor PushNotification was called since I last spoke,
 block the stop once and say which to call. My last words are my last typed
 message or my last answer to AskUserQuestion, so an early clarifying
-question does not cover a card or closeout written an hour later. Any error lets the turn end with a note on
-stderr; a broken check must not trap a session.
+question does not cover a card or closeout written an hour later. Any error
+lets the turn end with a note on stderr; a broken check must not trap a
+session.
 """
 import json
 import re
@@ -31,6 +32,9 @@ def typed(entry, content):
     """A message I typed, not a tool result, compact summary or harness notice."""
     if entry.get("isMeta") or entry.get("isCompactSummary"):
         return False
+    origin = entry.get("origin")
+    if isinstance(origin, dict) and "kind" in origin:  # observed, not documented
+        return origin["kind"] == "human"
     if isinstance(content, str):
         return not content.lstrip().startswith("<")
     return any(isinstance(c, dict) and c.get("type") == "text" for c in content or [])

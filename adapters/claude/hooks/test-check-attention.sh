@@ -67,6 +67,15 @@ printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id"
   '{"type":"user","message":{"content":[{"type":"text","text":"next"}]}}' >"$tmp/t.jsonl"
 blocks '# Closeout: Fix badge' '' 'ToolSearch'
 
+# A typed message is known by its origin when present, even behind a harness tag.
+printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"p1","name":"PushNotification"}]}}' \
+  '{"type":"user","origin":{"kind":"human"},"message":{"content":"<system-reminder>x</system-reminder> next"}}' >"$tmp/t.jsonl"
+blocks '# Closeout: Fix badge' '' 'PushNotification'
+printf '%s\n' '{"type":"user","message":{"content":"go"}}' \
+  '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"p1","name":"PushNotification"}]}}' \
+  '{"type":"user","origin":{"kind":"task-notification"},"message":{"content":"done"}}' >"$tmp/t.jsonl"
+passes '# Closeout: Fix badge'
+
 transcript Bash
 for none in '**Waiting on me:** none' '**Waiting on me:** n/a' '**Waiting on me:** *nothing*' '**Waiting on me:** _None_'; do
   passes "$none"
