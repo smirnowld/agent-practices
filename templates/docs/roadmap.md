@@ -1,7 +1,7 @@
 # Roadmap
 
 <!-- Product repos (P19). Where the product is going, readable in two
-minutes. Outcomes, not tasks: tasks live in plan.md. Current state only; git
+minutes. Outcomes, not tasks: tasks live in the phase plan. Current state only; git
 keeps history (P17). Budget: 20 KB. -->
 
 **Status:** Phase <N>, <name> — <on track | at risk: why> · **Updated:** <YYYY-MM-DD>
