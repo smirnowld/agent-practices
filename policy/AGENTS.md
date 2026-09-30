@@ -66,9 +66,8 @@ advisory instead.
   release-critical work always get the critical reviewer. Release-critical
   means the change can publish or deploy, can weaken a required check's
   configuration or ruleset, or can make one pass without running what it
-  guards; moving jobs between runners
-  is not. A reviewer from a different model family adds independence where
-  available.
+  guards; moving jobs between runners is not. A reviewer from a different
+  model family adds independence where available.
 - **P4a. One critical review per change.** A fix that changes only what a
   finding names is confirmed by the same reviewer agent, resumed, or by a
   reviewer given the finding; a fix that goes wider is critically reviewed
