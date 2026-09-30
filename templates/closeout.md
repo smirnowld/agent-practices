@@ -28,6 +28,6 @@ updated, remote branch, local branch, worktree, other resources released>
 **Next:** <one recommended next task, why it is next and what it depends on;
 or "none">
 
-**Continuation:** <continue this session | start a new session | wait for
-me | none> — <why>. <For a new session: the task in one line, briefed once I say
+**Continuation:** <continue this session | start a new session |
+wait for me | none> — <why>. <For a new session: the task in one line, briefed once I say
 yes (closeout skill step 5)>
