@@ -324,6 +324,11 @@ passes 'Paused one, then back on, quoted.'
 session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
   'b:for n in $(gh pr list -q .[].number); do gh pr merge "$n" --auto; done' r
 passes 'Both on auto-merge, quoted and not literal.'
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
+  'b:for n in 1; do n="$m"; gh pr merge "$n" --auto; done' r
+passes 'Reassigned after do.'
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" 'b:gh pr merge -t "$t" 1 --auto' r
+blocks 'A quoted flag value is not the PR.' '' "$open"
 # A flag's value is not the PR; the first other argument is.
 session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr merge --auto -t 2026 --match-head-commit 1234567' r
 passes 'Auto-merge on.'

@@ -55,7 +55,7 @@ NUMBER = re.compile(r"(?:\S*/pull/)?(\d+)(?:/\S*)?")
 VALUED = {"-t", "--subject", "-b", "--body", "-F", "--body-file", "--match-head-commit",
           "-A", "--author-email", "-R", "--repo", "-c", "--comment"}
 FOR = re.compile(r"(?:(?:then|do|else)\s+|\()*for (\w+) in (.*)")
-ASSIGN = re.compile(r"(?:export\s+)?(\w+)=")
+ASSIGN = re.compile(r"(?:(?:then|do|else)\s+|\()*(?:export\s+)?(\w+)=")
 PULL = re.compile(r"/pull/(\d+)\b")
 NOT_ACTION = re.compile(r"\s(--help|-h|--dry-run)\b")
 EDIT = re.compile(r"gh pr edit\b.*\s(--body|--body-file|-b|-F)\b|gh api\b.*\sbody=")
