@@ -313,6 +313,22 @@ passes 'The variable was reassigned.'
 session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
   'b:if true; then for n in 1; do gh pr merge $n --auto; done; fi' r
 blocks 'A loop after then.' '' "$open"
+# A quoted variable names its PR like an unquoted one.
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
+  'b:for n in 1 2; do gh pr merge "$n" --auto; done' r
+passes 'Both on auto-merge, quoted.'
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" 'b:gh pr merge 1 --auto' r \
+  'b:gh pr merge 2 --auto' r 'b:for n in 1; do gh pr merge "${n}" --disable-auto; done' r \
+  'b:gh pr merge 1 --auto' r
+passes 'Paused one, then back on, quoted.'
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
+  'b:for n in $(gh pr list -q .[].number); do gh pr merge "$n" --auto; done' r
+passes 'Both on auto-merge, quoted and not literal.'
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
+  'b:for n in 1; do n="$m"; gh pr merge "$n" --auto; done' r
+passes 'Reassigned after do.'
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" 'b:gh pr merge -t "$t" 1 --auto' r
+blocks 'A quoted flag value is not the PR.' '' "$open"
 # A flag's value is not the PR; the first other argument is.
 session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr merge --auto -t 2026 --match-head-commit 1234567' r
 passes 'Auto-merge on.'

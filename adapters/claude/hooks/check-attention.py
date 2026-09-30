@@ -44,6 +44,7 @@ NOT_MERGE = re.compile(r"\s(--auto|--disable-auto|--help|-h)\b")
 # printf arguments are text, not commands (a PR body, a commit message, a note).
 HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1([^\n]*)\n.*?^\s*\2\s*$", re.M | re.S)
 QUOTED = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"|(?<![^\s;&|()])#[^\n]*")
+QUOTED_VAR = re.compile(r'"\$(?:\w+|\{\w+\})"')
 ECHO = re.compile(r"(^|[\s(`=])(echo|printf)\s(?:[^)`$]|\$(?!\())*")
 # A create or settle may follow `$(`, a backtick, `do` or `VAR=`.
 CREATE = re.compile(r"(^|[\s(`=])gh pr create\b")
@@ -54,7 +55,7 @@ NUMBER = re.compile(r"(?:\S*/pull/)?(\d+)(?:/\S*)?")
 VALUED = {"-t", "--subject", "-b", "--body", "-F", "--body-file", "--match-head-commit",
           "-A", "--author-email", "-R", "--repo", "-c", "--comment"}
 FOR = re.compile(r"(?:(?:then|do|else)\s+|\()*for (\w+) in (.*)")
-ASSIGN = re.compile(r"(?:export\s+)?(\w+)=")
+ASSIGN = re.compile(r"(?:(?:then|do|else)\s+|\()*(?:export\s+)?(\w+)=")
 PULL = re.compile(r"/pull/(\d+)\b")
 NOT_ACTION = re.compile(r"\s(--help|-h|--dry-run)\b")
 EDIT = re.compile(r"gh pr edit\b.*\s(--body|--body-file|-b|-F)\b|gh api\b.*\sbody=")
@@ -144,11 +145,17 @@ def unheredoc(command):
         command = bare
 
 
+def emptied(match):
+    """A quoted string or comment emptied, except a lone quoted variable, which
+    is one word a settle may name its PR by."""
+    text = match.group()
+    return "" if text.startswith("#") else text if QUOTED_VAR.fullmatch(text) else '""'
+
+
 def steps_of(commands):
     """Simple commands, in order, of a list of shell commands, with heredoc
     bodies, quoted strings, comments and echo or printf arguments emptied."""
-    bare = (QUOTED.sub(lambda m: "" if m.group().startswith("#") else '""',
-                       unheredoc(c.replace("\\\n", " "))) for c in commands)
+    bare = (QUOTED.sub(emptied, unheredoc(c.replace("\\\n", " "))) for c in commands)
     return [ECHO.sub(r"\1\2", seg).strip() for c in bare for seg in SPLIT.split(c)]
 
 
@@ -204,6 +211,7 @@ def settled(prs, step, loops=None):
         elif not word.startswith("-"):
             arg = word
             break
+    arg = arg.strip('"') if QUOTED_VAR.fullmatch(arg) else arg
     named, var = NUMBER.fullmatch(arg), re.fullmatch(r"\$(?:(\w+)|\{(\w+)\})", arg)
     numbers = (loops or {}).get(var and (var.group(1) or var.group(2))) or (
         [int(named.group(1))] if named else [])
