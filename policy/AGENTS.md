@@ -64,8 +64,9 @@ advisory instead.
   mechanical changes with objective checks (renames, copy, formatting) or
   simple docs. Security, data loss, concurrency, auth, payments, migrations and
   release-critical work always get the critical reviewer. Release-critical
-  means the change can publish or deploy, can weaken a required check, or can
-  make one pass without running what it guards; moving jobs between runners
+  means the change can publish or deploy, can weaken a required check's
+  configuration or ruleset, or can make one pass without running what it
+  guards; moving jobs between runners
   is not. A reviewer from a different model family adds independence where
   available.
 - **P4a. One critical review per change.** A fix that changes only what a
