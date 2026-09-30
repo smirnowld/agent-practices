@@ -150,7 +150,7 @@ merge_turn "$closeout" "gh pr merge 5 \\
 passes 'Paused.'
 # A session's entries: u:TYPED, a:ASSISTANT_TEXT, b:BASH_COMMAND, q (AskUserQuestion),
 # p (PushNotification), r[:OUTPUT] (answer to the last tool call), e (the last tool
-# call failed). A session's entry N is stamped at time 10*N; subagent START NAME
+# call failed). A session's entry N is stamped at time 10*N; subagent START PATH
 # writes one agent's transcript, stamped START, START+1 and on.
 entries() {
   python3 -c '
@@ -171,9 +171,9 @@ for n, arg in enumerate(sys.argv[3:]):
 }
 session() { rm -rf "$tmp/t"; entries 0 10 "$@" >"$tmp/t.jsonl"; }
 subagent() {
-  mkdir -p "$tmp/t/subagents"
+  mkdir -p "$(dirname "$tmp/t/subagents/$2")"
   start=$1; name=$2; shift 2
-  entries "$start" 1 "$@" >"$tmp/t/subagents/agent-$name.jsonl"
+  entries "$start" 1 "$@" >"$tmp/t/subagents/$name.jsonl"
 }
 open='A PR this session created is still open'
 session u:go 'b:git push && gh pr create --fill' r
@@ -277,6 +277,27 @@ passes 'Auto-merge back on.'
 session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
   'b:for n in 1 2; do gh pr merge $n --auto; done' r
 passes 'Both on auto-merge.'
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
+  'b:for n in 1 2; do gh pr merge $n --auto; done' r 'b:for n in 1 2; do gh pr merge $n --disable-auto; done' r
+blocks 'Both paused.' '' "$open"
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" 'b:gh pr merge 1 --auto' r \
+  'b:gh pr merge 2 --auto' r 'b:gh pr merge --disable-auto' r
+blocks 'One paused.' '' "$open"
+# A flag's value is not the PR; the first other argument is.
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr merge --auto -t 2026 --match-head-commit 1234567' r
+passes 'Auto-merge on.'
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr merge --subject=2026 9 --auto 2>&1' r
+blocks 'Merged another PR.' '' "$open"
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr merge --match-head-commit $(git rev-parse HEAD) 9 --auto' r
+blocks 'Merged another PR.' '' "$open"
+# A push's /pull/new/ link is not a PR; output with several PR URLs names none.
+session u:go 'b:git push -u origin x && gh pr create --fill' \
+  "r:remote: Create a pull request for 'x' on GitHub by visiting: $url/new/x
+$url/4" 'b:gh pr merge 4 --auto' r
+passes 'Auto-merge on.'
+session u:go 'b:gh pr create --fill && gh pr view 2 --json url' "r:$url/4
+$url/2" 'b:gh pr merge 4 --auto' r
+passes 'Auto-merge on.'
 # A create that printed output but no PR URL failed; one that printed nothing counts.
 session u:go 'b:gh pr create --fill 2>&1 | tail -3' 'r:pull request create failed: GraphQL: No commits between main and x'
 passes 'Nothing to open.'
@@ -288,18 +309,30 @@ session u:go 'b:gh pr create --fill' "r:$url/1" 'b:gh pr create --fill || true' 
 passes 'Auto-merge on.'
 # A subagent's creates count, in time order with the session's own commands.
 session u:go 'b:ls' r u:next 'b:git status' r
-subagent 5 impl 'u:brief' 'b:gh pr create --fill' "r:$url/3"
+subagent 5 agent-impl 'u:brief' 'b:gh pr create --fill' "r:$url/3"
 blocks 'The implementer opened it.' '' "$open"
 session u:go 'b:ls' r u:next 'b:gh pr merge 3 --auto' r
-subagent 5 impl 'u:brief' 'b:gh pr create --fill' "r:$url/3"
+subagent 5 agent-impl 'u:brief' 'b:gh pr create --fill' "r:$url/3"
 passes 'Auto-merge on.'
 session u:go 'b:gh pr merge 3 --auto' r u:next 'b:git status' r
-subagent 25 impl 'u:brief' 'b:gh pr create --fill' "r:$url/3"
+subagent 25 agent-impl 'u:brief' 'b:gh pr create --fill' "r:$url/3"
 blocks 'The implementer opened it.' '' "$open"
 session u:go 'b:ls' r u:next 'b:git status' r
-subagent 5 impl 'u:brief' 'b:gh pr create --fill' e
-subagent 6 other 'u:brief' 'b:echo gh pr create' r
+subagent 5 agent-impl 'u:brief' 'b:gh pr create --fill' e
+subagent 6 agent-other 'u:brief' 'b:echo gh pr create' r
 passes 'Nothing opened.'
+# Workflow agents sit one level deeper; their journal is not a transcript.
+session u:go 'b:ls' r u:next 'b:git status' r
+subagent 5 workflows/wf_1/agent-x 'u:brief' 'b:gh pr create --fill' "r:$url/3"
+blocks 'The workflow opened it.' '' "$open"
+session u:go 'b:ls' r u:next 'b:git status' r
+subagent 5 workflows/wf_1/journal 'b:gh pr create --fill' "r:$url/3"
+passes 'Nothing opened.'
+# An unreadable subagent transcript skips the check with a note.
+session u:go 'b:gh pr create --fill' r
+mkdir -p "$tmp/t/subagents/agent-x.jsonl"
+out=$(input 'Opened.' | python3 "$hook" 2>&1)
+case $out in "check-attention: skipped"*) ;; *) echo "error: no skip note for a bad subagent: $out" >&2; exit 1 ;; esac
 rm -rf "$tmp/t"
 
 # Missing fields and a missing signal are reported together.

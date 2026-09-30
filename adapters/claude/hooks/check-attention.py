@@ -48,8 +48,11 @@ ECHO = re.compile(r"(^|[\s(`=])(echo|printf)\s(?:[^)`$]|\$(?!\())*")
 # A create or settle may follow `$(`, a backtick, `do` or `VAR=`.
 CREATE = re.compile(r"(^|[\s(`=])gh pr create\b")
 SETTLE = re.compile(r"(^|[\s(`=])gh pr (merge|close)\b")
-# A settle names its PR by number or URL; gh pr create prints the new PR's URL.
-NUMBER = re.compile(r"(?:^|\s)(?:\S*/pull/)?(\d+)(?=\s|$)")
+# A settle names its PR by number or URL as its first argument that is not a
+# flag or a flag's value; gh pr create prints the new PR's URL.
+NUMBER = re.compile(r"(?:\S*/pull/)?(\d+)(?:/\S*)?")
+VALUED = {"-t", "--subject", "-b", "--body", "-F", "--body-file", "--match-head-commit",
+          "-A", "--author-email", "-R", "--repo", "-c", "--comment"}
 PULL = re.compile(r"/pull/(\d+)\b")
 NOT_ACTION = re.compile(r"\s(--help|-h|--dry-run)\b")
 EDIT = re.compile(r"gh pr edit\b.*\s(--body|--body-file|-b|-F)\b|gh api\b.*\sbody=")
@@ -107,10 +110,12 @@ def turn_tools(path):
 
 def session_bash(path):
     """The successful Bash calls of the session and its subagents as
-    (command, output), in time order. Subagent transcripts sit in
-    SESSION/subagents/ beside SESSION.jsonl (hooks.md, "SubagentStop")."""
+    (command, output), in time order. Subagent transcripts sit in a nested
+    subagents/ folder (hooks.md, "SubagentStop"); SESSION/subagents/ beside
+    SESSION.jsonl, workflow agents one level deeper (observed)."""
     calls, out, failed = [], {}, set()
-    subagents = glob.glob(os.path.join(os.path.splitext(path)[0], "subagents", "*.jsonl"))
+    subagents = glob.glob(os.path.join(os.path.splitext(path)[0], "subagents", "**", "agent-*.jsonl"),
+                          recursive=True)
     for p in [path] + sorted(subagents):
         for entry, _, parts in entries(p):
             for c in parts:
@@ -148,8 +153,8 @@ def steps_of(commands):
 def pr_left_open(commands):
     """Whether a PR created with `gh pr create` has no later merge, auto-merge
     enable or close (P5); commands are (command, output). A PR is known by the
-    URL its create printed, else by the first number a settle names for it.
-    A lone create that printed output but no PR URL failed (an error piped
+    one URL its create printed, else by the first number a settle names for
+    it. A lone create that printed output but no PR URL failed (an error piped
     through `tail` is not a failed call). Disabling auto-merge reopens only a
     PR not merged or closed."""
     prs = []  # [number or None, "open" | "auto" | "done"]
@@ -161,7 +166,7 @@ def pr_left_open(commands):
             if CREATE.search(c):
                 if lone and not printed and output.strip():
                     continue
-                n = int(printed[-1]) if printed else None
+                n = int(printed[0]) if len(set(printed)) == 1 else None
                 if n is None or all(pr[0] != n for pr in prs):
                     prs.append([n, "open"])
             elif SETTLE.search(c):
@@ -179,11 +184,18 @@ def settled(prs, step):
     """The PRs a settle step acts on; none for a PR not created here. One
     naming no PR takes the latest it would change, open before auto-merge;
     one naming it by variable, as in a loop, takes all it would change."""
-    rest = SETTLE.split(step, 1)[-1]
-    named = NUMBER.findall(rest)
+    rest = re.sub(r"\$\([^()]*\)|`[^`]*`", "$_", SETTLE.split(step, 1)[-1])  # one word
+    words, arg = iter(rest.split()), ""
+    for word in words:
+        if word in VALUED:
+            next(words, None)
+        elif not word.startswith("-"):
+            arg = word
+            break
+    named = NUMBER.fullmatch(arg)
     if not named:
         wanted = ["auto"] if "--disable-auto" in step else ["open", "auto"]
-        if re.search(r"(^|\s)\$", rest):
+        if arg.startswith("$"):
             return [pr for pr in prs if pr[1] in wanted]
         for state in wanted:
             match = [pr for pr in prs if pr[1] == state]
@@ -191,7 +203,7 @@ def settled(prs, step):
                 return match[-1:]
         return []
     live = [pr for pr in prs if pr[1] != "done"]
-    n = int(named[0])
+    n = int(named.group(1))
     known = [pr for pr in prs if pr[0] == n] or [pr for pr in live if pr[0] is None][-1:]
     if known:
         known[0][0] = n
