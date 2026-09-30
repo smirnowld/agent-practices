@@ -136,6 +136,15 @@ for edit in 'gh pr merge 5 --squash && gh pr edit 5 --body-file b.md' \
   --squash && gh api -X PATCH repos/o/r/pulls/5 -f body=x"; do
   merge_turn "$closeout" "$edit"; passes 'Merged as abc.'
 done
+# A command after a heredoc's opener on the same line still counts.
+merge_turn "$closeout" 'gh pr merge 5 --squash' "cat > b.md <<'EOF' && gh pr edit 5 --body-file b.md
+body
+EOF"
+passes 'Merged as abc.'
+merge_turn "$closeout" "cat <<'EOF' && gh pr merge 5 --squash
+gh pr edit 5 --body-file b.md
+EOF"
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
 merge_turn "$closeout" "gh pr merge 5 \\
   --disable-auto"
 passes 'Paused.'

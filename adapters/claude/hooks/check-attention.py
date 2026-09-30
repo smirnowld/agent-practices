@@ -40,7 +40,7 @@ SPLIT = re.compile(r"&&|\|\||[;|\n]")
 MERGE = re.compile(r"gh pr merge\b")
 NOT_MERGE = re.compile(r"\s(--auto|--disable-auto|--help|-h)\b")
 # Heredoc bodies and quoted strings are text, not commands (a PR body, a commit message).
-HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1.*?^\s*\2\s*$", re.M | re.S)
+HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1([^\n]*)\n.*?^\s*\2\s*$", re.M | re.S)
 QUOTED = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"")
 # A create or settle may follow `$(`, a backtick, `do` or `VAR=`.
 CREATE = re.compile(r"(^|[\s(`=])gh pr create\b")
@@ -101,7 +101,7 @@ def turn_tools(path):
 def steps_of(commands):
     """Simple commands, in order, of a list of shell commands, with heredoc
     bodies and quoted strings emptied."""
-    bare = (QUOTED.sub('""', HEREDOC.sub("", c.replace("\\\n", " "))) for c in commands)
+    bare = (QUOTED.sub('""', HEREDOC.sub(r"\3", c.replace("\\\n", " "))) for c in commands)
     return [seg.strip() for c in bare for seg in SPLIT.split(c)]
 
 
