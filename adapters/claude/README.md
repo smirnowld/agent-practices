@@ -186,12 +186,29 @@ unverified against vendor docs.
   (`gh pr edit` with a body flag, or `gh api` with `body=`) or with no
   closeout sent in chat this session. It blocks a turn that ends while a PR
   created this session with a successful `gh pr create` has no later
-  `gh pr merge` (`--auto` counts, a later `--disable-auto` undoes it) or
-  `gh pr close`, unless a closeout was sent this session or the turn called
-  `AskUserQuestion` that is not yet answered. Any later merge or close counts,
-  whatever its PR number, and quoted strings and heredoc bodies are not read
-  as commands. All reasons go in one block. PRs created or merged by other
-  means (a subagent, a script) are not seen. If the plugin is enabled for headless (`-p`) or SDK runs,
+  `gh pr merge` (`--auto` counts; a later `--disable-auto` undoes it unless
+  the PR was already merged or closed) or `gh pr close`, unless a closeout was
+  sent this session or the turn called `AskUserQuestion` that is not yet
+  answered. Each PR is tracked by the one PR URL its create printed, else by
+  the first number or URL a merge or close names for it as its first
+  argument that is not a flag or a flag's value. One naming no PR settles
+  the latest still open, else the latest on auto-merge; one naming it by a
+  variable (a loop) settles all it would change. A create run alone in its
+  call that printed output but no PR URL is taken as failed, since an error
+  piped through `tail` does not fail the call. Commands run by subagents
+  count: their transcripts sit in a nested `subagents/` folder (hooks.md,
+  "SubagentStop", `agent_transcript_path`, checked 2026-09-30), which is
+  observed to be beside the session's transcript, with workflow agents one
+  level deeper, and they are merged by entry timestamp (observed, not
+  documented). Quoted strings, heredoc bodies, comments and `echo` or
+  `printf` arguments are not read as commands. All reasons go in one block.
+  Known limits: a PR created or merged inside a script, an alias or `gh api`
+  is not seen, nor one whose URL went elsewhere while other output was
+  printed; a create whose output holds several PR URLs is known by none of
+  them; a merge or close of another PR can settle one of the session's whose
+  create printed no URL (as in `url=$(gh pr create)`); a merge or close in a
+  call that failed for another reason is not counted; and PR numbers are not
+  told apart by repository. If the plugin is enabled for headless (`-p`) or SDK runs,
   where `AskUserQuestion` may be unavailable, the one forced extra turn
   there is unverified. Whether the app's
   finished-session notification reaches me, and whether phone pushes are on,
