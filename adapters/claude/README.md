@@ -154,9 +154,9 @@ standard model is unverified.
   chip, and its summary names the model from `tiers.json` (Sonnet for fast,
   Opus for standard). Where sessions default to another model, I pick the
   chip's model when I start it; otherwise the started session stops at the
-  model check and asks to be switched. In-flight work for the skill's step 1: the desktop app's
-  `list_sessions` lists other sessions; its description does not mention
-  chips not yet started (tool description, checked 2026-09-30, unverified
+  model check and asks to be switched. In-flight work for the skill's
+  step 1: the desktop app's `list_sessions` lists other sessions; its
+  description does not mention chips not yet started (tool description, checked 2026-09-30, unverified
   against vendor docs), so the skill also checks this session's own earlier
   `spawn_task` calls; chips from other sessions or routines not yet started
   stay invisible.

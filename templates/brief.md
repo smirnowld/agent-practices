@@ -45,5 +45,5 @@ not reasoning. The receiver must not need the sender's transcript. -->
 ## Handoff
 
 <Where the result goes (PR URL, message to parent), what to report, when to stop
-and ask. At the budget, or on a signal to go up a tier (practices/model-sizing.md),
-progress update, then stop.>
+and ask. At the budget, or on a fast-tier brief at a signal to go up
+(practices/model-sizing.md), progress update, then stop.>

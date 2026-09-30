@@ -53,8 +53,9 @@ The first row that matches wins:
 Risk overrides the table: a brief whose Risk line is critical is never below
 standard. The Model line names the two answers, for example "fast at high
 (exploration bounded, reasoning specified)", so I can check the call. A
-brief for review, exploration or a session that starts by asking me takes
-its row in the defaults table and leaves the answers out. A fast-tier session
+brief for review or exploration takes its row in the defaults table and
+leaves the answers out; a session that starts by asking me takes the tier of
+the work it would start. A fast-tier session
 that meets a signal to go up (below) stops with a progress update and asks to
 be moved up; the template's Handoff carries this.
 
