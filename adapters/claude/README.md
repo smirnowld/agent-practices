@@ -193,7 +193,8 @@ unverified against vendor docs.
   the first number or URL a merge or close names for it as its first
   argument that is not a flag or a flag's value. One naming no PR settles
   the latest still open, else the latest on auto-merge; one naming it by a
-  variable (a loop) settles all it would change. A create run alone in its
+  variable bound by a `for` over literal PR numbers or URLs settles those, and
+  any other variable settles all it would change. A create run alone in its
   call that printed output but no PR URL is taken as failed, since an error
   piped through `tail` does not fail the call. Commands run by subagents
   count: their transcripts sit in a nested `subagents/` folder (hooks.md,
