@@ -7,7 +7,7 @@ models. Adjust from evidence.
 
 | Tier | For |
 |---|---|
-| fast | Search, lookups, summarising evidence, mechanical edits |
+| fast | Search, lookups, summarising evidence, mechanical edits, scoped slices from a complete brief |
 | standard | Most implementation and routine review |
 | strong | Hard design, debugging, reviewing standard-tier work that is non-trivial |
 | strongest | Critical review of security, auth, payments and data loss, deliberate architecture sessions |
@@ -20,7 +20,8 @@ Effort (reasoning budget): low, medium, high, extra-high.
 |---|---|
 | Exploration, doc lookup | fast / low |
 | Mechanical slice (rename, fixtures, copy, screen to approved design) | fast / medium |
-| Normal coding slice | standard / medium |
+| Scoped slice: brief leaves little to explore or decide (see below) | fast / high |
+| Slice that needs exploration or design judgement | standard / medium |
 | Hard design or debugging slice | standard / high, or strong / medium |
 | Review of mechanical change or simple docs | fast / medium |
 | Review of normal change | standard / high (never below the implementer) |
@@ -29,6 +30,31 @@ Effort (reasoning budget): low, medium, high, extra-high.
 | Critical review when none of those applies (concurrency, migrations, release-critical) | standard / extra-high, same role, never below the implementer |
 | Parent session coordinating a written plan | standard / medium |
 | Planning or analysis session | strong or strongest, chosen by me |
+
+## Tier for a brief
+
+A brief's Model line comes from two questions, answered from what the brief
+already holds, not from the task's title:
+
+- **Exploration left.** *None*: the brief names the owned files and the facts
+  to rely on. *Bounded*: a known area, a few files to read. *Open*: the
+  cause or the place to change is still to be found.
+- **Reasoning left.** *Specified*: the change follows from the settled
+  decisions; the proof is objective (tests, compiler, lint, a named check).
+  *Judgement*: choices inside the settled decisions, several interacting
+  parts. *Open*: design or root cause undecided.
+
+| Exploration / reasoning | Tier / effort |
+|---|---|
+| None or bounded / specified, size S | fast / high (fast / medium if mechanical) |
+| Bounded / judgement, or size M | standard / medium |
+| Open on either | standard / high, or strong / medium for hard design |
+
+Risk overrides the table: a brief whose Risk line is critical is never below
+standard. The Model line names the answers, for example "fast at high
+(exploration bounded, reasoning specified)", so I can check the call. A
+fast-tier session that meets a signal to go up (below) stops with a progress
+update and asks to be moved up, as in P2d; it does not push on.
 
 ## Size in responses
 
@@ -68,6 +94,11 @@ snapshot, lint); output is formulaic.
 ## Evidence log
 
 Forks: record notable outcomes (tier too weak or wasteful) here.
+
+- 2026-09, all projects: "Tier for a brief" moved scoped slices from
+  standard to fast tier. A starting point, not yet measured: record fast-tier
+  briefs that had to move up, and standard-tier briefs that fast would have
+  finished.
 
 - 2026-09, product repos: five briefs expected to be one slice ran 290 to
   430 responses each with five to seven compactions. The total response

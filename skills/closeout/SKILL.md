@@ -36,7 +36,8 @@ For **Continuation**:
   authority. A ready branch or open PR is not a reason to stop (P5).
 - **Start a new session** after merge and cleanup, when the next task is a
   distinct objective, needs another worktree or owner, or would benefit from
-  fresh context.
+  fresh context. Propose it with the `brief` skill (`followups`), and do the
+  same for leftover work the closeout lists.
 - **Wait for me** when the next step is a decision, production action or
   other step that is mine.
 
