@@ -53,7 +53,8 @@ SETTLE = re.compile(r"(^|[\s(`=])gh pr (merge|close)\b")
 NUMBER = re.compile(r"(?:\S*/pull/)?(\d+)(?:/\S*)?")
 VALUED = {"-t", "--subject", "-b", "--body", "-F", "--body-file", "--match-head-commit",
           "-A", "--author-email", "-R", "--repo", "-c", "--comment"}
-FOR = re.compile(r"for (\w+) in (.*)")
+FOR = re.compile(r"(?:(?:then|do|else)\s+|\()*for (\w+) in (.*)")
+ASSIGN = re.compile(r"(?:export\s+)?(\w+)=")
 PULL = re.compile(r"/pull/(\d+)\b")
 NOT_ACTION = re.compile(r"\s(--help|-h|--dry-run)\b")
 EDIT = re.compile(r"gh pr edit\b.*\s(--body|--body-file|-b|-F)\b|gh api\b.*\sbody=")
@@ -165,7 +166,9 @@ def pr_left_open(commands):
         printed = PULL.findall(output) if lone else []
         loops = {}  # loop variable -> PR numbers of a literal `for` list
         for c in steps:
-            bound = FOR.match(c)
+            bound, assigned = FOR.match(c), ASSIGN.match(c)
+            if assigned:
+                loops.pop(assigned.group(1), None)  # rebound: no longer the loop's list
             if bound:
                 words = bound.group(2).split()
                 loops[bound.group(1)] = (

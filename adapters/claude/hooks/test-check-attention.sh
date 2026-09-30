@@ -302,6 +302,17 @@ session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" 'b:gh pr me
   'b:gh pr merge 2 --auto' r 'b:for n in 1; do gh pr merge $m --disable-auto; done' r \
   'b:gh pr merge 1 --auto' r
 blocks 'Another variable paused all.' '' "$open"
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
+  "b:for n in $url/1 $url/2; do gh pr merge \$n --auto; done" r
+passes 'Both on auto-merge by URL.'
+session u:go 'b:gh pr create' r 'b:gh pr create' r 'b:for n in 7 8; do gh pr merge $n --auto; done' r
+passes 'Both on auto-merge, numbers unseen.'
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
+  'b:for n in 1; do gh pr merge $n --auto; done; n=2; gh pr merge $n --auto' r
+passes 'The variable was reassigned.'
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
+  'b:if true; then for n in 1 2; do gh pr merge $n --auto; done; fi' r
+passes 'A loop after then.'
 # A flag's value is not the PR; the first other argument is.
 session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr merge --auto -t 2026 --match-head-commit 1234567' r
 passes 'Auto-merge on.'
