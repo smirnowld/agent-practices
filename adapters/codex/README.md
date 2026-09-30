@@ -24,7 +24,8 @@ on every Codex host or cloud environment.
   Official guide: https://developers.openai.com/codex/skills.
 - **Roles:** Generated standalone TOML files use the custom-agent schema.
   Install the files under `~/.codex/agents/` for personal agents or
-  `.codex/agents/` for project-scoped agents. Each file requires `name`,
+  `.codex/agents/` for project-scoped agents. Copy them; symlinked role files
+  do not load (see [Role files are copies](#role-files-are-copies)). Each file requires `name`,
   `description`, and `developer_instructions`; `model`,
   `model_reasoning_effort`, and `sandbox_mode` are supported config keys.
   Official schema and locations:
@@ -75,22 +76,22 @@ cannot lower a pinned critical-reviewer role to the standard tier described
 in `practices/model-sizing.md`; use the pinned tier until the role-generation
 design changes. https://learn.chatgpt.com/docs/agent-configuration/subagents
 (checked 2026-09-30). Live per-spawn override behavior for a custom role is
-unverified because the four installed roles could not be spawned in this
-desktop session.
+unverified.
 
-## Symlink compatibility
+## Role files are copies
 
 The documented custom-agent location and schema do not state whether role
 files there may be symlinks:
 https://learn.chatgpt.com/docs/agent-configuration/subagents (checked
 2026-09-30). With Codex CLI `0.155.0-alpha.2.6`, all four generated role files
-linked individually into `~/.codex/agents` failed to spawn. The loader logged
-`failed to apply role to config: Too many levels of symbolic links`, then
-returned `agent type is currently not available`. A regular built-in
-`default` agent did spawn. This suggests a per-file symlink restriction in
-that build; official documentation has not confirmed the restriction or a
-supported symlink-preserving workaround. Linked skills did load, including
-`brief`, and resolved repository-relative paths from this checkout.
+linked individually into `~/.codex/agents` failed to spawn: the loader logged
+`failed to apply role to config: Too many levels of symbolic links`, the
+error a loader gets when it refuses to follow a symlink, then returned
+`agent type is currently not available`. The same files copied into
+`~/.codex/agents` spawned (observed 2026-09-30, same build). Copies go stale:
+recopy them after `scripts/build-adapters.py` changes a role. Linked skill
+folders did load, including `brief`, and resolved repository-relative paths
+from the checkout.
 
 ## Keeping the local install current
 
@@ -102,10 +103,9 @@ https://learn.chatgpt.com/docs/agent-configuration/agents-md (checked
 future local updater: a hook can read the checked-out source at startup,
 whereas a locally installed plugin uses a cached copy. A hook alone does not
 fetch new commits or link new skill folders. Automatic updates need a guarded
-fast-forward of the checkout and idempotent reconciliation of skill symlinks,
-with a clear outcome when the checkout is dirty or the fetch fails. Existing
-role symlinks would still point at the updated source, but the compatibility
-failure above remains until Codex supports this installation. That updater is
+fast-forward of the checkout, idempotent reconciliation of skill symlinks and
+a recopy of changed role files, with a clear outcome when the checkout is
+dirty or the fetch fails. That updater is
 not installed yet; its trust setup, checkout safety, and failure handling
 warrant a separate brief. Hook behavior and plugin caching:
 https://learn.chatgpt.com/docs/hooks and
@@ -139,10 +139,6 @@ https://developers.openai.com/plugins/build/plugins (checked 2026-09-30).
 
 ## Not verified
 
-- Whether a Codex release supports spawning custom roles from per-file
-  symlinks. The desktop and a fresh CLI session both failed on this machine;
-  the official subagent guide documents file locations and schema but does
-  not settle symlink support.
 - Whether a desktop turn ending after an asynchronous structured question
   displays the waiting state and sends the question notification.
 - Cloud availability of locally installed skills, role files, hooks, and
