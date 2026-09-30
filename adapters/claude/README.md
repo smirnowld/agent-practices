@@ -184,8 +184,14 @@ unverified against vendor docs.
   `templates/closeout.md`, and a turn whose `gh pr merge` call succeeded
   (not `--auto`, `--disable-auto` or `--help`) without a later body rewrite
   (`gh pr edit` with a body flag, or `gh api` with `body=`) or with no
-  closeout sent in chat this session. Both reasons go in one block. Merges by
-  other means are not seen. If the plugin is enabled for headless (`-p`) or SDK runs,
+  closeout sent in chat this session. It blocks a turn that ends while a PR
+  created this session with a successful `gh pr create` has no later
+  `gh pr merge` (`--auto` counts, a later `--disable-auto` undoes it) or
+  `gh pr close`, unless a closeout was sent this session or the turn called
+  `AskUserQuestion` that is not yet answered. Any later merge or close counts,
+  whatever its PR number, and quoted strings and heredoc bodies are not read
+  as commands. All reasons go in one block. PRs created or merged by other
+  means (a subagent, a script) are not seen. If the plugin is enabled for headless (`-p`) or SDK runs,
   where `AskUserQuestion` may be unavailable, the one forced extra turn
   there is unverified. Whether the app's
   finished-session notification reaches me, and whether phone pushes are on,
