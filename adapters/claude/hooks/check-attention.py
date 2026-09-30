@@ -53,6 +53,8 @@ SETTLE = re.compile(r"(^|[\s(`=])gh pr (merge|close)\b")
 NUMBER = re.compile(r"(?:\S*/pull/)?(\d+)(?:/\S*)?")
 VALUED = {"-t", "--subject", "-b", "--body", "-F", "--body-file", "--match-head-commit",
           "-A", "--author-email", "-R", "--repo", "-c", "--comment"}
+FOR = re.compile(r"(?:(?:then|do|else)\s+|\()*for (\w+) in (.*)")
+ASSIGN = re.compile(r"(?:export\s+)?(\w+)=")
 PULL = re.compile(r"/pull/(\d+)\b")
 NOT_ACTION = re.compile(r"\s(--help|-h|--dry-run)\b")
 EDIT = re.compile(r"gh pr edit\b.*\s(--body|--body-file|-b|-F)\b|gh api\b.*\sbody=")
@@ -162,7 +164,16 @@ def pr_left_open(commands):
         steps = [c for c in steps_of([command]) if not NOT_ACTION.search(c)]
         lone = sum(bool(CREATE.search(c)) for c in steps) == 1
         printed = PULL.findall(output) if lone else []
+        loops = {}  # loop variable -> PR numbers of a literal `for` list
         for c in steps:
+            bound, assigned = FOR.match(c), ASSIGN.match(c)
+            if assigned:
+                loops.pop(assigned.group(1), None)  # rebound: no longer the loop's list
+            if bound:
+                words = bound.group(2).split()
+                loops[bound.group(1)] = (
+                    [int(NUMBER.fullmatch(w).group(1)) for w in words]
+                    if words and all(NUMBER.fullmatch(w) for w in words) else None)
             if CREATE.search(c):
                 if lone and not printed and output.strip():
                     continue
@@ -170,7 +181,7 @@ def pr_left_open(commands):
                 if n is None or all(pr[0] != n for pr in prs):
                     prs.append([n, "open"])
             elif SETTLE.search(c):
-                for pr in settled(prs, c):
+                for pr in settled(prs, c, loops):
                     if pr[1] == "done":
                         continue
                     if "--disable-auto" in c:
@@ -180,10 +191,11 @@ def pr_left_open(commands):
     return any(state == "open" for _, state in prs)
 
 
-def settled(prs, step):
+def settled(prs, step, loops=None):
     """The PRs a settle step acts on; none for a PR not created here. One
     naming no PR takes the latest it would change, open before auto-merge;
-    one naming it by variable, as in a loop, takes all it would change."""
+    one naming it by variable takes each number a literal `for` list in loops
+    bound to it, else all it would change."""
     rest = re.sub(r"\$\([^()]*\)|`[^`]*`", "$_", SETTLE.split(step, 1)[-1])  # one word
     words, arg = iter(rest.split()), ""
     for word in words:
@@ -192,8 +204,10 @@ def settled(prs, step):
         elif not word.startswith("-"):
             arg = word
             break
-    named = NUMBER.fullmatch(arg)
-    if not named:
+    named, var = NUMBER.fullmatch(arg), re.fullmatch(r"\$(?:(\w+)|\{(\w+)\})", arg)
+    numbers = (loops or {}).get(var and (var.group(1) or var.group(2))) or (
+        [int(named.group(1))] if named else [])
+    if not numbers:
         wanted = ["auto"] if "--disable-auto" in step else ["open", "auto"]
         if arg.startswith("$"):
             return [pr for pr in prs if pr[1] in wanted]
@@ -202,12 +216,14 @@ def settled(prs, step):
             if match:
                 return match[-1:]
         return []
-    live = [pr for pr in prs if pr[1] != "done"]
-    n = int(named.group(1))
-    known = [pr for pr in prs if pr[0] == n] or [pr for pr in live if pr[0] is None][-1:]
-    if known:
-        known[0][0] = n
-    return known[:1]
+    acted = []
+    for n in numbers:
+        live = [pr for pr in prs if pr[1] != "done"]
+        known = [pr for pr in prs if pr[0] == n] or [pr for pr in live if pr[0] is None][-1:]
+        if known:
+            known[0][0] = n
+            acted.append(known[0])
+    return acted
 
 
 def missing_fields(text):
