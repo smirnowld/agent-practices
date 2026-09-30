@@ -67,7 +67,7 @@ with `--offline` for the local checks and name the unchecked links under
 
 Send the closeout, then signal per P6b: a notification with the outcome, or,
 when the continuation is **Wait for me** on a decision, the structured
-question prompt. The adapter names the tools.
+question prompt. The adapter's `session.md` names the tools.
 
 ## Origin
 

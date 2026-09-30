@@ -6,7 +6,8 @@ on every Codex host or cloud environment.
 
 ## What works
 
-- **Policy:** Codex reads `AGENTS.md`. Install this repository's policy at
+- **Policy:** Codex reads `AGENTS.md`. Install a pointer to this
+  repository's policy and to [session.md](session.md) at
   `~/.codex/AGENTS.md` for your user, or sync it into a project's `AGENTS.md`
   with `scripts/sync-policy.sh`.
 - **Skills:** Codex scans `~/.agents/skills` (user) and `.agents/skills` at
