@@ -133,6 +133,8 @@ standard model is unverified.
 The rules a session follows are in [session.md](session.md), which the
 `SessionStart` hook prints every time, synced project or not. This section
 holds the evidence behind them and the rules sessions do not need at start.
+Tool names there were observed in desktop-app sessions (2026-09-30),
+unverified against vendor docs.
 
 - Model check (P2d): the rule is in [session.md](session.md).
 - Chips (P2c): a session I am offered as a desktop-app chip, whether from
@@ -149,8 +151,8 @@ holds the evidence behind them and the rules sessions do not need at start.
   desktop app's `mcp__ccd_session__spawn_task` (observed 2026-09-29 with a
   test chip; unverified against vendor docs).
 - Proposing sessions (`brief` skill): the rule is in
-  [session.md](session.md); the chip's summary names the model from
-  `tiers.json` (Sonnet for fast, Opus for standard). Before session.md was
+  [session.md](session.md); the model it names comes from `tiers.json`
+  (Sonnet for fast, Opus for standard). Before session.md was
   printed at start, sessions told to use the `brief` skill wrote briefs in
   chat and made no chips until reminded (2026-09-30). Where sessions default to another model, I pick the
   chip's model when I start it; otherwise the started session stops at the
@@ -164,9 +166,9 @@ holds the evidence behind them and the rules sessions do not need at start.
   only while a permission prompt, `AskUserQuestion` or another input prompt
   is open (agent-view.md, checked 2026-09-29); a turn ending in prose counts
   as finished. Hence the `AskUserQuestion` and `PushNotification` rule in
-  [session.md](session.md); an acceptance card is offered as accept / change /
-  reject, proposed first. `PushNotification` skips while I am at the session (both from the tool's own
-  description, observed 2026-09-29, unverified against vendor docs). Both
+  [session.md](session.md). `PushNotification` skips while I am at the
+  session (both from the tool's own description, observed 2026-09-29,
+  unverified against vendor docs). Both
   can be deferred tools, loaded with ToolSearch `select:NAME` first. The
   `Stop` hook ([`hooks/check-attention.py`](hooks/check-attention.py))
   blocks a turn once when its final message, outside code fences, holds an
