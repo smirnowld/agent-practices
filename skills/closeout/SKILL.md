@@ -36,8 +36,8 @@ For **Continuation**:
   authority. A ready branch or open PR is not a reason to stop (P5).
 - **Start a new session** after merge and cleanup, when the next task is a
   distinct objective, needs another worktree or owner, or would benefit from
-  fresh context. Propose it, and any leftover work the closeout lists, with
-  the `brief` skill; the closeout supplies the candidates.
+  fresh context. It, and any leftover work the closeout lists, is proposed
+  with the `brief` skill once I say yes in step 5.
 - **Wait for me** when the next step is a decision, production action or
   other step that is mine.
 
@@ -63,11 +63,23 @@ reference (a command, a branch name) can stay. Without `gh` or network, rerun
 with `--offline` for the local checks and name the unchecked links under
 **Not verified**.
 
-## 5. Signal
+## 5. Signal and ask
 
-Send the closeout, then signal per P6b: a notification with the outcome, or,
-when the continuation is **Wait for me** on a decision, the structured
-question prompt. The adapter's `session.md` names the tools.
+Send the closeout, then the notification with the outcome (P6b). Then ask
+whichever of these apply, together in one structured question prompt:
+
+- **Acceptance or decision** the closeout waits on (P6).
+- **Merge**: a PR that is verified, reviewed and green but left to me to
+  merge (P6a or the project's procedure). Ask whether you merge it, merging
+  proposed first. A yes is my explicit OK for that PR (P1): merge it with the
+  `merge` skill, whose other checks still apply.
+- **Follow-ups**: when **Deferred**, **Next** or **Continuation** lists work
+  for a new session. Ask whether to brief it: all (proposed first), let me
+  pick, or none. On a yes, run `brief` with those candidates.
+
+After acting on the answers, say in one line what happened (merge SHA,
+sessions proposed) and update the PR's closeout to match. The adapter's
+`session.md` names the tools.
 
 ## Origin
 
