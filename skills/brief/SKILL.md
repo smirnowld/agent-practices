@@ -43,7 +43,7 @@ tier; the relevance check, ranking and brief writing stay here (P2).
 - Open issues (priorities: baseline R6). Check each one you would shortlist
   with `issue-review` step 2; drop the addressed, obsolete and duplicate
   ones. Give an unprioritised issue the priority you would propose.
-- Open PRs with no activity for 7 days or more that I or my agents opened.
+- Open PRs with no activity for 3 days or more that I or my agents opened.
   Others (dependency bots, contributors) belong to someone else (P8): list
   them in the report, do not brief them.
 
