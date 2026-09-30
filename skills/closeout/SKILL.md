@@ -84,9 +84,13 @@ whichever of these apply, together in one structured question prompt:
   pick (a second prompt lists them), or none. On a yes, run `brief` with
   those candidates.
 
-After acting on the answers, update the PR's closeout to match and say in
-one line in chat what happened (merge SHA, sessions proposed); do not repost
-the closeout. The adapter's `session.md` names the tools.
+After acting on the answers, rewrite the closeout in the PR description
+(`gh pr edit --body-file`; a comment does not replace it) so Outcome, Proof
+(with any post-merge run), Blocked on and Cleanup match the merged state,
+and check it again as in step 4. Then say in one line in chat what happened
+(merge SHA, sessions proposed); do not repost the closeout. If no full
+closeout went to chat earlier, send it now. The adapter's `session.md` names
+the tools.
 
 ## Origin
 

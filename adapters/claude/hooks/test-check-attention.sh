@@ -25,6 +25,7 @@ blocks() { out=$(input "$1" "${2:-}" | python3 "$hook"); echo "$out" | grep -qF 
 # Pass cases must also leave stderr empty: a skipped check is not a pass.
 passes() { out=$(input "$1" "${2:-}" | python3 "$hook" 2>&1); [ -z "$out" ] || { echo "error: expected silent pass for: $1 -> $out" >&2; exit 1; }; }
 
+closeout=$(cat "$dir/../../../scripts/fixtures/closeout-good.md")
 card='Done.
 
 # Acceptance: New sign-in screen
@@ -34,7 +35,7 @@ transcript Bash
 blocks "$card" '' 'AskUserQuestion'
 blocks '# Question: Keep 30-day sign-in?' '' 'AskUserQuestion'
 blocks '**Waiting on me:** acceptance of phase 2' '' 'AskUserQuestion'
-blocks '# Closeout: Fix badge' '' 'PushNotification'
+blocks "$closeout" '' 'PushNotification'
 blocks "$card" '{"background_tasks":[]}' '"decision": "block"'
 
 passes '**Waiting on me:** nothing'
@@ -43,16 +44,16 @@ passes 'Here is the answer: 42.'
 passes "$card" '{"stop_hook_active":true}'
 passes "$card" '{"background_tasks":[{"id":"t1","type":"subagent"}]}'
 transcript AskUserQuestion; passes "$card"
-transcript PushNotification; passes '# Closeout: Fix badge'
+transcript PushNotification; passes "$closeout"
 # A signal from an earlier turn does not count for this one.
-transcript ''; blocks '# Closeout: Fix badge' '' 'PushNotification'
+transcript ''; blocks "$closeout" '' 'PushNotification'
 
 # An early clarifying question does not cover a closeout written after my answer.
 printf '%s\n' '{"type":"user","message":{"content":"build it"}}' \
   '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"q1","name":"AskUserQuestion"}]}}' \
   '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"q1"}]}}' \
   '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"b1","name":"Bash"}]}}' >"$tmp/t.jsonl"
-blocks '# Closeout: Fix badge' '' 'PushNotification'
+blocks "$closeout" '' 'PushNotification'
 # Another tool result after the signal keeps it; a notification wakes nothing.
 printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"go"}]}}' \
   '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"p1","name":"PushNotification"}]}}' \
@@ -61,20 +62,20 @@ printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"go"}]
   '{"type":"user","isCompactSummary":true,"message":{"content":"summary"}}' \
   '{"type":"user","message":{"content":"<task-notification>done</task-notification>"}}' \
   '[1]' >"$tmp/t.jsonl"
-passes '# Closeout: Fix badge'
+passes "$closeout"
 # A list of text parts is a typed message and resets the turn.
 printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"p1","name":"PushNotification"}]}}' \
   '{"type":"user","message":{"content":[{"type":"text","text":"next"}]}}' >"$tmp/t.jsonl"
-blocks '# Closeout: Fix badge' '' 'ToolSearch'
+blocks "$closeout" '' 'ToolSearch'
 
 # A typed message is known by its origin when present, even behind a harness tag.
 printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"p1","name":"PushNotification"}]}}' \
   '{"type":"user","origin":{"kind":"human"},"message":{"content":"<system-reminder>x</system-reminder> next"}}' >"$tmp/t.jsonl"
-blocks '# Closeout: Fix badge' '' 'PushNotification'
+blocks "$closeout" '' 'PushNotification'
 printf '%s\n' '{"type":"user","message":{"content":"go"}}' \
   '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"p1","name":"PushNotification"}]}}' \
   '{"type":"user","origin":{"kind":"task-notification"},"message":{"content":"done"}}' >"$tmp/t.jsonl"
-passes '# Closeout: Fix badge'
+passes "$closeout"
 
 transcript Bash
 for none in '**Waiting on me:** none' '**Waiting on me:** n/a' '**Waiting on me:** *nothing*' '**Waiting on me:** _None_'; do
@@ -90,6 +91,56 @@ blocks '```
 x
 ```
 # Acceptance: Real card' '' 'AskUserQuestion'
+
+# A closeout missing template fields is blocked, naming each.
+transcript PushNotification
+short=$(printf '%s\n' "$closeout" | grep -v -e '^\*\*Proof:' -e '^\*\*Next:')
+blocks "$short" '' '**Proof:**, **Next:**'
+
+# A turn that merged a PR: bash CMD... as tool calls m1, m2... after my message; TEXT
+# is an earlier assistant message.
+merge_turn() {
+  text=$1; shift
+  printf '%s\n' '{"type":"user","message":{"content":"merge it"}}' >"$tmp/t.jsonl"
+  python3 -c 'import json,sys; print(json.dumps({"type":"assistant","message":{"content":[{"type":"text","text":sys.argv[1]}]}}))' "$text" >>"$tmp/t.jsonl"
+  k=0
+  for c in "$@"; do
+    k=$((k + 1))
+    python3 -c 'import json,sys; print(json.dumps({"type":"assistant","message":{"content":[{"type":"tool_use","id":sys.argv[2],"name":"Bash","input":{"command":sys.argv[1]}}]}}))' "$c" "m$k" >>"$tmp/t.jsonl"
+  done
+}
+merge_turn "$closeout" 'gh pr merge 5 --squash'
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+merge_turn "$closeout" 'gh pr merge 5 --squash' 'gh pr comment 5 --body merged'
+blocks 'Merged as abc.' '' 'a comment does not replace it'
+merge_turn "$closeout" 'gh pr edit 5 --body-file b.md' 'gh pr merge 5 --squash'
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+merge_turn "$closeout" 'gh pr merge 5 --squash' 'gh pr edit 5 --body-file b.md'
+passes 'Merged as abc.'
+merge_turn 'Merged, all good.' 'gh pr merge 5 --squash' 'gh pr edit 5 --body-file b.md'
+blocks 'Merged as abc.' '' 'send the full closeout in chat'
+merge_turn 'Paused.' 'gh pr merge 5 --disable-auto'
+passes 'Paused.'
+# Not merges: help, a search, a pending auto-merge, a quoted mention.
+merge_turn 'Done.' 'gh pr merge --help' 'grep -rn "gh pr merge" skills' 'gh pr merge 5 --auto --squash' 'git log | grep merge'
+passes 'Done.'
+# A merge whose call failed or was refused is not a merge.
+merge_turn "$closeout" 'gh pr merge 5 --squash'
+printf '%s\n' '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"m1","is_error":true}]}}' >>"$tmp/t.jsonl"
+passes 'Merge refused.'
+# Body rewrites in other forms count.
+for edit in 'gh pr merge 5 --squash && gh pr edit 5 --body-file b.md' \
+  'gh pr merge 5 --squash; gh pr edit 5 -F b.md' \
+  "gh pr merge 5 \\
+  --squash && gh api -X PATCH repos/o/r/pulls/5 -f body=x"; do
+  merge_turn "$closeout" "$edit"; passes 'Merged as abc.'
+done
+merge_turn "$closeout" "gh pr merge 5 \\
+  --disable-auto"
+passes 'Paused.'
+# Missing fields and a missing signal are reported together.
+transcript Bash
+blocks "$short" '' 'PushNotification'
 
 for bad in 'not json' '{"last_assistant_message":"# Closeout: x"}' '{"last_assistant_message":"# Closeout: x","transcript_path":"/nonexistent"}'; do
   err=$(printf '%s\n' "$bad" | python3 "$hook" 2>&1 >/dev/null) || { echo "error: hook exited non-zero on: $bad" >&2; exit 1; }
