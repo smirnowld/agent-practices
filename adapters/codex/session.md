@@ -17,4 +17,5 @@ unverified (2026-09-30).
   a mismatch, ask me to switch the model and effort and stop.
 - **Ask me, or wait on me** (P6b): the structured question tool where the
   surface exposes one; otherwise the question in chat. No agent-callable
-  notification is checked; end with the card or closeout in chat.
+  notification is checked; end with the card or closeout in chat, followed
+  by the closeout's questions, and act on the answers next turn.

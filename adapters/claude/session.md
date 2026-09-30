@@ -25,5 +25,7 @@ when ToolSearch cannot find it either, and the report says so.
   no parent, ask me to switch with `/model` and `/effort` and stop.
 - **Ask me, or wait on me** (P6b): a decision or acceptance goes through
   `AskUserQuestion` after the card is shown; an acceptance card is offered as
-  accept / change / reject, proposed first. A closeout or hand-off to me ends
-  with `PushNotification`, one line under 200 characters.
+  accept / change / reject, proposed first. A closeout or hand-off to me sends
+  `PushNotification`, one line under 200 characters, then asks its questions
+  (acceptance, merge, follow-ups) in one `AskUserQuestion` call, one question
+  per topic.

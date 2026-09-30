@@ -168,6 +168,8 @@ unverified against vendor docs.
   as finished. Hence the `AskUserQuestion` and `PushNotification` rule in
   [session.md](session.md). `PushNotification` skips while I am at the
   session (both from the tool's own description, observed 2026-09-29,
+  unverified against vendor docs). `AskUserQuestion` takes at most four
+  questions of two to four options each (its schema, observed 2026-09-30,
   unverified against vendor docs). Both
   can be deferred tools, loaded with ToolSearch `select:NAME` first. The
   `Stop` hook ([`hooks/check-attention.py`](hooks/check-attention.py))

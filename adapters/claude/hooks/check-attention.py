@@ -89,8 +89,8 @@ def main():
             "You wrote a closeout; I may have walked away (P6b). Call PushNotification"
             + LOAD.format("PushNotification") + " with the outcome and what, if anything, "
             "waits on me, in one line under 200 characters; it is skipped if I am at the "
-            "session. If the next step is my decision, call AskUserQuestion instead. Then "
-            "end the turn without repeating the message."
+            "session. Then ask any closeout questions (acceptance, merge, "
+            "follow-ups) with AskUserQuestion. Do not repeat the message."
         )
     json.dump({"decision": "block", "reason": reason}, sys.stdout)
 

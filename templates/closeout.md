@@ -29,5 +29,5 @@ updated, remote branch, local branch, worktree, other resources released>
 or "none">
 
 **Continuation:** <continue this session | start a new session | wait for me>
-— <why>. <For a new session: a ready-to-paste brief
-(`templates/brief.md`)>
+— <why>. <For a new session: the task in one line, briefed once I say yes
+(closeout skill step 5)>
