@@ -24,8 +24,9 @@ on every Codex host or cloud environment.
   Official guide: https://developers.openai.com/codex/skills.
 - **Roles:** Generated standalone TOML files use the custom-agent schema.
   Install the files under `~/.codex/agents/` for personal agents or
-  `.codex/agents/` for project-scoped agents. Copy them; symlinked role files
-  do not load (see [Role files are copies](#role-files-are-copies)). Each file requires `name`,
+  `.codex/agents/` for project-scoped agents. Copy them: symlinked role
+  files did not load in the build tested (see
+  [Role files are copies](#role-files-are-copies)). Each file requires `name`,
   `description`, and `developer_instructions`; `model`,
   `model_reasoning_effort`, and `sandbox_mode` are supported config keys.
   Official schema and locations:
@@ -71,8 +72,8 @@ https://learn.chatgpt.com/docs/config-file/config-reference (checked
 
 Codex documents an explicit per-spawn model and effort choice, but a custom
 agent file's `model` and `model_reasoning_effort` take precedence over those
-choices. The generated role files set both. Thus an explicit spawn override
-cannot lower a pinned critical-reviewer role to the standard tier described
+choices. The generated role files set both, so per the docs an explicit spawn
+override cannot lower a pinned critical-reviewer role to the standard tier described
 in `practices/model-sizing.md`; use the pinned tier until the role-generation
 design changes. https://learn.chatgpt.com/docs/agent-configuration/subagents
 (checked 2026-09-30). Live per-spawn override behavior for a custom role is
@@ -85,10 +86,12 @@ files there may be symlinks:
 https://learn.chatgpt.com/docs/agent-configuration/subagents (checked
 2026-09-30). With Codex CLI `0.155.0-alpha.2.6`, all four generated role files
 linked individually into `~/.codex/agents` failed to spawn: the loader logged
-`failed to apply role to config: Too many levels of symbolic links`, the
-error a loader gets when it refuses to follow a symlink, then returned
+`failed to apply role to config: Too many levels of symbolic links` (likely
+a loader that refuses to follow symlinks; inferred, not documented), then
+returned
 `agent type is currently not available`. The same files copied into
-`~/.codex/agents` spawned (observed 2026-09-30, same build). Copies go stale:
+`~/.codex/agents` spawned from `codex exec` (observed 2026-09-30, same
+build). Copies go stale:
 recopy them after `scripts/build-adapters.py` changes a role. Linked skill
 folders did load, including `brief`, and resolved repository-relative paths
 from the checkout.
@@ -124,12 +127,12 @@ https://developers.openai.com/plugins/build/plugins (checked 2026-09-30).
   manual task unless one is explicitly created.
 - P6b can use a structured question tool when the active Codex surface exposes
   one. The app-server documents an experimental `tool/requestUserInput` prompt;
-  this desktop session exposes structured question tools, with availability
-  depending on mode. The desktop app documents separate question and
+  a desktop session exposed structured question tools, with availability
+  depending on mode (observed 2026-09-30). The desktop app documents separate question and
   turn-completion notification settings and an Activity view for chats waiting
   for a response. These are user-controlled settings, not a confirmed
   agent-callable notification for a specific closeout. Use the structured tool
-  when available and the closeout or question in chat; whether this session's
+  when available and the closeout or question in chat; whether the desktop's
   asynchronous question tool causes a waiting badge and notification at turn
   end is unverified. https://learn.chatgpt.com/docs/app-server and
   https://learn.chatgpt.com/docs/notifications (checked 2026-09-30).
@@ -139,6 +142,10 @@ https://developers.openai.com/plugins/build/plugins (checked 2026-09-30).
 
 ## Not verified
 
+- Role files: copies were tried only from `codex exec` and in
+  `~/.codex/agents`, symlinks only on CLI `0.155.0-alpha.2.6`. Copies in the
+  desktop app or project-scoped `.codex/agents/`, and symlinks on later
+  builds, are untested.
 - Whether a desktop turn ending after an asynchronous structured question
   displays the waiting state and sends the question notification.
 - Cloud availability of locally installed skills, role files, hooks, and
