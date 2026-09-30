@@ -65,6 +65,11 @@ releases models. Codex accepts model names in its `model` setting:
 https://learn.chatgpt.com/docs/config-file/config-reference (checked
 2026-09-27).
 
+Running a role below its tier (critical review at standard, per
+`practices/model-sizing.md`) needs a per-spawn model override. Whether
+Codex subagents take one is unverified; until checked, the critical reviewer
+runs at its own tier.
+
 ## Codex usability notes for the neutral source
 
 - Neutral roles and skills refer to `parent session`, `delegated agent`, and
