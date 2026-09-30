@@ -56,6 +56,73 @@ on every Codex host or cloud environment.
   remain on with the app running; CLI and IDE do not provide the scheduling
   interface. https://developers.openai.com/codex/app/automations.
 
+## Proposing and starting sessions
+
+The workflow binding lives in [session.md](session.md). Proposals stay in the
+originating chat until an explicit start request, so the user can review,
+revise and start them individually. Approving a brief's contents does not
+start it. A request such as "Approve and start B1" does; "start all" may
+start independent briefs, while dependent briefs remain pending. Pending does
+not schedule a future run: check prerequisites when this chat is next asked
+to continue. Briefs are not committed to the repository (P17).
+
+The Codex desktop instructions exposed on 2026-09-30 support an inline
+follow-up action in a Markdown list item:
+
+```text
+- :codex-followup[Approve and start B1]{prompt="Create a new Codex chat for brief B1 above using gpt-6-luna at high effort. Pass the complete brief unchanged, after checking work in flight and dependencies. Start only B1."}
+```
+
+This example assumes B1 names that model and effort. Each real action names
+its own brief and displayed settings. Escape double quotes in the prompt.
+The action requests work in the originating chat; the agent then calls
+`create_thread`. Resolve the complete approved brief before creating; if it
+is unavailable or the request is ambiguous, ask rather than reconstruct it.
+Follow-up rendering, click behavior and persistence have not been tested;
+the syntax is supplied by the desktop instructions, unverified against
+official documentation. A typed explicit start request is the fallback.
+
+The same desktop instructions require a creation result on its own line in
+the final response, using the identifier actually returned:
+
+```text
+::created-thread{threadId="RETURNED_THREAD_ID"}
+```
+
+For pending worktree setup, use `::created-thread{clientThreadId="RETURNED_CLIENT_THREAD_ID"}`
+instead. This reports a creation result; it is not a proposal or start action.
+Its rendering is also untested and unverified against official documentation;
+on surfaces without this directive, report the returned identifier in chat.
+
+The `codex-app-tools` tool definitions exposed in a desktop session on
+2026-09-30 include:
+
+- `list_projects`: project identifiers, hosts and repository eligibility.
+- `create_thread`: a complete prompt, title, project or projectless target,
+  local or explicitly requested worktree environment, and optional `model`
+  and `thinking`. The tool requires an explicit request for a new chat;
+  model overrides require an explicit request for that model. A start action
+  naming the displayed settings supplies that request. Creation dispatches
+  work asynchronously; there is no exposed draft or paused-start parameter.
+- `list_threads` and `read_thread`: chat status and summaries for checking
+  work in flight. Listings are best effort, not a complete registry of
+  unstarted proposals. Track this chat's pending briefs and creation results
+  separately, including a `clientThreadId` while worktree setup is pending.
+- `wait_threads`: a bounded progress snapshot after creation. Use the
+  returned `threadId` and `hostId`, never a pending `clientThreadId`; report
+  pending setup without creating a replacement. A created chat is owned by
+  the user; creation does not authorize later follow-up messages to it.
+
+These are exposed tool contracts, not end-to-end compatibility tests, and
+are unverified against official documentation for these specific tools. No
+test chat was created. Do not assume availability in CLI, IDE or cloud
+sessions; discover deferred tools and use the chat fallback when absent.
+The official app-server distinguishes creating a thread (`thread/start`)
+from starting generation (`turn/start`), but it does not establish a dormant
+mode for the desktop `create_thread` tool. A custom integration could use
+that separation; this adapter uses the available desktop tools instead.
+https://learn.chatgpt.com/docs/app-server (checked 2026-09-30).
+
 ## Models
 
 The tier map uses the documented model IDs: `gpt-6-luna` (fast), `gpt-6.1-sol`
@@ -145,6 +212,9 @@ https://developers.openai.com/plugins/build/plugins (checked 2026-09-30).
 
 ## Not verified
 
+- End-to-end approved-brief creation, follow-up action rendering and click
+  behavior, and persistence of those actions across app surfaces. See
+  [Proposing and starting sessions](#proposing-and-starting-sessions).
 - Role files: copies were tried only from `codex exec` and in
   `~/.codex/agents`, symlinks only on CLI `0.155.0-alpha.2.6`. Copies in the
   desktop app or project-scoped `.codex/agents/`, and symlinks on later
