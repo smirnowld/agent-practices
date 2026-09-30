@@ -1,6 +1,8 @@
 # Codex adapter
 
-Checked 2026-09-27 against the official OpenAI Codex documentation.
+Checked 2026-09-30 against the official OpenAI Codex documentation and a
+local Codex build. Local compatibility observations do not establish behavior
+on every Codex host or cloud environment.
 
 ## What works
 
@@ -36,15 +38,16 @@ Checked 2026-09-27 against the official OpenAI Codex documentation.
   for automatic history compaction:
   https://learn.chatgpt.com/docs/config-file/config-reference.
 - **Hooks:** Codex documents `SessionStart` and other lifecycle hooks. They
-  can load policy context instead of manually maintaining a user-level
-  `AGENTS.md`; project hook files live alongside trusted project config.
-  https://developers.openai.com/codex/hooks.
+  can add developer context at session start. User hooks can live in
+  `~/.codex/hooks.json`; non-managed hooks require review and trust before
+  they run. Project hooks load only for trusted projects.
+  https://learn.chatgpt.com/docs/hooks (checked 2026-09-30).
 - **Plugins:** Codex plugins can bundle skills and lifecycle hooks. This could
   distribute this repository's skills and session-start policy loader as one
-  installable package; hook scripts must be available in the execution
-  environment and users must review/trust hook definitions.
-  https://developers.openai.com/plugins/concepts/plugins
-  https://developers.openai.com/plugins/build/plugins.
+  installable package, but local marketplace plugins run from an installed
+  cache copy; changing the source calls for updating the plugin and restarting
+  the desktop app. This does not give the live checkout automatic updates.
+  https://developers.openai.com/plugins/build/plugins (checked 2026-09-30).
 - **Scheduled tasks:** Codex desktop scheduled tasks can replace manually
   started recurring routines. Local project tasks require the computer to
   remain on with the app running; CLI and IDE do not provide the scheduling
@@ -65,10 +68,48 @@ releases models. Codex accepts model names in its `model` setting:
 https://learn.chatgpt.com/docs/config-file/config-reference (checked
 2026-09-27).
 
-Running a role below its tier (critical review at standard, per
-`practices/model-sizing.md`) needs a per-spawn model override. Whether
-Codex subagents take one is unverified; until checked, the critical reviewer
-runs at its own tier.
+Codex documents an explicit per-spawn model and effort choice, but a custom
+agent file's `model` and `model_reasoning_effort` take precedence over those
+choices. The generated role files set both. Thus an explicit spawn override
+cannot lower a pinned critical-reviewer role to the standard tier described
+in `practices/model-sizing.md`; use the pinned tier until the role-generation
+design changes. https://learn.chatgpt.com/docs/agent-configuration/subagents
+(checked 2026-09-30). Live per-spawn override behavior for a custom role is
+unverified because the four installed roles could not be spawned in this
+desktop session.
+
+## Symlink compatibility
+
+The documented custom-agent location and schema do not state whether role
+files there may be symlinks:
+https://learn.chatgpt.com/docs/agent-configuration/subagents (checked
+2026-09-30). With Codex CLI `0.155.0-alpha.2.6`, all four generated role files
+linked individually into `~/.codex/agents` failed to spawn. The loader logged
+`failed to apply role to config: Too many levels of symbolic links`, then
+returned `agent type is currently not available`. A regular built-in
+`default` agent did spawn. This suggests a per-file symlink restriction in
+that build; official documentation has not confirmed the restriction or a
+supported symlink-preserving workaround. Linked skills did load, including
+`brief`, and resolved repository-relative paths from this checkout.
+
+## Keeping the local install current
+
+Keep the short `~/.codex/AGENTS.md` pointer as the global bootstrap. Codex
+reads that file at session start, then project `AGENTS.md` files in root-to-leaf
+order; it does not automatically read changes made to those files mid-session.
+https://learn.chatgpt.com/docs/agent-configuration/agents-md (checked
+2026-09-30). Prefer a user-level `SessionStart` hook over a Codex plugin for a
+future local updater: a hook can read the checked-out source at startup,
+whereas a locally installed plugin uses a cached copy. A hook alone does not
+fetch new commits or link new skill folders. Automatic updates need a guarded
+fast-forward of the checkout and idempotent reconciliation of skill symlinks,
+with a clear outcome when the checkout is dirty or the fetch fails. Existing
+role symlinks would still point at the updated source, but the compatibility
+failure above remains until Codex supports this installation. That updater is
+not installed yet; its trust setup, checkout safety, and failure handling
+warrant a separate brief. Hook behavior and plugin caching:
+https://learn.chatgpt.com/docs/hooks and
+https://developers.openai.com/plugins/build/plugins (checked 2026-09-30).
 
 ## Codex usability notes for the neutral source
 
@@ -81,18 +122,29 @@ runs at its own tier.
   mode) describe recurring routines. Codex scheduled tasks can run these
   workflows, but setup of their schedule, project list, and notification behavior remains a
   manual task unless one is explicitly created.
-- P6b asks for a structured question prompt and a notification when a turn
-  ends waiting on me. No Codex equivalent was checked; unverified, so a Codex
-  session ends with the card or closeout in chat.
+- P6b can use a structured question tool when the active Codex surface exposes
+  one. The app-server documents an experimental `tool/requestUserInput` prompt;
+  this desktop session exposes structured question tools, with availability
+  depending on mode. The desktop app documents separate question and
+  turn-completion notification settings and an Activity view for chats waiting
+  for a response. These are user-controlled settings, not a confirmed
+  agent-callable notification for a specific closeout. Use the structured tool
+  when available and the closeout or question in chat; whether this session's
+  asynchronous question tool causes a waiting badge and notification at turn
+  end is unverified. https://learn.chatgpt.com/docs/app-server and
+  https://learn.chatgpt.com/docs/notifications (checked 2026-09-30).
 - `policy/AGENTS.md` says in P15 that closeouts name agents and models. Codex
   can provide those names; this is an instruction convention, not a Codex
   feature or schema field.
 
 ## Not verified
 
-- This documentation review verifies documented locations and format, but
-  does not launch Codex to confirm these generated agent files are discovered
-  in a live user or project installation.
+- Whether a Codex release supports spawning custom roles from per-file
+  symlinks. The desktop and a fresh CLI session both failed on this machine;
+  the official subagent guide documents file locations and schema but does
+  not settle symlink support.
+- Whether a desktop turn ending after an asynchronous structured question
+  displays the waiting state and sends the question notification.
 - Cloud availability of locally installed skills, role files, hooks, and
   plugins depends on the specific runtime and environment; do not assume a
   local installation is present in a cloud task.
