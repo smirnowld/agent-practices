@@ -12,13 +12,14 @@ question does not cover a card or closeout written an hour later.
 It also holds the closeout to its template (P15): a closeout missing a field
 of templates/closeout.md is blocked, and so is a turn that merged a PR
 without rewriting the PR description afterwards or without any closeout in
-chat this session. A PR this session created with `gh pr create` and has not
-merged, set to auto-merge or closed since is not a stopping point (P5): the
-turn is blocked unless a closeout was sent this session or this turn asked me
-with AskUserQuestion. Any error
+chat this session. A PR this session or its subagents created with
+`gh pr create` and has not merged, set to auto-merge or closed since is not a
+stopping point (P5): the turn is blocked unless a closeout was sent this
+session or this turn asked me with AskUserQuestion. Any error
 lets the turn end with a note on stderr; a broken check must not trap a
 session.
 """
+import glob
 import importlib.util
 import json
 import os
@@ -39,12 +40,17 @@ FENCE = re.compile(r"^\s*(```|~~~).*?^\s*\1", re.M | re.S)
 SPLIT = re.compile(r"&&|\|\||[;|\n]")
 MERGE = re.compile(r"gh pr merge\b")
 NOT_MERGE = re.compile(r"\s(--auto|--disable-auto|--help|-h)\b")
-# Heredoc bodies and quoted strings are text, not commands (a PR body, a commit message).
+# Heredoc bodies, quoted strings, comments (a `#` starting a word) and echo or
+# printf arguments are text, not commands (a PR body, a commit message, a note).
 HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1([^\n]*)\n.*?^\s*\2\s*$", re.M | re.S)
-QUOTED = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"")
+QUOTED = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"|(?<![^\s;&|()])#[^\n]*")
+ECHO = re.compile(r"(^|[\s(`=])(echo|printf)\s(?:[^)`$]|\$(?!\())*")
 # A create or settle may follow `$(`, a backtick, `do` or `VAR=`.
 CREATE = re.compile(r"(^|[\s(`=])gh pr create\b")
 SETTLE = re.compile(r"(^|[\s(`=])gh pr (merge|close)\b")
+# A settle names its PR by number or URL; gh pr create prints the new PR's URL.
+NUMBER = re.compile(r"(?:^|\s)(?:\S*/pull/)?(\d+)(?=\s|$)")
+PULL = re.compile(r"/pull/(\d+)\b")
 NOT_ACTION = re.compile(r"\s(--help|-h|--dry-run)\b")
 EDIT = re.compile(r"gh pr edit\b.*\s(--body|--body-file|-b|-F)\b|gh api\b.*\sbody=")
 LOAD = " (if it is not in your tools, load it with ToolSearch 'select:{0}' first)"
@@ -62,62 +68,134 @@ def typed(entry, content):
     return any(isinstance(c, dict) and c.get("type") == "text" for c in content or [])
 
 
-def turn_tools(path):
-    """Tool calls since I last spoke (typed, or answered AskUserQuestion), in
-    order as (name, input), whether any earlier message held a closeout, and
-    the session's Bash commands in order."""
-    names, asks, failed, closeout, session = [], set(), set(), False, []
+def entries(path):
+    """A transcript's entries as (entry, content, its dict parts); bad lines skipped."""
     with open(path) as f:
         for line in f:
             try:
                 entry = json.loads(line)
             except ValueError:
                 continue
-            if not isinstance(entry, dict):
-                continue
-            content = (entry.get("message") or {}).get("content")
-            parts = [c for c in content if isinstance(c, dict)] if isinstance(content, list) else []
-            if entry.get("type") == "user":
-                failed |= {c.get("tool_use_id") for c in parts
-                           if c.get("type") == "tool_result" and c.get("is_error")}
-                if typed(entry, content) or any(
-                        c.get("type") == "tool_result" and c.get("tool_use_id") in asks for c in parts):
-                    names = []
-            elif entry.get("type") == "assistant":
-                for c in parts:
-                    if c.get("type") == "text" and re.search(
-                            NOTIFY[0][0], FENCE.sub("", c.get("text") or ""), re.M):
-                        closeout = True
-                    if c.get("type") == "tool_use":
-                        names.append((c.get("name"), c.get("input") or {}, c.get("id")))
-                        if c.get("name") == "Bash":
-                            session.append(((c.get("input") or {}).get("command"), c.get("id")))
-                        if c.get("name") == "AskUserQuestion":
-                            asks.add(c.get("id"))
-    return ([(n, i) for n, i, k in names if k not in failed], closeout,
-            [str(c) for c, k in session if k not in failed])
+            if isinstance(entry, dict):
+                content = (entry.get("message") or {}).get("content")
+                parts = [c for c in content if isinstance(c, dict)] if isinstance(content, list) else []
+                yield entry, content, parts
+
+
+def turn_tools(path):
+    """Tool calls since I last spoke (typed, or answered AskUserQuestion), in
+    order as (name, input), and whether any earlier message held a closeout."""
+    names, asks, failed, closeout = [], set(), set(), False
+    for entry, content, parts in entries(path):
+        if entry.get("type") == "user":
+            failed |= {c.get("tool_use_id") for c in parts
+                       if c.get("type") == "tool_result" and c.get("is_error")}
+            if typed(entry, content) or any(
+                    c.get("type") == "tool_result" and c.get("tool_use_id") in asks for c in parts):
+                names = []
+        elif entry.get("type") == "assistant":
+            for c in parts:
+                if c.get("type") == "text" and re.search(
+                        NOTIFY[0][0], FENCE.sub("", c.get("text") or ""), re.M):
+                    closeout = True
+                if c.get("type") == "tool_use":
+                    names.append((c.get("name"), c.get("input") or {}, c.get("id")))
+                    if c.get("name") == "AskUserQuestion":
+                        asks.add(c.get("id"))
+    return [(n, i) for n, i, k in names if k not in failed], closeout
+
+
+def session_bash(path):
+    """The successful Bash calls of the session and its subagents as
+    (command, output), in time order. Subagent transcripts sit in
+    SESSION/subagents/ beside SESSION.jsonl (hooks.md, "SubagentStop")."""
+    calls, out, failed = [], {}, set()
+    subagents = glob.glob(os.path.join(os.path.splitext(path)[0], "subagents", "*.jsonl"))
+    for p in [path] + sorted(subagents):
+        for entry, _, parts in entries(p):
+            for c in parts:
+                key = (p, c.get("id") or c.get("tool_use_id"))
+                if c.get("type") == "tool_use" and c.get("name") == "Bash":
+                    calls.append((str(entry.get("timestamp") or ""), key,
+                                  str((c.get("input") or {}).get("command"))))
+                elif c.get("type") == "tool_result":
+                    body = c.get("content")
+                    out[key] = body if isinstance(body, str) else " ".join(
+                        str(b.get("text", "")) for b in body or [] if isinstance(b, dict))
+                    if c.get("is_error"):
+                        failed.add(key)
+    calls.sort(key=lambda call: call[0])  # stable: each transcript keeps its order
+    return [(cmd, out.get(key, "")) for _, key, cmd in calls if key not in failed]
+
+
+def unheredoc(command):
+    """The command without its heredoc bodies, however many open on one line."""
+    while True:
+        bare = HEREDOC.sub(r"\3", command)
+        if bare == command:
+            return bare
+        command = bare
 
 
 def steps_of(commands):
     """Simple commands, in order, of a list of shell commands, with heredoc
-    bodies and quoted strings emptied."""
-    bare = (QUOTED.sub('""', HEREDOC.sub(r"\3", c.replace("\\\n", " "))) for c in commands)
-    return [seg.strip() for c in bare for seg in SPLIT.split(c)]
+    bodies, quoted strings, comments and echo or printf arguments emptied."""
+    bare = (QUOTED.sub(lambda m: "" if m.group().startswith("#") else '""',
+                       unheredoc(c.replace("\\\n", " "))) for c in commands)
+    return [ECHO.sub(r"\1\2", seg).strip() for c in bare for seg in SPLIT.split(c)]
 
 
 def pr_left_open(commands):
-    """Whether the last successful `gh pr create` has no later merge, auto-merge
-    enable or close (P5); disabling auto-merge opens it again. Not per PR
-    number: any later settle counts."""
-    created = open_ = False
-    for c in steps_of(commands):
-        if NOT_ACTION.search(c):
-            continue
-        if CREATE.search(c):
-            created = open_ = True
-        elif SETTLE.search(c):
-            open_ = created and "--disable-auto" in c
-    return open_
+    """Whether a PR created with `gh pr create` has no later merge, auto-merge
+    enable or close (P5); commands are (command, output). A PR is known by the
+    URL its create printed, else by the first number a settle names for it.
+    A lone create that printed output but no PR URL failed (an error piped
+    through `tail` is not a failed call). Disabling auto-merge reopens only a
+    PR not merged or closed."""
+    prs = []  # [number or None, "open" | "auto" | "done"]
+    for command, output in commands:
+        steps = [c for c in steps_of([command]) if not NOT_ACTION.search(c)]
+        lone = sum(bool(CREATE.search(c)) for c in steps) == 1
+        printed = PULL.findall(output) if lone else []
+        for c in steps:
+            if CREATE.search(c):
+                if lone and not printed and output.strip():
+                    continue
+                n = int(printed[-1]) if printed else None
+                if n is None or all(pr[0] != n for pr in prs):
+                    prs.append([n, "open"])
+            elif SETTLE.search(c):
+                for pr in settled(prs, c):
+                    if pr[1] == "done":
+                        continue
+                    if "--disable-auto" in c:
+                        pr[1] = "open"
+                    else:
+                        pr[1] = "auto" if "--auto" in c else "done"
+    return any(state == "open" for _, state in prs)
+
+
+def settled(prs, step):
+    """The PRs a settle step acts on; none for a PR not created here. One
+    naming no PR takes the latest it would change, open before auto-merge;
+    one naming it by variable, as in a loop, takes all it would change."""
+    rest = SETTLE.split(step, 1)[-1]
+    named = NUMBER.findall(rest)
+    if not named:
+        wanted = ["auto"] if "--disable-auto" in step else ["open", "auto"]
+        if re.search(r"(^|\s)\$", rest):
+            return [pr for pr in prs if pr[1] in wanted]
+        for state in wanted:
+            match = [pr for pr in prs if pr[1] == state]
+            if match:
+                return match[-1:]
+        return []
+    live = [pr for pr in prs if pr[1] != "done"]
+    n = int(named[0])
+    known = [pr for pr in prs if pr[0] == n] or [pr for pr in live if pr[0] is None][-1:]
+    if known:
+        known[0][0] = n
+    return known[:1]
 
 
 def missing_fields(text):
@@ -164,15 +242,15 @@ def main():
     text = FENCE.sub("", data.get("last_assistant_message") or "")
     found = lambda rules: [what for pattern, what in rules if re.search(pattern, text, re.M)]
     ask, notify = found(ASK), found(NOTIFY)
-    calls, earlier, commands = turn_tools(data["transcript_path"])
+    calls, earlier = turn_tools(data["transcript_path"])
     gaps = merge_gaps(calls, earlier or bool(notify))
     missing = missing_fields(text) if notify else []
     if missing:
         gaps.append("add the closeout fields it lacks, with their labels (\"none\" where "
                     "nothing applies): " + ", ".join(missing))
     reasons = ["Closeout incomplete (closeout skill): " + "; ".join(gaps) + "."] if gaps else []
-    if (pr_left_open(commands) and not (earlier or notify)
-            and "AskUserQuestion" not in {n for n, _ in calls}):
+    if (not (earlier or notify) and "AskUserQuestion" not in {n for n, _ in calls}
+            and pr_left_open(session_bash(data["transcript_path"]))):
         reasons.append(
             "A PR this session created is still open and no closeout was sent; an open PR "
             "is not a stopping point (P5). Finish it: independent review (P4), then merge "

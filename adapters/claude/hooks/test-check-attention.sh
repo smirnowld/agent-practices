@@ -3,7 +3,7 @@
 # ends a turn without a signal is blocked once; a turn that already signalled,
 # a repeat stop, pending background work and plain answers pass silently; bad
 # input passes with a note on stderr. A merge without its closeout, and a PR
-# left open with no closeout or question, are blocked.
+# the session or a subagent left open with no closeout or question, are blocked.
 set -eu
 dir=$(dirname "$0")
 hook="$dir/check-attention.py"
@@ -149,12 +149,14 @@ merge_turn "$closeout" "gh pr merge 5 \\
   --disable-auto"
 passes 'Paused.'
 # A session's entries: u:TYPED, a:ASSISTANT_TEXT, b:BASH_COMMAND, q (AskUserQuestion),
-# p (PushNotification), r (answer to the last tool call), e (the last tool call failed).
-session() {
+# p (PushNotification), r[:OUTPUT] (answer to the last tool call), e (the last tool
+# call failed). A session's entry N is stamped at time 10*N; subagent START NAME
+# writes one agent's transcript, stamped START, START+1 and on.
+entries() {
   python3 -c '
 import json, sys
-k = 0
-for arg in sys.argv[1:]:
+k, start, step = 0, int(sys.argv[1]), int(sys.argv[2])
+for n, arg in enumerate(sys.argv[3:]):
     kind, _, v = arg.partition(":")
     if kind == "u": e = {"type": "user", "message": {"content": v}}
     elif kind == "a": e = {"type": "assistant", "message": {"content": [{"type": "text", "text": v}]}}
@@ -163,8 +165,15 @@ for arg in sys.argv[1:]:
         tool = {"type": "tool_use", "id": "s%d" % k, "name": "Bash", "input": {"command": v}}
         if kind != "b": tool.update(name={"q": "AskUserQuestion", "p": "PushNotification"}[kind], input={})
         e = {"type": "assistant", "message": {"content": [tool]}}
-    else: e = {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "s%d" % k, "is_error": kind == "e"}]}}
-    print(json.dumps(e))' "$@" >"$tmp/t.jsonl"
+    else: e = {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "s%d" % k, "content": v, "is_error": kind == "e"}]}}
+    e["timestamp"] = "2026-01-01T%04d" % (start + step * n)
+    print(json.dumps(e))' "$@"
+}
+session() { rm -rf "$tmp/t"; entries 0 10 "$@" >"$tmp/t.jsonl"; }
+subagent() {
+  mkdir -p "$tmp/t/subagents"
+  start=$1; name=$2; shift 2
+  entries "$start" 1 "$@" >"$tmp/t/subagents/agent-$name.jsonl"
 }
 open='A PR this session created is still open'
 session u:go 'b:git push && gh pr create --fill' r
@@ -217,6 +226,81 @@ session u:go 'b:gh pr create' r a:"\`\`\`
 $closeout
 \`\`\`" u:next
 blocks 'Next done.' '' "$open"
+# Comments and echo or printf arguments are text; a substitution inside echo runs.
+session u:go 'b:git push # next: gh pr create' r "b:git push # don't gh pr create yet" r \
+  'b:echo run gh pr create next' r "b:printf '%s' x gh pr create" r 'b:x=$(echo gh pr create) && ls' r \
+  'b:ls ;# gh pr create' r 'b:# gh pr merge 5 --squash' r
+passes 'Noted.'
+for c in 'echo $(gh pr create --fill)' "git push # it's pushed
+gh pr create --fill" 'n=${#x} && gh pr create'; do
+  session u:go "b:$c" r; blocks 'Opened.' '' "$open"
+done
+merge_turn "$closeout" 'gh pr merge 5 --squash # then the body'
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+# Every heredoc opened on a line is emptied, and a command after the last runs.
+session u:go 'b:cat <<A <<B
+gh pr create
+A
+gh pr create
+B' r
+passes 'Printed.'
+session u:go 'b:cat <<A <<-B
+x
+A
+	y
+	B
+gh pr create' r
+blocks 'Opened.' '' "$open"
+# Disabling auto-merge does not reopen a PR already merged or closed.
+session u:go 'b:gh pr create' r 'b:gh pr merge 5 --squash' r u:next 'b:gh pr merge 5 --disable-auto' r
+passes 'Paused.'
+session u:go 'b:gh pr create' r 'b:gh pr close 5' r 'b:gh pr merge --disable-auto' r
+passes 'Paused.'
+# Each PR is tracked: by the URL its create printed, else by the first number a
+# settle names; a settle naming no PR acts on the latest one still open.
+url=https://github.com/o/r/pull
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" 'b:gh pr merge 1 --auto' r
+blocks 'One on auto-merge.' '' "$open"
+session u:go 'b:gh pr create' r 'b:gh pr create' r 'b:gh pr merge 7 --auto' r
+blocks 'One on auto-merge.' '' "$open"
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr merge 9 --auto' r
+blocks 'Merged another PR.' '' "$open"
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
+  "b:gh pr merge $url/2 --auto" r 'b:gh pr merge --auto 1' r
+passes 'Both on auto-merge.'
+session u:go 'b:gh pr create' r 'b:gh pr create' r 'b:gh pr merge 7 --auto' r 'b:gh pr merge --auto' r
+passes 'Both on auto-merge.'
+session u:go 'b:gh pr create' r 'b:gh pr merge 7 --auto' r 'b:gh pr merge 7 --disable-auto' r \
+  'b:gh pr merge 7 --auto' r
+passes 'Auto-merge back on.'
+# A settle naming its PR by variable, as in a loop, settles every PR it can.
+session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
+  'b:for n in 1 2; do gh pr merge $n --auto; done' r
+passes 'Both on auto-merge.'
+# A create that printed output but no PR URL failed; one that printed nothing counts.
+session u:go 'b:gh pr create --fill 2>&1 | tail -3' 'r:pull request create failed: GraphQL: No commits between main and x'
+passes 'Nothing to open.'
+session u:go 'b:url=$(gh pr create --fill)' 'r:   '
+blocks 'Opened.' '' "$open"
+# A create that printed an existing PR's URL is that PR.
+session u:go 'b:gh pr create --fill' "r:$url/1" 'b:gh pr create --fill || true' "r:already exists: $url/1" \
+  'b:gh pr merge 1 --auto' r
+passes 'Auto-merge on.'
+# A subagent's creates count, in time order with the session's own commands.
+session u:go 'b:ls' r u:next 'b:git status' r
+subagent 5 impl 'u:brief' 'b:gh pr create --fill' "r:$url/3"
+blocks 'The implementer opened it.' '' "$open"
+session u:go 'b:ls' r u:next 'b:gh pr merge 3 --auto' r
+subagent 5 impl 'u:brief' 'b:gh pr create --fill' "r:$url/3"
+passes 'Auto-merge on.'
+session u:go 'b:gh pr merge 3 --auto' r u:next 'b:git status' r
+subagent 25 impl 'u:brief' 'b:gh pr create --fill' "r:$url/3"
+blocks 'The implementer opened it.' '' "$open"
+session u:go 'b:ls' r u:next 'b:git status' r
+subagent 5 impl 'u:brief' 'b:gh pr create --fill' e
+subagent 6 other 'u:brief' 'b:echo gh pr create' r
+passes 'Nothing opened.'
+rm -rf "$tmp/t"
 
 # Missing fields and a missing signal are reported together.
 transcript Bash
