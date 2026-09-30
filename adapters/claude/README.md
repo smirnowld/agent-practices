@@ -147,7 +147,9 @@ unverified against vendor docs.
   started session runs the model check above. A `PreToolUse` hook
   ([`hooks/check-chip-brief.py`](hooks/check-chip-brief.py)) denies a
   `spawn_task` prompt without the brief's heading, Model line, Goal and Proof,
-  and returns the template so the retry is one call. The hook fires on the
+  or whose Model line names a tier without its `tiers.json` model (sessions
+  wrote "standard" and named the model only in their final message,
+  2026-09-30), and returns the template so the retry is one call. The hook fires on the
   desktop app's `mcp__ccd_session__spawn_task` (observed 2026-09-29 with a
   test chip; unverified against vendor docs).
 - Proposing sessions (`brief` skill): the rule is in

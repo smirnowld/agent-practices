@@ -78,7 +78,7 @@ Fill `templates/brief.md`, every section.
 ## 5. Size
 
 Set Size from "Size in responses" and the Model line from "Tier for a brief"
-(`practices/model-sizing.md`). Name the two answers on the Model line. An L
+(`practices/model-sizing.md`), which says what the Model line names. An L
 is split before it is proposed.
 
 ## 6. Propose
@@ -91,7 +91,7 @@ them to the repository (P17).
 
 ## 7. Report
 
-One line per proposed session: title, tier and effort, size, source. Then
+One line per proposed session: title, tier (model) and effort, size, source. Then
 what was dropped as in flight or not relevant, and why.
 
 ## Origin
