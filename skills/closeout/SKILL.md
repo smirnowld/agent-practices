@@ -27,7 +27,9 @@ phone, and knows what comes next. The closeout goes in chat and in the PR
 ## 2. Fill the template
 
 Fill `templates/closeout.md` field by field. Keep each field to what a reader
-needs; leave out process detail.
+needs; leave out process detail. Every field appears, with its label, in the
+chat closeout as well as the PR: short is fine, "none" where it applies, but
+a closeout in the PR never replaces the one in chat.
 
 For **Continuation**:
 
@@ -54,14 +56,15 @@ Save the draft to a scratch file and run the link check that ships next to
 this skill, with an absolute path to the draft:
 
 ```
-python3 SKILL_DIR/../../scripts/check-links.py /ABSOLUTE/PATH/DRAFT.md
+python3 SKILL_DIR/../../scripts/check-links.py --closeout /ABSOLUTE/PATH/DRAFT.md
 ```
 
 `SKILL_DIR` is the folder holding this file; the path works through a
 symlinked install. Fix each failure. A flagged token that is not a file
 reference (a command, a branch name) can stay. Without `gh` or network, rerun
 with `--offline` for the local checks and name the unchecked links under
-**Not verified**.
+**Not verified**. Check the exact text you will send and send it unchanged;
+drop `--closeout` only for a PR body that holds no closeout.
 
 ## 5. Signal and ask
 
