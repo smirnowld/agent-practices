@@ -1,6 +1,7 @@
 #!/bin/sh
 # Offline self-test for the chip brief hook: a free-form prompt is denied with
-# every missing part named and the template attached; the template itself and
+# every missing part named and the template attached; a Model line without
+# its model is denied with the tier map; the template with its model filled and
 # a filled brief pass silently; bad input passes with a note on stderr.
 set -eu
 dir=$(dirname "$0")
@@ -14,10 +15,13 @@ for needle in '"permissionDecision": "deny"' "# Brief: TITLE" "Model:" "## Goal"
   echo "$out" | grep -qF "$needle" || { echo "error: deny output lacks: $needle" >&2; exit 1; }
 done
 
-template=$(python3 -c 'import json,sys; print(json.dumps({"tool_input": {"prompt": open(sys.argv[1]).read()}}))' "$dir/../../../templates/brief.md")
-passes "$template" || { echo "error: templates/brief.md itself was denied; hook and template disagree" >&2; exit 1; }
+template=$(python3 -c 'import json,sys; print(json.dumps({"tool_input": {"prompt": open(sys.argv[1]).read().replace("<model>", "opus")}}))' "$dir/../../../templates/brief.md")
+passes "$template" || { echo "error: templates/brief.md with its model filled was denied; hook and template disagree" >&2; exit 1; }
 
-passes '{"tool_input":{"prompt":"  # Brief: Fix badge\n\n  **Model:** small at low\n\n  ## Goal\n\nx\n\n  ## Proof\n\n- make check\n"}}' ||
+out=$(printf "%s\n" '{"tool_input":{"prompt":"# Brief: Fix badge\n\n**Model:** standard at medium\n\n## Goal\n\nx\n\n## Proof\n\n- make check\n"}}' | run)
+echo "$out" | grep -qF "standard (opus)" || { echo "error: tier without model was not denied with the tier map: $out" >&2; exit 1; }
+
+passes '{"tool_input":{"prompt":"  # Brief: Fix badge\n\n  **Model:** fast (Sonnet) at low\n\n  ## Goal\n\nx\n\n  ## Proof\n\n- make check\n"}}' ||
   { echo "error: indented brief was not passed: $out" >&2; exit 1; }
 
 for bad in 'not json' '{"tool_input":null}' '{"tool_input":{"prompt":["x"]}}'; do

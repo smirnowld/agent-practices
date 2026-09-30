@@ -78,7 +78,9 @@ Fill `templates/brief.md`, every section.
 ## 5. Size
 
 Set Size from "Size in responses" and the Model line from "Tier for a brief"
-(`practices/model-sizing.md`). Name the two answers on the Model line. An L
+(`practices/model-sizing.md`). On the Model line, name the tier's model
+from the adapter's `tiers.json` (a tier alone is not enough to start the
+session) and the two answers. An L
 is split before it is proposed.
 
 ## 6. Propose

@@ -51,8 +51,10 @@ The first row that matches wins:
 | Anything else (judgement, or size M) | standard / medium |
 
 Risk overrides the table: a brief whose Risk line is critical is never below
-standard. The Model line names the two answers, for example "fast at high
-(exploration bounded, reasoning specified)", so I can check the call. A
+standard. The Model line names the tier's model from the adapter's
+`tiers.json` and the two answers, for example "fast (MODEL) at high
+(exploration bounded, reasoning specified)", so I can start the session on
+that model and check the call. A
 brief for review or exploration takes its row in the defaults table and
 leaves the answers out; a session that starts by asking me takes the tier of
 the work it would start. A fast-tier session
