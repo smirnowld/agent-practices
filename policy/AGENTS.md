@@ -63,8 +63,18 @@ advisory instead.
 - The reviewer's tier is at least the implementer's. It may be lower only for
   mechanical changes with objective checks (renames, copy, formatting) or
   simple docs. Security, data loss, concurrency, auth, payments, migrations and
-  release-critical work always get the critical reviewer. A reviewer from a
-  different model family adds independence where available.
+  release-critical work always get the critical reviewer. Release-critical
+  means the change can publish or deploy, can weaken a required check's
+  configuration or ruleset, or can make one pass without running what it
+  guards; moving jobs between runners is not. A reviewer from a different
+  model family adds independence where available.
+- **P4a. One critical review per change.** A fix that changes only what a
+  finding names is confirmed by the same reviewer agent, resumed, or by a
+  reviewer given the finding; a fix that goes wider is critically reviewed
+  again. The same diff applied in several repositories is critically reviewed
+  once; the others get a reviewer briefed with its findings, and any
+  difference needs its own critical review. The change still needs the
+  critical reviewer for P6a.
 - The brief states risk level and focus; review scope for docs is in
   `roles/reviewer.md`. A migration is checked against every build still
   running, installed app builds included, not only its branch.

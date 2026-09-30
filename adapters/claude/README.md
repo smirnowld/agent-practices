@@ -120,6 +120,14 @@ Sources: plugins/loading.md, settings-reference.md
 move with releases, so no numbered model IDs. "Read-only" tool sets include
 the shell, so read-only is enforced by the role's instructions, not by tools.
 
+To run a role below its tier (critical review at standard, per
+`practices/model-sizing.md`), pass the standard tier's alias as the Agent
+tool's per-invocation `model`. It takes precedence over the agent's
+frontmatter `model` (sub-agents.md, "Choose a model", checked
+2026-09-30). The page lists no per-invocation effort, so the frontmatter
+`effort` is inferred to still apply, and whether `xhigh` is available on the
+standard model is unverified.
+
 ## Session rules specific to this agent
 
 - Model check (P2d): a session started from a brief whose model or effort
