@@ -12,7 +12,10 @@ question does not cover a card or closeout written an hour later.
 It also holds the closeout to its template (P15): a closeout missing a field
 of templates/closeout.md is blocked, and so is a turn that merged a PR
 without rewriting the PR description afterwards or without any closeout in
-chat this session. Any error
+chat this session. A PR this session created with `gh pr create` and has not
+merged, set to auto-merge or closed since is not a stopping point (P5): the
+turn is blocked unless a closeout was sent this session or this turn asked me
+with AskUserQuestion. Any error
 lets the turn end with a note on stderr; a broken check must not trap a
 session.
 """
@@ -36,6 +39,13 @@ FENCE = re.compile(r"^\s*(```|~~~).*?^\s*\1", re.M | re.S)
 SPLIT = re.compile(r"&&|\|\||[;|\n]")
 MERGE = re.compile(r"gh pr merge\b")
 NOT_MERGE = re.compile(r"\s(--auto|--disable-auto|--help|-h)\b")
+# Heredoc bodies and quoted strings are text, not commands (a PR body, a commit message).
+HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1([^\n]*)\n.*?^\s*\2\s*$", re.M | re.S)
+QUOTED = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"")
+# A create or settle may follow `$(`, a backtick, `do` or `VAR=`.
+CREATE = re.compile(r"(^|[\s(`=])gh pr create\b")
+SETTLE = re.compile(r"(^|[\s(`=])gh pr (merge|close)\b")
+NOT_ACTION = re.compile(r"\s(--help|-h|--dry-run)\b")
 EDIT = re.compile(r"gh pr edit\b.*\s(--body|--body-file|-b|-F)\b|gh api\b.*\sbody=")
 LOAD = " (if it is not in your tools, load it with ToolSearch 'select:{0}' first)"
 
@@ -54,8 +64,9 @@ def typed(entry, content):
 
 def turn_tools(path):
     """Tool calls since I last spoke (typed, or answered AskUserQuestion), in
-    order as (name, input), and whether any earlier message held a closeout."""
-    names, asks, failed, closeout = [], set(), set(), False
+    order as (name, input), whether any earlier message held a closeout, and
+    the session's Bash commands in order."""
+    names, asks, failed, closeout, session = [], set(), set(), False, []
     with open(path) as f:
         for line in f:
             try:
@@ -74,13 +85,39 @@ def turn_tools(path):
                     names = []
             elif entry.get("type") == "assistant":
                 for c in parts:
-                    if c.get("type") == "text" and re.search(NOTIFY[0][0], c.get("text") or "", re.M):
+                    if c.get("type") == "text" and re.search(
+                            NOTIFY[0][0], FENCE.sub("", c.get("text") or ""), re.M):
                         closeout = True
                     if c.get("type") == "tool_use":
                         names.append((c.get("name"), c.get("input") or {}, c.get("id")))
+                        if c.get("name") == "Bash":
+                            session.append(((c.get("input") or {}).get("command"), c.get("id")))
                         if c.get("name") == "AskUserQuestion":
                             asks.add(c.get("id"))
-    return [(n, i) for n, i, k in names if k not in failed], closeout
+    return ([(n, i) for n, i, k in names if k not in failed], closeout,
+            [str(c) for c, k in session if k not in failed])
+
+
+def steps_of(commands):
+    """Simple commands, in order, of a list of shell commands, with heredoc
+    bodies and quoted strings emptied."""
+    bare = (QUOTED.sub('""', HEREDOC.sub(r"\3", c.replace("\\\n", " "))) for c in commands)
+    return [seg.strip() for c in bare for seg in SPLIT.split(c)]
+
+
+def pr_left_open(commands):
+    """Whether the last successful `gh pr create` has no later merge, auto-merge
+    enable or close (P5); disabling auto-merge opens it again. Not per PR
+    number: any later settle counts."""
+    created = open_ = False
+    for c in steps_of(commands):
+        if NOT_ACTION.search(c):
+            continue
+        if CREATE.search(c):
+            created = open_ = True
+        elif SETTLE.search(c):
+            open_ = created and "--disable-auto" in c
+    return open_
 
 
 def missing_fields(text):
@@ -105,8 +142,7 @@ def _missing_fields(text):
 def merge_gaps(calls, closeout):
     """What a turn that merged a PR still owes: the PR description rewritten
     after the merge, and a closeout in chat (P15, closeout skill step 5)."""
-    steps = [seg.strip() for n, i in calls if n == "Bash"
-             for seg in SPLIT.split(str(i.get("command", "")).replace("\\\n", " "))]
+    steps = steps_of(str(i.get("command", "")) for n, i in calls if n == "Bash")
     merged = [k for k, c in enumerate(steps) if MERGE.match(c) and not NOT_MERGE.search(c)]
     if not merged:
         return []
@@ -128,13 +164,22 @@ def main():
     text = FENCE.sub("", data.get("last_assistant_message") or "")
     found = lambda rules: [what for pattern, what in rules if re.search(pattern, text, re.M)]
     ask, notify = found(ASK), found(NOTIFY)
-    calls, earlier = turn_tools(data["transcript_path"])
+    calls, earlier, commands = turn_tools(data["transcript_path"])
     gaps = merge_gaps(calls, earlier or bool(notify))
     missing = missing_fields(text) if notify else []
     if missing:
         gaps.append("add the closeout fields it lacks, with their labels (\"none\" where "
                     "nothing applies): " + ", ".join(missing))
     reasons = ["Closeout incomplete (closeout skill): " + "; ".join(gaps) + "."] if gaps else []
+    if (pr_left_open(commands) and not (earlier or notify)
+            and "AskUserQuestion" not in {n for n, _ in calls}):
+        reasons.append(
+            "A PR this session created is still open and no closeout was sent; an open PR "
+            "is not a stopping point (P5). Finish it: independent review (P4), then merge "
+            "with the `merge` skill or hand the merge to me, then write the closeout with "
+            "the `closeout` skill and its PushNotification. If I already merged it or "
+            "said I will, the closeout records that hand-off. If you are waiting on me, "
+            "ask with AskUserQuestion" + LOAD.format("AskUserQuestion") + ".")
     if (ask or notify) and not {n for n, _ in calls} & SIGNALS:
         reasons.append(signal_reason(ask))
     if reasons:

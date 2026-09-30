@@ -2,7 +2,8 @@
 # Offline self-test for the attention hook: a card, question or closeout that
 # ends a turn without a signal is blocked once; a turn that already signalled,
 # a repeat stop, pending background work and plain answers pass silently; bad
-# input passes with a note on stderr.
+# input passes with a note on stderr. A merge without its closeout, and a PR
+# left open with no closeout or question, are blocked.
 set -eu
 dir=$(dirname "$0")
 hook="$dir/check-attention.py"
@@ -135,9 +136,88 @@ for edit in 'gh pr merge 5 --squash && gh pr edit 5 --body-file b.md' \
   --squash && gh api -X PATCH repos/o/r/pulls/5 -f body=x"; do
   merge_turn "$closeout" "$edit"; passes 'Merged as abc.'
 done
+# A command after a heredoc's opener on the same line still counts.
+merge_turn "$closeout" 'gh pr merge 5 --squash' "cat > b.md <<'EOF' && gh pr edit 5 --body-file b.md
+body
+EOF"
+passes 'Merged as abc.'
+merge_turn "$closeout" "cat <<'EOF' && gh pr merge 5 --squash
+gh pr edit 5 --body-file b.md
+EOF"
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
 merge_turn "$closeout" "gh pr merge 5 \\
   --disable-auto"
 passes 'Paused.'
+# A session's entries: u:TYPED, a:ASSISTANT_TEXT, b:BASH_COMMAND, q (AskUserQuestion),
+# p (PushNotification), r (answer to the last tool call), e (the last tool call failed).
+session() {
+  python3 -c '
+import json, sys
+k = 0
+for arg in sys.argv[1:]:
+    kind, _, v = arg.partition(":")
+    if kind == "u": e = {"type": "user", "message": {"content": v}}
+    elif kind == "a": e = {"type": "assistant", "message": {"content": [{"type": "text", "text": v}]}}
+    elif kind in ("b", "q", "p"):
+        k += 1
+        tool = {"type": "tool_use", "id": "s%d" % k, "name": "Bash", "input": {"command": v}}
+        if kind != "b": tool.update(name={"q": "AskUserQuestion", "p": "PushNotification"}[kind], input={})
+        e = {"type": "assistant", "message": {"content": [tool]}}
+    else: e = {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "s%d" % k, "is_error": kind == "e"}]}}
+    print(json.dumps(e))' "$@" >"$tmp/t.jsonl"
+}
+open='A PR this session created is still open'
+session u:go 'b:git push && gh pr create --fill' r
+blocks 'Opened the PR.' '' "$open"
+# The block reason names the whole path to done.
+blocks 'Opened the PR.' '' 'the `merge` skill or hand the merge to me'
+session u:go 'b:gh pr create --fill' r u:'merge it' 'b:gh pr merge 5 --squash' r \
+  'b:gh pr edit 5 --body-file b.md' r p r
+passes "$closeout"
+session u:go 'b:gh pr create --fill' r q
+passes 'Asked whether to merge.'
+session u:go 'b:gh pr create --fill' r a:"$closeout" u:'thanks'
+passes 'You are welcome.'
+# An answered question does not cover a stop after it.
+session u:go 'b:gh pr create --fill' r q r 'b:git status' r
+blocks 'Carried on.' '' "$open"
+# A pending auto-merge or a close settles it; a failed or help create opens nothing.
+session u:go 'b:gh pr create --fill' r 'b:gh pr merge 5 --auto --squash' r
+passes 'Auto-merge on.'
+session u:go 'b:gh pr create --fill' r 'b:gh pr close 5' r
+passes 'Closed.'
+session u:go 'b:gh pr create --fill' e
+passes 'Create failed.'
+session u:go 'b:gh pr create --help' r 'b:grep -rn "gh pr create" skills' r
+passes 'Read the help.'
+# A second PR created after the first merged is open again.
+session u:go 'b:gh pr create' r 'b:gh pr merge 5 --squash' r 'b:gh pr create' r
+blocks 'Second PR opened.' '' "$open"
+session u:go 'b:gh pr create' r 'b:gh pr merge 5 --disable-auto' r
+blocks 'Paused.' '' "$open"
+session u:go 'b:gh pr create' r 'b:gh pr merge 5 --auto --squash' r 'b:gh pr merge 5 --disable-auto' r
+blocks 'Paused before a push.' '' "$open"
+# Creates by substitution, prefix or loop count.
+for c in 'url=$(gh pr create --fill)' 'GH_REPO=o/r gh pr create --fill' 'for b in x; do gh pr create --fill; done'; do
+  session u:go "b:$c" r; blocks 'Opened.' '' "$open"
+done
+# Mentions in quotes, heredocs or a PR body are not commands; a dry run opens nothing.
+session u:go "b:git commit -F - <<'EOF'
+gh pr create calls without a merge now block.
+EOF" r 'b:git commit -m "docs; gh pr create now blocks"' r 'b:grep -rnE "foo|gh pr create" .' r \
+  'b:gh pr create --dry-run --fill' r
+passes 'Committed.'
+session u:go "b:gh pr create --title 'Add -h flag' --body \"\$(cat <<'EOF'
+gh pr merge 5 --squash
+EOF
+)\"" r
+blocks 'Opened.' '' "$open"
+# A closeout shown inside a code fence earlier was not sent.
+session u:go 'b:gh pr create' r a:"\`\`\`
+$closeout
+\`\`\`" u:next
+blocks 'Next done.' '' "$open"
+
 # Missing fields and a missing signal are reported together.
 transcript Bash
 blocks "$short" '' 'PushNotification'
