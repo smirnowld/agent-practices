@@ -2,7 +2,7 @@
 """PreToolUse hook for spawn_task: a chip's prompt must be a brief (P2c).
 
 Blocks a prompt that lacks the brief's heading, Model line, Goal or Proof,
-or whose Model line names a tier without its model from tiers.json, and hands
+or whose Model line lacks a tier followed by its model from tiers.json, and hands
 back templates/brief.md so the retry takes one call. Any error lets
 the chip through with a note on stderr; a broken check must not block chips.
 """
@@ -25,9 +25,9 @@ def main():
     root = os.environ.get("CLAUDE_PLUGIN_ROOT") or os.path.join(os.path.dirname(__file__), "../../..")
     with open(os.path.join(root, "adapters/claude/tiers.json")) as f:
         models = json.load(f)["models"]
-    names = "|".join(sorted({re.escape(m) for m in models.values()}))
+    pairs_re = "|".join(re.escape(t) + r"\s*\(\s*" + re.escape(m) for t, m in models.items())
     line = re.search(r"^\s*\*\*Model:\*\* .*$", prompt, re.M)
-    if line and not re.search(r"\((" + names + r")\b", line.group(0), re.I):
+    if line and not re.search(r"\b(" + pairs_re + r")\b", line.group(0), re.I):
         pairs = ", ".join(f"{t} ({m})" for t, m in models.items())
         missing.append("the model in the Model line, as TIER (MODEL): " + pairs)
     if not missing:

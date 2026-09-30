@@ -30,7 +30,7 @@ Effort (reasoning budget): low, medium, high, extra-high.
 
 ## Tier for a brief
 
-A brief's Model line comes from two questions, answered from what the brief
+A brief's tier comes from two questions, answered from what the brief
 already holds, not from the task's title:
 
 - **Exploration left.** *None*: the brief names the owned files and the facts
