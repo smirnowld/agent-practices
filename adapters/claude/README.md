@@ -195,7 +195,7 @@ unverified against vendor docs.
   the latest still open, else the latest on auto-merge; one naming it by a
   variable bound by a `for` over literal PR numbers or URLs (until a
   `name=` assigns it again) settles those, and any other variable settles all
-  it would change; a quoted `"$n"` is not read as a variable. A create run alone in its
+  it would change; a lone quoted `"$n"` counts as the variable. A create run alone in its
   call that printed output but no PR URL is taken as failed, since an error
   piped through `tail` does not fail the call. Commands run by subagents
   count: their transcripts sit in a nested `subagents/` folder (hooks.md,
