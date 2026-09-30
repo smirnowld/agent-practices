@@ -70,16 +70,20 @@ whichever of these apply, together in one structured question prompt:
 
 - **Acceptance or decision** the closeout waits on (P6).
 - **Merge**: a PR that is verified, reviewed and green but left to me to
-  merge (P6a or the project's procedure). Ask whether you merge it, merging
-  proposed first. A yes is my explicit OK for that PR (P1): merge it with the
-  `merge` skill, whose other checks still apply.
+  merge (P6a or the project's procedure). The question names the PR link,
+  why it is mine and its head commit; merging is proposed first. A yes is my
+  explicit OK (P1) for that commit only, and counts only if I also accepted
+  and left no decision open. Merge by the project's procedure or the `merge`
+  skill, whose other checks still apply. Any new commit needs the question
+  again.
 - **Follow-ups**: when **Deferred**, **Next** or **Continuation** lists work
   for a new session. Ask whether to brief it: all (proposed first), let me
-  pick, or none. On a yes, run `brief` with those candidates.
+  pick (a second prompt lists them), or none. On a yes, run `brief` with
+  those candidates.
 
-After acting on the answers, say in one line what happened (merge SHA,
-sessions proposed) and update the PR's closeout to match. The adapter's
-`session.md` names the tools.
+After acting on the answers, update the PR's closeout to match and say in
+one line in chat what happened (merge SHA, sessions proposed); do not repost
+the closeout. The adapter's `session.md` names the tools.
 
 ## Origin
 

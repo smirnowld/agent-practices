@@ -28,4 +28,4 @@ when ToolSearch cannot find it either, and the report says so.
   accept / change / reject, proposed first. A closeout or hand-off to me sends
   `PushNotification`, one line under 200 characters, then asks its questions
   (acceptance, merge, follow-ups) in one `AskUserQuestion` call, one question
-  each.
+  per topic (its tool schema allows four; checked 2026-09-30).

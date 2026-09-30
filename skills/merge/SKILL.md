@@ -11,8 +11,7 @@ procedure, if it has one, replaces this skill, except for the P6a
 safeguards, which always hold: never bypass branch protection (no admin
 override such as `gh pr merge --admin`, no relaxing the ruleset; only I do,
 for a case I name), and a change that needs the critical reviewer under P4
-is handed to me to merge, unless I OK that merge in the conversation (P1;
-the closeout asks). The OK covers that PR only, never bypassing protection.
+is handed to me to merge unless I OK it (the closeout asks).
 
 ## 1. Check that merging is allowed
 
