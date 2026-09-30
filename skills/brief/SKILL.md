@@ -53,9 +53,9 @@ cheaper to finish first.
 
 ## 3. Choose
 
-**next**: show a shortlist of two to five (fewer only if fewer exist), each with what it is, why it
-ranks above the rest, its source link and the tier it would get (step 5).
-Ask me which to brief (P6b) and write only those.
+**next**: show a shortlist of two to five (fewer only if fewer exist), each
+with what it is, why it ranks above the rest, its source link and the tier
+it would get (step 5). Ask me which to brief (P6b) and write only those.
 
 **followups**: write briefs directly, up to five. With more, shortlist as
 above.
