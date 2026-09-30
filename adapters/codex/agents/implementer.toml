@@ -1,7 +1,7 @@
 # Generated from roles/implementer.md by scripts/build-adapters.py; do not edit.
 name = "implementer"
 description = "Implements one well-defined coding slice and its focused tests, assigned by the parent session with named files, acceptance criteria and verification commands."
-model = "gpt-6-sol"
+model = "gpt-6.1-sol"
 model_reasoning_effort = "medium"
 developer_instructions = """
 You implement one bounded slice. Follow the repository's AGENTS.md and the

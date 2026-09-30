@@ -58,11 +58,13 @@ on every Codex host or cloud environment.
 
 ## Models
 
-The tier map uses the documented model IDs: `gpt-6-luna` (fast), `gpt-6-sol`
-(standard and strong), and `gpt-6-astra` (strongest). The GPT-6 model guidance
-documents all three names and describes their relative capabilities:
+The tier map uses the documented model IDs: `gpt-6-luna` (fast), `gpt-6.1-sol`
+(standard and strong), and `gpt-6-astra` (strongest). Model guidance for Luna
+and Astra:
 https://developers.openai.com/api/docs/guides/latest-model (checked
-2026-09-27).
+2026-09-27). The Sol pin was updated to GPT-6.1 Sol against its model page:
+https://developers.openai.com/api/docs/models/gpt-6.1-sol (checked
+2026-09-30).
 
 No Codex `auto latest` setting or moving GPT-6 alias is documented in the
 Codex config reference or GPT-6 model guidance checked on 2026-09-27. The
