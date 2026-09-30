@@ -20,4 +20,4 @@
 
 **Next:** none
 
-**Continuation:** wait for me — nothing left in scope.
+**Continuation:** none — nothing left in scope.

@@ -40,8 +40,11 @@ For **Continuation**:
   distinct objective, needs another worktree or owner, or would benefit from
   fresh context. It, and any leftover work the closeout lists, is proposed
   with the `brief` skill once I say yes in step 5.
-- **Wait for me** when the next step is a decision, production action or
-  other step that is mine.
+- **Wait for me** when the next step is a decision, acceptance, merge,
+  production action or other step that is mine. Never for work with nothing
+  left to wait on.
+- **None** when the task is done (merged and cleaned up, or abandoned) and
+  there is no next step for me or a new session.
 
 ## 3. Links (P18)
 
