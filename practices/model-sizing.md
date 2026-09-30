@@ -7,8 +7,8 @@ models. Adjust from evidence.
 
 | Tier | For |
 |---|---|
-| fast | Search, lookups, summarising evidence, mechanical edits |
-| standard | Most implementation and routine review |
+| fast | Search, lookups, summarising evidence, mechanical edits, scoped slices from a complete brief |
+| standard | Implementation that needs exploration or judgement, routine review |
 | strong | Hard design, debugging, reviewing standard-tier work that is non-trivial |
 | strongest | Critical review of security, auth, payments and data loss, deliberate architecture sessions |
 
@@ -19,9 +19,7 @@ Effort (reasoning budget): low, medium, high, extra-high.
 | Work | Tier / effort |
 |---|---|
 | Exploration, doc lookup | fast / low |
-| Mechanical slice (rename, fixtures, copy, screen to approved design) | fast / medium |
-| Normal coding slice | standard / medium |
-| Hard design or debugging slice | standard / high, or strong / medium |
+| Implementation slice, delegated or a session started from a brief | "Tier for a brief" below |
 | Review of mechanical change or simple docs | fast / medium |
 | Review of normal change | standard / high (never below the implementer) |
 | Docs review with implications (ADR status, cross-doc) | standard / high |
@@ -29,6 +27,37 @@ Effort (reasoning budget): low, medium, high, extra-high.
 | Critical review when none of those applies (concurrency, migrations, release-critical) | standard / extra-high, same role, never below the implementer |
 | Parent session coordinating a written plan | standard / medium |
 | Planning or analysis session | strong or strongest, chosen by me |
+
+## Tier for a brief
+
+A brief's Model line comes from two questions, answered from what the brief
+already holds, not from the task's title:
+
+- **Exploration left.** *None*: the brief names the owned files and the facts
+  to rely on. *Bounded*: a known area, a few files to read. *Open*: the
+  cause or the place to change is still to be found.
+- **Reasoning left.** *Specified*: the change follows from the settled
+  decisions; the proof is objective (tests, compiler, lint, a named check).
+  *Judgement*: choices inside the settled decisions, several interacting
+  parts. *Open*: design or root cause undecided.
+
+The first row that matches wins:
+
+| Brief | Tier / effort |
+|---|---|
+| Exploration or reasoning open | standard / high, or strong / medium for hard design |
+| Mechanical: formulaic output, objective proof (rename, fixtures, copy, screen to approved design), any size | fast / medium |
+| Exploration none or bounded, reasoning specified, size S | fast / high |
+| Anything else (judgement, or size M) | standard / medium |
+
+Risk overrides the table: a brief whose Risk line is critical is never below
+standard. The Model line names the two answers, for example "fast at high
+(exploration bounded, reasoning specified)", so I can check the call. A
+brief for review or exploration takes its row in the defaults table and
+leaves the answers out; a session that starts by asking me takes the tier of
+the work it would start. A fast-tier session
+that meets a signal to go up (below) stops with a progress update and asks to
+be moved up; the template's Handoff carries this.
 
 ## Size in responses
 
@@ -69,6 +98,10 @@ snapshot, lint); output is formulaic.
 
 Forks: record notable outcomes (tier too weak or wasteful) here.
 
+- 2026-09, all projects: "Tier for a brief" moved scoped slices from
+  standard to fast tier. A starting point, not yet measured: record fast-tier
+  briefs that had to move up, and standard-tier briefs that fast would have
+  finished.
 - 2026-09, product repos: five briefs expected to be one slice ran 290 to
   430 responses each with five to seven compactions. The total response
   count, not who made the responses, was the cost driver. Led to "Size in

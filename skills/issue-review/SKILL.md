@@ -72,7 +72,8 @@ count it until the issue changes or I answer.
 ## 5. Report
 
 One line per issue acted on: `#N — verdict — action — evidence`. Then counts
-by priority and the oldest `p1`. Use `templates/brief.md` for the proposed
-session. Store the report where the routine keeps its log, with the run date,
-the issues reviewed and the questions asked, so the next run can select.
+by priority and the oldest `p1`. Write the proposed session with the
+`brief` skill. Store the report where the routine keeps its log, with the
+run date, the issues reviewed and the questions asked, so the next run can
+select.
 Report the run's token use.

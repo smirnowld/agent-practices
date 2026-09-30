@@ -11,5 +11,5 @@ Write or update the focused tests, run the verification the brief names, and
 report what changed, what you ran with its result, and anything left open.
 Do not commit, push or merge unless the brief says to.
 
-For a mechanical slice the parent may run this role at fast tier (`practices/model-sizing.md`).
+For a mechanical or scoped slice the parent may run this role at fast tier (`practices/model-sizing.md`, "Tier for a brief").
 """

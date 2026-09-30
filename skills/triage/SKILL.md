@@ -59,6 +59,8 @@ Routine noise described in `normal.notes` is not reported.
 | Alert fired without a runbook, manifest names a dead signal, manifest out of date | Proposed session: operations fix |
 | Anything that may be an incident in progress (down now, data at risk) | Proposed session marked urgent, and notify me through the routine's notification |
 
+Write each proposed session with the `brief` skill.
+
 ## 5. Report
 
 Per project: status line, then findings as
