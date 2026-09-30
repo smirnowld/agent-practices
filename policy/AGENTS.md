@@ -117,7 +117,7 @@ run) is not blocked: ask for that run instead of merging untested.
 - **P6a. Merge safeguards**, which hold under any project merge procedure:
   never bypass branch protection (admin merge, relaxing a rule); only I do,
   for a case I name. Any change that needs the critical reviewer under P4 is
-  merged by me, or on my explicit OK for that PR.
+  merged by me, or on my explicit OK for its head commit.
 - **Merge.** The project's merge procedure applies. Otherwise merge your own
   PR (auto-merge preferred) once work is verified or marked untested under
   P5, review passed, every proof status is green on the head commit (a status
