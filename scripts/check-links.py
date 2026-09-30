@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check links in text meant for the owner (P18): a closeout, PR body or update.
 
-Usage: check-links.py [--offline] FILE   (reads stdin without FILE)
+Usage: check-links.py [--offline] [--closeout] FILE   (reads stdin without FILE)
 
 Fails on:
 - a Markdown link whose target is not an https URL;
@@ -12,7 +12,11 @@ Fails on:
 - a GitHub blob or tree URL not pinned to a full commit SHA;
 - a GitHub URL that does not resolve (skipped with --offline).
 Resolving uses `gh api`, so private repositories work when gh is signed in.
+
+With --closeout, also fails on a field of templates/closeout.md missing from
+the draft, so a shortened chat closeout is caught before it is sent.
 """
+import os
 import re
 import shutil
 import subprocess
@@ -107,15 +111,30 @@ def check(text, offline):
     return errors
 
 
+TEMPLATE = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                        "..", "templates", "closeout.md")
+FIELD = re.compile(r"^\*\*([^*]+):\*\*", re.M)
+
+
+def missing_fields(text):
+    """Field labels of the closeout template that the draft does not use."""
+    fields = FIELD.findall(open(TEMPLATE).read())
+    return [f"closeout field missing: **{f}:**" for f in fields
+            if not re.search(rf"\*\*{re.escape(f)}:\*\*", text)]
+
+
 def main(argv):
     offline = "--offline" in argv
-    args = [a for a in argv if a != "--offline"]
+    closeout = "--closeout" in argv
+    args = [a for a in argv if a not in ("--offline", "--closeout")]
     if not offline and not shutil.which("gh"):
         print("error: gh not found; rerun with --offline for the local checks",
               file=sys.stderr)
         return 2
     text = open(args[0]).read() if args else sys.stdin.read()
     errors = check(text, offline)
+    if closeout:
+        errors += missing_fields(text)
     for e in errors:
         print(e)
     return 1 if errors else 0
