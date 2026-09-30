@@ -3,7 +3,7 @@
 <!-- A work package for another session or agent (policy P2c). Conclusions,
 not reasoning. The receiver must not need the sender's transcript. -->
 
-**Model:** <tier> at <effort> (exploration <none | bounded | open>, reasoning <specified | judgement | open>)  <!-- practices/model-sizing.md, "Tier for a brief"; adapter maps tier to a model; P2d check -->
+**Model:** <tier> at <effort> (exploration <none | bounded | open>, reasoning <specified | judgement | open>; work briefs only)  <!-- practices/model-sizing.md, "Tier for a brief"; adapter maps tier to a model; P2d check -->
 **Risk:** <low | normal | critical: category>  <!-- sets the reviewer, P4 -->
 **Size:** <S | M>  <!-- response budget: practices/model-sizing.md, "Size in responses" -->
 **Repo / branch / worktree:** <path>, <branch from base>
@@ -45,4 +45,5 @@ not reasoning. The receiver must not need the sender's transcript. -->
 ## Handoff
 
 <Where the result goes (PR URL, message to parent), what to report, when to stop
-and ask. At the budget: progress update, then stop.>
+and ask. At the budget, or on a signal to go up a tier (practices/model-sizing.md),
+progress update, then stop.>

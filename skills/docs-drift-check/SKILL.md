@@ -57,7 +57,7 @@ Do not report style or wording.
 
 ## 4. Session brief
 
-Use `templates/brief.md`: the repo, the commit range, each finding as
+Write it with the `brief` skill: the repo, the commit range, each finding as
 `doc:section — claim — evidence (file:line or PR URL, P18)`, the proposed
 change, and proof = docs review (P4). Keep it to findings; no transcript.
 

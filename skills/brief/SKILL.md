@@ -1,6 +1,6 @@
 ---
 name: brief
-description: Propose sessions as briefs (P2c), each sized to the right tier. Two modes - "followups" turns this session's leftover work into briefs; "next" reads the project (plan, open issues, stale PRs) and proposes 2-5 tasks to work on next. Use when I ask for /brief, and from closeout and issue-review when they propose sessions.
+description: Propose sessions as briefs (P2c), each sized to the right tier. Two modes - "followups" turns this session's leftover work into briefs; "next" reads the project (plan, open issues, stale PRs) and proposes 2-5 tasks to work on next. Use when I ask for /brief, and whenever another skill or routine proposes a session.
 ---
 
 # Brief
@@ -15,13 +15,18 @@ The argument picks it: `followups` or `next`. Without one: `followups` if
 this session changed something or found work it did not do, `next`
 otherwise.
 
+Called from another skill (closeout, a routine), that skill supplies the
+candidates: run steps 1, 4, 5 and 6.
+
 ## 1. What is in flight
 
 Before any candidate, list what is already being worked on: open PRs,
 pushed branches without a PR, running sessions on this project and
 proposed sessions I have not started (the adapter names how to see them),
 and in-progress rows in `docs/plan.md`. A candidate these already cover is
-dropped and named in the report.
+dropped and named in the report. Stale PRs (step 2) are the one exception.
+The check is best effort: proposed sessions the agent cannot see may still
+exist, so the report says what it could not check.
 
 ## 2. Candidates
 
@@ -30,19 +35,25 @@ noticed but out of scope, the next plan step this session unblocked, and
 anything under "Not verified". Settled decisions and verified facts come
 from this session's evidence, with references.
 
-**next**, from the project. Delegate the reading to an explorer at fast
-tier; ranking and brief writing stay here (P2).
+**next**, from the project. Delegate the listing to an explorer at fast
+tier; the relevance check, ranking and brief writing stay here (P2).
 
 - The living plan: `docs/plan.md` and the current phase plan
   (`practices/planning.md`); the next packages not started.
-- Open issues, in priority order (baseline R6): unprioritised, `p1`, `p2`,
-  `p3`. Check each shortlisted issue with `issue-review` step 2; drop the
-  addressed, obsolete and duplicate ones.
-- Open PRs with no activity for 7 days or more.
+- Open issues (priorities: baseline R6). Check each one you would shortlist
+  with `issue-review` step 2; drop the addressed, obsolete and duplicate
+  ones. Give an unprioritised issue the priority you would propose.
+- Open PRs with no activity for 7 days or more that I or my agents opened.
+  Others (dependency bots, contributors) belong to someone else (P8): list
+  them in the report, do not brief them.
+
+Rank: `p1` issues and plan packages that block other work; then the current
+phase's next packages, `p2` issues and stale PRs; then `p3`. Within a band,
+cheaper to finish first.
 
 ## 3. Choose
 
-**next**: show a shortlist of up to five, each with what it is, why it
+**next**: show a shortlist of two to five (fewer only if fewer exist), each with what it is, why it
 ranks above the rest, its source link and the tier it would get (step 5).
 Ask me which to brief (P6b) and write only those.
 

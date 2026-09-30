@@ -91,7 +91,7 @@ recorded in the PR description with the command used.
 - The row-by-row report with evidence links (P18).
 - Setup mode: the PR URL, settings changed, what still needs me.
 - Audit mode: gaps only, grouped as "can fix" and "needs me"; if any, the
-  routine proposes a session with a brief (`templates/brief.md`) for a setup
+  routine proposes a session (`brief` skill) for a setup
   session covering the "can fix" list.
 - For a new project: the routine entries to add (routines
   T1–T4 that apply), for me to paste; the skill does not edit that list.

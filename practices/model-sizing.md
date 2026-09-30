@@ -8,7 +8,7 @@ models. Adjust from evidence.
 | Tier | For |
 |---|---|
 | fast | Search, lookups, summarising evidence, mechanical edits, scoped slices from a complete brief |
-| standard | Most implementation and routine review |
+| standard | Implementation that needs exploration or judgement, routine review |
 | strong | Hard design, debugging, reviewing standard-tier work that is non-trivial |
 | strongest | Critical review of security, auth, payments and data loss, deliberate architecture sessions |
 
@@ -19,10 +19,7 @@ Effort (reasoning budget): low, medium, high, extra-high.
 | Work | Tier / effort |
 |---|---|
 | Exploration, doc lookup | fast / low |
-| Mechanical slice (rename, fixtures, copy, screen to approved design) | fast / medium |
-| Scoped slice: brief leaves little to explore or decide (see below) | fast / high |
-| Slice that needs exploration or design judgement | standard / medium |
-| Hard design or debugging slice | standard / high, or strong / medium |
+| Implementation slice, delegated or a session started from a brief | "Tier for a brief" below |
 | Review of mechanical change or simple docs | fast / medium |
 | Review of normal change | standard / high (never below the implementer) |
 | Docs review with implications (ADR status, cross-doc) | standard / high |
@@ -44,17 +41,22 @@ already holds, not from the task's title:
   *Judgement*: choices inside the settled decisions, several interacting
   parts. *Open*: design or root cause undecided.
 
-| Exploration / reasoning | Tier / effort |
+The first row that matches wins:
+
+| Brief | Tier / effort |
 |---|---|
-| None or bounded / specified, size S | fast / high (fast / medium if mechanical) |
-| Bounded / judgement, or size M | standard / medium |
-| Open on either | standard / high, or strong / medium for hard design |
+| Exploration or reasoning open | standard / high, or strong / medium for hard design |
+| Mechanical: formulaic output, objective proof (rename, fixtures, copy, screen to approved design), any size | fast / medium |
+| Exploration none or bounded, reasoning specified, size S | fast / high |
+| Anything else (judgement, or size M) | standard / medium |
 
 Risk overrides the table: a brief whose Risk line is critical is never below
-standard. The Model line names the answers, for example "fast at high
+standard. The Model line names the two answers, for example "fast at high
 (exploration bounded, reasoning specified)", so I can check the call. A
-fast-tier session that meets a signal to go up (below) stops with a progress
-update and asks to be moved up, as in P2d; it does not push on.
+brief for review, exploration or a session that starts by asking me takes
+its row in the defaults table and leaves the answers out. A fast-tier session
+that meets a signal to go up (below) stops with a progress update and asks to
+be moved up; the template's Handoff carries this.
 
 ## Size in responses
 
@@ -99,7 +101,6 @@ Forks: record notable outcomes (tier too weak or wasteful) here.
   standard to fast tier. A starting point, not yet measured: record fast-tier
   briefs that had to move up, and standard-tier briefs that fast would have
   finished.
-
 - 2026-09, product repos: five briefs expected to be one slice ran 290 to
   430 responses each with five to seven compactions. The total response
   count, not who made the responses, was the cost driver. Led to "Size in
