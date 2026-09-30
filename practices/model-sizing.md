@@ -10,7 +10,7 @@ models. Adjust from evidence.
 | fast | Search, lookups, summarising evidence, mechanical edits |
 | standard | Most implementation and routine review |
 | strong | Hard design, debugging, reviewing standard-tier work that is non-trivial |
-| strongest | Critical review (P4 categories), deliberate architecture sessions |
+| strongest | Critical review of security, auth, payments and data loss, deliberate architecture sessions |
 
 Effort (reasoning budget): low, medium, high, extra-high.
 
@@ -26,7 +26,7 @@ Effort (reasoning budget): low, medium, high, extra-high.
 | Review of normal change | standard / high (never below the implementer) |
 | Docs review with implications (ADR status, cross-doc) | standard / high |
 | Critical review: security, auth, payments, data loss | strongest / extra-high; the caller never lowers it |
-| Critical review: concurrency, migrations, release-critical only | standard / extra-high, same role |
+| Critical review when none of those applies (concurrency, migrations, release-critical) | standard / extra-high, same role, never below the implementer |
 | Parent session coordinating a written plan | standard / medium |
 | Planning or analysis session | strong or strongest, chosen by me |
 
@@ -79,6 +79,7 @@ Forks: record notable outcomes (tier too weak or wasteful) here.
   Two strongest-tier critical reviews that had found blocking issues were
   replayed at standard tier on the same commits: it found two of the three
   blockers, and one real blocker the original missed, at about 40% of the
-  cost. The miss was an operator rollout step on a runner change. Led to P4a
-  and the standard-tier row for critical review outside security, auth,
-  payments and data loss.
+  cost. The blocker the standard-tier run missed was an operator rollout
+  step on a change touching a runner token, which stays at strongest tier.
+  Led to P4a and the standard-tier row for critical review outside security,
+  auth, payments and data loss.
