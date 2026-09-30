@@ -25,8 +25,8 @@ marketplace (`.claude-plugin/marketplace.json`, plugin source `"."`), so
   reaches a machine is under [Updates and running
   sessions](#updates-and-running-sessions).
 - `hooks/hooks.json`: `SessionStart` on `startup|clear|compact` runs
-  `session-start.sh`, whose stdout becomes context (hooks.md). It prints the
-  policy only when the project lacks the synced block, so the policy never
+  `session-start.sh`, whose stdout becomes context (hooks.md). It prints
+  [session.md](session.md) every time, and the policy only when the project lacks the synced block, so the policy never
   loads twice. `PreToolUse` on `mcp__ccd_session__spawn_task` runs
   `check-chip-brief.py` (see Chips below); it denies with
   `hookSpecificOutput.permissionDecision: "deny"`, and on its own errors
@@ -130,13 +130,11 @@ standard model is unverified.
 
 ## Session rules specific to this agent
 
-- Model check (P2d): a session started from a brief whose model or effort
-  differs from the brief's Model line sends its parent "Switch me to <model>
-  at <effort>: <session id>" and waits; the parent switches it with the
-  desktop app's session-model and session-effort tools, replies "Switched;
-  continue with the brief." and does nothing else that turn. With no
-  reachable parent, the session asks me to switch it with `/model` and
-  `/effort` and stops.
+The rules a session follows are in [session.md](session.md), which the
+`SessionStart` hook prints every time, synced project or not. This section
+holds the evidence behind them and the rules sessions do not need at start.
+
+- Model check (P2d): the rule is in [session.md](session.md).
 - Chips (P2c): a session I am offered as a desktop-app chip, whether from
   `spawn_task` or a scheduled routine (below), is a brief. Its prompt is filled
   from [`templates/brief.md`](../../templates/brief.md), heading and Model line
@@ -150,9 +148,11 @@ standard model is unverified.
   and returns the template so the retry is one call. The hook fires on the
   desktop app's `mcp__ccd_session__spawn_task` (observed 2026-09-29 with a
   test chip; unverified against vendor docs).
-- Proposing sessions (`brief` skill): a proposed session is a `spawn_task`
-  chip, and its summary names the model from `tiers.json` (Sonnet for fast,
-  Opus for standard). Where sessions default to another model, I pick the
+- Proposing sessions (`brief` skill): the rule is in
+  [session.md](session.md); the chip's summary names the model from
+  `tiers.json` (Sonnet for fast, Opus for standard). Before session.md was
+  printed at start, sessions told to use the `brief` skill wrote briefs in
+  chat and made no chips until reminded (2026-09-30). Where sessions default to another model, I pick the
   chip's model when I start it; otherwise the started session stops at the
   model check and asks to be switched. In-flight work for the skill's
   step 1: the desktop app's `list_sessions` lists other sessions; its
@@ -163,11 +163,9 @@ standard model is unverified.
 - Waiting on me (P6b): the desktop app shows a session as needing input
   only while a permission prompt, `AskUserQuestion` or another input prompt
   is open (agent-view.md, checked 2026-09-29); a turn ending in prose counts
-  as finished. So a decision or acceptance is asked with `AskUserQuestion`
-  (an acceptance card as accept / change / reject, proposed first) after the
-  card is shown, and a closeout or a hand-off to me (a merge I own, a command
-  to run) ends with `PushNotification`, one line under 200 characters; the
-  tool skips it while I am at the session (both from the tool's own
+  as finished. Hence the `AskUserQuestion` and `PushNotification` rule in
+  [session.md](session.md); an acceptance card is offered as accept / change /
+  reject, proposed first. `PushNotification` skips while I am at the session (both from the tool's own
   description, observed 2026-09-29, unverified against vendor docs). Both
   can be deferred tools, loaded with ToolSearch `select:NAME` first. The
   `Stop` hook ([`hooks/check-attention.py`](hooks/check-attention.py))

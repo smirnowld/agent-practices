@@ -9,6 +9,7 @@ vendor's own page.
 | Policy, local | Plugin `SessionStart` hook prints it, unless the project carries the synced copy | Global `AGENTS.md` pointing here, or the synced project copy |
 | Policy, project and cloud | Synced block in the project's `AGENTS.md`, imported from `CLAUDE.md` | Synced block in the project's `AGENTS.md`, read natively |
 | Skills | Plugin (repo-root `skills/`); cloud: setup script | `.agents/skills` (user or repo level) |
+| Session bindings (action to tool) | `claude/session.md`, printed by the `SessionStart` hook | `codex/session.md`, pointed to from the global `AGENTS.md` |
 | Roles | Generated `claude/agents/*.md` in the plugin | Generated `codex/agents/*.toml`, copied to `~/.codex/agents/` or `.codex/agents/` |
 | Routines | Desktop scheduled tasks | Desktop scheduled tasks |
 | Tiers | `claude/tiers.json` | `codex/tiers.json` |

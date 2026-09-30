@@ -22,7 +22,8 @@ candidates: run steps 1, 4, 5 and 6.
 
 Before any candidate, list what is already being worked on: open PRs,
 pushed branches without a PR, running sessions on this project and
-proposed sessions I have not started (the adapter names how to see them),
+proposed sessions I have not started (the adapter's `session.md` names how
+to see them),
 and in-progress rows in `docs/plan.md`. A candidate these already cover is
 dropped and named in the report. Stale PRs (step 2) are the one exception.
 The check is best effort: proposed sessions the agent cannot see may still
@@ -82,9 +83,11 @@ is split before it is proposed.
 
 ## 6. Propose
 
-Propose one session per brief; its summary repeats the Model line's model
-and effort. Where the agent cannot propose sessions, send the briefs in chat.
-Never commit them to the repository (P17).
+Propose one session per brief with the tool the adapter's `session.md`
+names (P1); writing a brief out in chat does not propose it. Its summary
+repeats the Model line's model and effort. Only where `session.md` names no
+such tool, send the briefs in chat and say so in the report. Never commit
+them to the repository (P17).
 
 ## 7. Report
 
