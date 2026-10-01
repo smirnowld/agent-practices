@@ -61,8 +61,10 @@ on every Codex host or cloud environment.
 The workflow binding lives in [session.md](session.md). Proposals stay in the
 originating chat until an explicit start request, so the user can review,
 revise and start them individually. Approving a brief's contents does not
-start it. A request such as "Approve and start B1" does; "start all" may
-start independent briefs, while dependent briefs remain pending. Pending does
+start it. A request such as "Approve and start B1 using its displayed model
+and effort" authorizes creation and those settings; "start all using each
+brief's displayed model and effort" may start independent briefs, while
+dependent briefs remain pending. Pending does
 not schedule a future run: check prerequisites when this chat is next asked
 to continue. Briefs are not committed to the repository (P17).
 
@@ -102,7 +104,13 @@ The `codex-app-tools` tool definitions exposed in a desktop session on
   local or explicitly requested worktree environment, and optional `model`
   and `thinking`. The tool requires an explicit request for a new chat;
   model overrides require an explicit request for that model. A start action
-  naming the displayed settings supplies that request. Creation dispatches
+  naming the displayed settings supplies that request. For brief launches,
+  both fields are mandatory in the call and must match the approved Model
+  line. Putting the settings only in the prompt leaves them unconfigured.
+  A start request that does not explicitly approve the settings needs one
+  clarification before dispatch, not a launch with omitted fields. If the
+  pair is unavailable or rejected, keep the brief pending rather than retry
+  with defaults. Creation dispatches
   work asynchronously; there is no exposed draft or paused-start parameter.
 - `list_threads` and `read_thread`: chat status and summaries for checking
   work in flight. Listings are best effort, not a complete registry of
@@ -122,6 +130,35 @@ from starting generation (`turn/start`), but it does not establish a dormant
 mode for the desktop `create_thread` tool. A custom integration could use
 that separation; this adapter uses the available desktop tools instead.
 https://learn.chatgpt.com/docs/app-server (checked 2026-09-30).
+
+### Launch checks
+
+Before calling `create_thread`, compare the approved brief, the start request
+and the actual tool arguments. For a brief naming `gpt-6-luna` at high:
+
+| Case | Required result |
+|---|---|
+| Explicit request to start with the displayed model and effort | Pass `model: "gpt-6-luna"` and `thinking: "high"` together with the complete brief. |
+| Model and effort appear only in the prompt | Do not dispatch; fill both tool fields after settings approval. |
+| Request says only "start B1" or "start all" | Obtain an explicit settings-approved start request before dispatching. |
+| Either setting differs from the approved Model line | Do not dispatch; resolve the discrepancy first. |
+| Exact pair unsupported or creation rejects it | Report the blocker and retain the brief; no default or more expensive retry. |
+
+Report the settings actually passed alongside the returned chat identifier.
+Do not claim the running model was verified unless returned metadata or
+subsequent inspection establishes it. P2d remains a second check; it does not
+replace configuring the launch.
+
+Observed 2026-10-01 in a product repo: three brief launches named a model and
+effort in their prompts but omitted both creation arguments. The user reported
+unexpected Astra usage. The omitted arguments are confirmed; which configured
+default selected Astra and the resulting spend were not independently
+verified. These launch checks replace the adapter's previous instruction to
+omit unapproved settings and rely on P2d. They use the desktop tool contract
+exposed on 2026-10-01; end-to-end enforcement is still unverified against
+official documentation. The app-server's explicit model configuration is
+documented at https://learn.chatgpt.com/docs/app-server (checked 2026-10-01),
+but that API does not establish this desktop tool's behavior.
 
 ## Models
 

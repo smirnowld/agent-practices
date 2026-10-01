@@ -16,11 +16,20 @@ unverified (2026-09-30).
 - **Start approved sessions:** only on my explicit request to start selected
   briefs, use `mcp__codex_app__list_projects` to resolve the project and
   `mcp__codex_app__create_thread` with the complete approved brief as its
-  prompt and its title. Set `model` and `thinking` only when I explicitly
-  approved those settings; otherwise omit them and retain the brief's P2d
-  check. Use the local project environment unless I explicitly request a
+  prompt and its title. Every brief launch must pass both `model` and
+  `thinking`, exactly matching its approved Model line. A Model line in the
+  prompt does not configure the chat. The start request must explicitly name
+  those settings or request the selected brief's displayed model and effort;
+  the follow-up action above does this. If it only says "start B1" or
+  "start all" without approving the settings, ask for one explicit start
+  request naming each selected brief's model and effort before creating any
+  chats. Never omit either field, use the configured default, substitute a
+  model, or dispatch first and rely on P2d to catch a mismatch. If the exact
+  model/effort pair is unavailable or rejected, keep the brief pending and
+  report the blocker; do not retry with defaults. Keep P2d as a second check.
+  Use the local project environment unless I explicitly request a
   worktree. Recheck work in flight and dependencies immediately before each
-  creation. "Start all" covers the selected independent briefs, not work
+  creation. A settings-approved "start all" covers the selected independent briefs, not work
   whose prerequisites are still pending; keep dependent briefs pending until
   those prerequisites are satisfied on a later continuation (no automatic
   wakeup is scheduled). Resolve the exact complete approved brief; ask if
