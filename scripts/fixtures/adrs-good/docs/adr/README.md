@@ -6,6 +6,17 @@
 | [0002](0002-use-widgets.md "Use widgets") | Use widgets for the thing | Proposed |
 | [0004](0004-replace-gadgets.md) | Replace gadgets with widgets | accepted |
 
+## More decisions
+
+A second table: Status is located from the header, not the last cell; emphasis
+in the header or the cell, an escaped pipe before it, a trailing column and an
+angle-bracket link target are accepted, and `<NNNN>` outside the link is prose.
+
+| ADR | Decision | **Status** | Notes |
+| --- | --- | --- | --- |
+| [0006](0006-bold-status.md) | Accept \| reject | **Proposed** | trailing column |
+| [0007](<0007-angle-link.md>) | Name files `<NNNN>-slug.md` | _accepted_ | angle-bracket link |
+
 ## Status meanings
 
 Proposed and accepted ADRs live here; rejected and superseded ADRs move to

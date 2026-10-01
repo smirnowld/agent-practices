@@ -12,16 +12,24 @@ directories whose name is not NNNN-kebab-case.md fails.
 Each ADR must carry a `**Status:** VALUE` line. In docs/adr/ the value must be
 `proposed` or `accepted` (case-insensitive); in docs/adr/archive/ it must be
 `rejected` or `superseded by ADR-NNNN`. A recognised status in the wrong
-directory fails; an unrecognised value fails and reports what was found.
+directory fails; an unrecognised value fails and reports what was found. In
+`superseded by ADR-NNNN`, NNNN must be an existing ADR other than the file
+itself. A near-miss such as `**Status**: accepted` fails naming the expected
+form.
 
 ADR numbers run 1..N across docs/adr/ and docs/adr/archive/ together: every
 duplicate and every gap fails.
 
 docs/adr/README.md must list every active ADR (a Markdown table row linking
 its file), must not list an archived ADR, and every link it has to an ADR
-file must resolve; a link may carry a `#anchor` or a title. Each row's last
-cell must equal the ADR's status (case-insensitive). Links in prose outside
-table rows are ignored, as are lines inside ``` or ~~~ code fences.
+file must resolve; a link may carry a `#anchor` or a title, and its target may
+be wrapped in angle brackets. Each row's Status cell (the column headed
+Status; the last cell when the table has no such header) must equal the ADR's
+status (case-insensitive, emphasis and backticks ignored). A row still holding
+the template placeholder link `[<NNNN>](<NNNN-slug>.md)` fails. Links in prose or list items outside
+table rows are ignored, except that an ADR listed only that way is reported
+with the expected table-row form; lines inside ``` or ~~~ code fences are
+ignored.
 
 Prints `path:line: reason` for each failure (path relative to DIR; line is
 omitted where there is no specific line). Exits 1 if there are any failures,
@@ -35,6 +43,10 @@ import sys
 
 NAME_RE = re.compile(r"^(\d{4})-[a-z0-9]+(?:-[a-z0-9]+)*\.md$")
 STATUS_RE = re.compile(r"^\*\*Status:\*\*\s*(.*?)\s*$")
+NEAR_STATUS_RE = re.compile(r"^[*_]*status[*_]*\s*:\s*[*_]*\s*(.*?)\s*$", re.IGNORECASE)
+PLACEHOLDER_RE = re.compile(r"\[<NNNN>\]|\(<NNNN[->]")
+SEPARATOR_CELL_RE = re.compile(r"^:?-+:?$")
+EMPHASIS_RE = re.compile(r"[*_`]")
 SUPERSEDED_RE = re.compile(r"^superseded by adr-(\d{4})$", re.IGNORECASE)
 LINK_RE = re.compile(r"\]\(([^)]+)\)")
 ACTIVE_STATUSES = {"proposed", "accepted"}
@@ -68,22 +80,31 @@ def adr_files(dir_path):
     return found
 
 
-def check_status(path, label, rel, failures):
+def check_status(path, num, label, rel, failures, superseded):
     lines = path.read_text().splitlines()
     status_line = None
     status_value = None
+    near_miss = None
     for n, line in enumerate(lines, 1):
         m = STATUS_RE.match(line)
         if m:
             status_line = n
             status_value = m.group(1)
             break
+        if near_miss is None and NEAR_STATUS_RE.match(line):
+            near_miss = (n, line.strip())
     if status_value is None:
-        failures.append(f"{rel}: missing **Status:** line")
+        hint = ""
+        if near_miss:
+            hint = f'; line {near_miss[0]} reads "{near_miss[1]}"; write **Status:** VALUE'
+        failures.append(f"{rel}: missing **Status:** line{hint}")
         return None
     if not is_recognised(status_value):
         failures.append(f"{rel}:{status_line}: status outside the set: {status_value}")
         return None
+    m = SUPERSEDED_RE.match(status_value)
+    if m:
+        superseded.append((rel, status_line, num, int(m.group(1))))
     if label == "active" and belongs_in_archive(status_value):
         failures.append(
             f"{rel}:{status_line}: superseded/rejected status in docs/adr/; move to docs/adr/archive/"
@@ -110,6 +131,38 @@ def check_numbering(numbered, root, failures):
             failures.append(f"docs/adr: ADR-{num:04d} missing: gap in numbering")
 
 
+def check_superseded(superseded, numbered, failures):
+    existing = {num for _, num in numbered}
+    for rel, line, own, target in superseded:
+        if target == own:
+            failures.append(
+                f"{rel}:{line}: superseded by itself (ADR-{target:04d}); name the ADR that replaces it"
+            )
+        elif target not in existing:
+            failures.append(
+                f"{rel}:{line}: superseded by ADR-{target:04d}, which does not exist; "
+                "name an existing ADR other than this one"
+            )
+
+
+def split_row(stripped):
+    return [c.strip() for c in re.split(r"(?<!\\)\|", stripped.strip().strip("|"))]
+
+
+def link_target(target):
+    target = target.strip()
+    if target.startswith("<"):
+        return target[1:].split(">")[0].split("#")[0]
+    return target.split()[0].split("#")[0] if target.split() else ""
+
+
+def link_basename(target):
+    clean = link_target(target)
+    if clean.startswith("./"):
+        clean = clean[2:]
+    return clean.rsplit("/", 1)[-1]
+
+
 def check_index(root, adr_dir, active_names, archive_names, statuses, failures):
     readme = adr_dir / "README.md"
     rel_readme = readme.relative_to(root)
@@ -117,7 +170,10 @@ def check_index(root, adr_dir, active_names, archive_names, statuses, failures):
         failures.append(f"{rel_readme}: missing index")
         return
     listed_active = set()
+    off_table = {}
     fence = None
+    prev_cells = None
+    status_col = None
     for n, line in enumerate(readme.read_text().splitlines(), 1):
         stripped = line.lstrip()
         marker = stripped[:3]
@@ -129,15 +185,37 @@ def check_index(root, adr_dir, active_names, archive_names, statuses, failures):
             continue
         if fence is not None:
             continue
-        if not stripped.startswith("|"):
+        is_row = stripped.startswith("|")
+        if not is_row:
+            prev_cells = status_col = None
+            for target in LINK_RE.findall(line):
+                basename = link_basename(target)
+                if basename in active_names:
+                    off_table.setdefault(basename, n)
             continue
-        cells = [c.strip() for c in stripped.strip().strip("|").split("|")]
-        row_status = cells[-1].lower() if cells else ""
+        cells = split_row(stripped)
+        if all(SEPARATOR_CELL_RE.match(c) for c in cells):
+            status_col = None
+            if prev_cells:
+                heads = [EMPHASIS_RE.sub("", c).strip().lower() for c in prev_cells]
+                status_col = heads.index("status") if "status" in heads else None
+            prev_cells = None
+            continue
+        prev_cells = cells
+        col = -1 if status_col is None else status_col
+        raw_status = cells[col] if -len(cells) <= col < len(cells) else ""
+        row_status = EMPHASIS_RE.sub("", raw_status).strip().lower()
+        if PLACEHOLDER_RE.search(line):
+            failures.append(
+                f"{rel_readme}:{n}: placeholder row: replace <NNNN> and the rest with the ADR's "
+                "number, title and status, or delete the row"
+            )
+            continue
         for target in LINK_RE.findall(line):
-            clean = target.split()[0].split("#")[0] if target.split() else ""
+            basename = link_basename(target)
+            clean = link_target(target)
             if clean.startswith("./"):
                 clean = clean[2:]
-            basename = clean.rsplit("/", 1)[-1]
             if not NAME_RE.match(basename):
                 continue
             is_archive_link = clean.startswith("archive/") or (
@@ -156,11 +234,17 @@ def check_index(root, adr_dir, active_names, archive_names, statuses, failures):
                 expected = statuses.get(basename)
                 if expected and row_status != expected:
                     failures.append(
-                        f"{rel_readme}:{n}: lists {basename} as {cells[-1] or 'blank'}, "
+                        f"{rel_readme}:{n}: lists {basename} as {raw_status or 'blank'}, "
                         f"but its Status line says {expected}"
                     )
     for name in sorted(active_names - listed_active):
-        failures.append(f"{rel_readme}: does not list {name}")
+        if name in off_table:
+            failures.append(
+                f"{rel_readme}:{off_table[name]}: does not list {name} in a table row; "
+                f"expected | [NNNN]({name}) | DECISION | STATUS |"
+            )
+        else:
+            failures.append(f"{rel_readme}: does not list {name}")
 
 
 def main():
@@ -179,6 +263,7 @@ def main():
     active_names = set()
     archive_names = set()
     statuses = {}
+    superseded = []
 
     for label, dir_path, names in (
         ("active", adr_dir, active_names),
@@ -192,11 +277,12 @@ def main():
                 continue
             names.add(path.name)
             numbered.append((path, int(m.group(1))))
-            status = check_status(path, label, rel, failures)
+            status = check_status(path, int(m.group(1)), label, rel, failures, superseded)
             if status:
                 statuses[path.name] = status
 
     check_numbering(numbered, root, failures)
+    check_superseded(superseded, numbered, failures)
     check_index(root, adr_dir, active_names, archive_names, statuses, failures)
 
     if failures:
