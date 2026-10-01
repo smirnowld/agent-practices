@@ -17,6 +17,9 @@ is in [policy/AGENTS.md](policy/AGENTS.md).
   updates one sync PR per listed project (`scripts/push-policy-sync.sh`); if
   it failed, rerun it (`gh workflow run sync-policy`). After changing `roles/` or a `tiers.json`, run
   `python3 scripts/build-adapters.py`; never edit generated agents.
+- This repo is the policy source: it links [policy/AGENTS.md](policy/AGENTS.md)
+  instead of carrying the synced block, and is not in `POLICY_SYNC_REPOS`.
+  `scripts/sync-policy.sh --check` reporting `stale:` for AGENTS.md here is expected.
 - Run `make check` before opening a pull request; CI runs the same target.
 - Adapter facts cite the vendor doc URL and the date checked. Mark anything not
   confirmed against the official page as unverified.
