@@ -19,7 +19,7 @@ is in [policy/AGENTS.md](policy/AGENTS.md).
   `python3 scripts/build-adapters.py`; never edit generated agents.
 - This repo is the policy source: it links [policy/AGENTS.md](policy/AGENTS.md)
   instead of carrying the synced block, and is not in `POLICY_SYNC_REPOS`.
-  `sync-policy.sh --check` reporting `stale: AGENTS.md` here is expected.
+  `scripts/sync-policy.sh --check` reporting `stale:` for AGENTS.md here is expected.
 - Run `make check` before opening a pull request; CI runs the same target.
 - Adapter facts cite the vendor doc URL and the date checked. Mark anything not
   confirmed against the official page as unverified.
