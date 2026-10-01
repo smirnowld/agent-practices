@@ -9,12 +9,13 @@
 ## More decisions
 
 A second table: Status is located from the header, not the last cell; emphasis
-in the cell, a trailing column and an angle-bracket link target are accepted.
+in the header or the cell, an escaped pipe before it, a trailing column and an
+angle-bracket link target are accepted, and `<NNNN>` outside the link is prose.
 
-| ADR | Status | Notes |
-| --- | --- | --- |
-| [0006](0006-bold-status.md) | **Proposed** | trailing column |
-| [0007](<0007-angle-link.md>) | _accepted_ | angle-bracket link |
+| ADR | Decision | **Status** | Notes |
+| --- | --- | --- | --- |
+| [0006](0006-bold-status.md) | Accept \| reject | **Proposed** | trailing column |
+| [0007](<0007-angle-link.md>) | Name files `<NNNN>-slug.md` | _accepted_ | angle-bracket link |
 
 ## Status meanings
 

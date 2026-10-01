@@ -26,7 +26,7 @@ file must resolve; a link may carry a `#anchor` or a title, and its target may
 be wrapped in angle brackets. Each row's Status cell (the column headed
 Status; the last cell when the table has no such header) must equal the ADR's
 status (case-insensitive, emphasis and backticks ignored). A row still holding
-the template placeholder `<NNNN>` fails. Links in prose or list items outside
+the template placeholder link `[<NNNN>](<NNNN-slug>.md)` fails. Links in prose or list items outside
 table rows are ignored, except that an ADR listed only that way is reported
 with the expected table-row form; lines inside ``` or ~~~ code fences are
 ignored.
@@ -44,6 +44,7 @@ import sys
 NAME_RE = re.compile(r"^(\d{4})-[a-z0-9]+(?:-[a-z0-9]+)*\.md$")
 STATUS_RE = re.compile(r"^\*\*Status:\*\*\s*(.*?)\s*$")
 NEAR_STATUS_RE = re.compile(r"^[*_]*status[*_]*\s*:\s*[*_]*\s*(.*?)\s*$", re.IGNORECASE)
+PLACEHOLDER_RE = re.compile(r"\[<NNNN>\]|\(<NNNN[->]")
 SEPARATOR_CELL_RE = re.compile(r"^:?-+:?$")
 EMPHASIS_RE = re.compile(r"[*_`]")
 SUPERSEDED_RE = re.compile(r"^superseded by adr-(\d{4})$", re.IGNORECASE)
@@ -204,7 +205,7 @@ def check_index(root, adr_dir, active_names, archive_names, statuses, failures):
         col = -1 if status_col is None else status_col
         raw_status = cells[col] if -len(cells) <= col < len(cells) else ""
         row_status = EMPHASIS_RE.sub("", raw_status).strip().lower()
-        if "<NNNN>" in line:
+        if PLACEHOLDER_RE.search(line):
             failures.append(
                 f"{rel_readme}:{n}: placeholder row: replace <NNNN> and the rest with the ADR's "
                 "number, title and status, or delete the row"

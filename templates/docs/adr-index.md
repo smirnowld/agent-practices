@@ -3,8 +3,10 @@
 <!-- docs/adr/README.md, all repos with ADRs (P17). One table row per ADR
 in force or proposed, in number order; the decision is the ADR's title, which
 `templates/adr.md` writes as a short statement. The Status cell equals the
-ADR's Status line. Checked by `scripts/check-adrs.py` (baseline C5,
-`practices/project-baseline.md`). Budget: `practices/record-keeping.md`. -->
+ADR's Status line. Replace the placeholder row with the first ADR's, or delete
+it; the check fails while it remains. Checked by `scripts/check-adrs.py`
+(baseline C5, `practices/project-baseline.md`). Budget:
+`practices/record-keeping.md`. -->
 
 One file per lasting decision, format from the shared ADR template.
 
