@@ -19,6 +19,7 @@ check:
 	sh scripts/test-ensure-labels.sh
 	sh scripts/test-check-links.sh
 	sh scripts/test-check-action-pins.sh
+	python3 scripts/check-action-pins.py .
 	sh scripts/test-check-adrs.sh
 	sh adapters/claude/hooks/test-check-chip-brief.sh
 	sh adapters/claude/hooks/test-check-attention.sh
