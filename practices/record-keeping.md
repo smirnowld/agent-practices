@@ -41,6 +41,15 @@ unverified against a primary source), and P17 keeps verification evidence out
 of the repository (the "verification logs" row above). Learnt in a product
 repo, 2026-09-27.
 
+On that page, each image opens in an in-page viewer with a visible way back,
+never as a link to the image file: the host's page viewer opens a linked
+image with no back control, which strands me in picture view on a phone
+(observed; unverified against a primary source). Start from
+[templates/evidence-page.html](../templates/evidence-page.html): a button per
+image opens a full-screen dialog with "Back to overview" and an actual-size
+toggle, and its Back button, Escape and the back gesture close it. Learnt in
+a product repo, 2026-10-02.
+
 ## Why
 
 Agents read docs on start. Oversized records cost tokens every session, bury

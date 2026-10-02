@@ -35,6 +35,8 @@ pick the lower and say what it does not show.
 - Deliver so it opens anywhere (P18): put the images on a private published
   page linked from the PR (`practices/record-keeping.md#visual-evidence`);
   preview and build links must be reachable without the local machine.
+- Build the page from `templates/evidence-page.html`, so images open in its
+  in-page viewer with a way back, never as links to the image files.
 - Check every link resolves before sending.
 
 ## Report
