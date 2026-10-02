@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TITLE evidence</title>
+<style>
+/* One column of screens, each with what to look for above it.
+   Each image sits in a button that opens the in-page viewer, never a link to
+   the image file: the host's page viewer opens a linked image with no back control. */
+:root{--bg:#f6f7f9;--fg:#1c2128;--muted:#5a6472;--line:#d9dee5;--accent:#1f5fbf;
+--sans:system-ui,-apple-system,sans-serif;--mono:ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171c;--fg:#e6e9ee;--muted:#9aa4b2;--line:#2c323b;--accent:#7fb0ff;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14171c;--fg:#e6e9ee;--muted:#9aa4b2;--line:#2c323b;--accent:#7fb0ff;color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 var(--sans)}
+main{max-width:1100px;margin:0 auto;padding:32px 16px 64px;display:grid;gap:40px}
+h1{font-size:1.6rem;margin:0;text-wrap:balance}
+h2{font-size:1.1rem;margin:0}
+p,ul{margin:0;max-width:68ch}
+ul{padding-left:1.2em}
+header,section{display:grid;gap:10px;min-width:0}
+code{font-family:var(--mono);font-size:.88em}
+figure{margin:0;border:1px solid var(--line)}
+img{display:block;width:100%;height:auto}
+figure button.open{display:block;width:100%;padding:0;border:0;background:none;cursor:zoom-in}
+/* Viewer */
+dialog#viewer{padding:0;border:0;margin:0;width:100vw;height:100dvh;max-width:none;max-height:none;background:var(--bg);color:var(--fg)}
+dialog#viewer[open]{display:flex;flex-direction:column}
+dialog#viewer::backdrop{background:rgba(0,0,0,.6)}
+#viewer .bar{position:sticky;top:0;z-index:1;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--line)}
+#viewer .bar button{font:600 15px/1 var(--sans);padding:10px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+#viewer .bar .back{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+#viewer .stage{flex:1;min-height:0;overflow:auto}
+#viewer .stage img{width:auto;max-width:100%;cursor:zoom-in}
+#viewer.actual .stage img{max-width:none;cursor:zoom-out}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>TITLE</h1>
+<p>How it was captured: the build, the command, the account. Tap a screen to open it full size; "Back to overview", Escape or the back gesture returns here.</p>
+</header>
+<!-- One section per screen and state. Repeat as needed. img src: a path or URL
+     that resolves on the published host. -->
+<section>
+<h2>SCREEN AND STATE</h2>
+<ul><li>What to look for.</li></ul>
+<figure><button class="open" type="button" aria-label="Open full size: DESCRIPTION"><img src="img/IMAGE.png" alt="DESCRIPTION" loading="lazy"></button></figure>
+</section>
+</main>
+<dialog id="viewer" aria-label="Screen, full size">
+<div class="bar"><button class="back" type="button">← Back to overview</button><button class="zoom" type="button">Actual size</button></div>
+<div class="stage"><img alt=""></div>
+</dialog>
+<script>
+{
+// A full-size viewer inside the page, so a tap never leaves the overview.
+// Opening pushes a history entry: the Back button, Escape and the browser's back all close it.
+const viewer=document.getElementById('viewer'),stage=viewer.querySelector('.stage'),big=stage.querySelector('img'),zoom=viewer.querySelector('.zoom'),back=viewer.querySelector('.back');
+function setActual(on){viewer.classList.toggle('actual',on);zoom.textContent=on?'Fit to width':'Actual size';}
+function openViewer(img){big.src=img.currentSrc||img.src;big.alt=img.alt;setActual(false);viewer.showModal();stage.scrollTo(0,0);try{history.pushState({viewer:1},'');}catch(e){}}
+function closeViewer(){if(viewer.open)viewer.close();}
+document.querySelectorAll('button.open').forEach(b=>b.addEventListener('click',()=>openViewer(b.querySelector('img'))));
+back.addEventListener('click',()=>{if(history.state&&history.state.viewer)history.back();else closeViewer();});
+zoom.addEventListener('click',()=>setActual(!viewer.classList.contains('actual')));
+big.addEventListener('click',()=>setActual(!viewer.classList.contains('actual')));
+viewer.addEventListener('cancel',e=>{e.preventDefault();back.click();});
+addEventListener('popstate',closeViewer);
+// A reload with the viewer open keeps its history entry; drop it so Back leaves in one press.
+if(history.state&&history.state.viewer)history.replaceState(null,'');
+}
+</script>
+</body>
+</html>

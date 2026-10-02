@@ -12,6 +12,7 @@ fields. Using the template is mandatory; empty sections may be omitted.
 | `acceptance-card.md` | My acceptance of user-facing work (P6) | Chat and PR |
 | `closeout.md` | End of session (P15) | PR and chat |
 | `pull-request.md` | PR description | PR |
+| `evidence-page.html` | Private page of visual acceptance evidence (P6, P18) | Private published page |
 | `adr.md` | Lasting decision, summary above the divider (P17) | `docs/adr/` |
 | `docs/adr-index.md` | ADR index and status meanings (P17) | `docs/adr/README.md` |
 | `docs/questions.md` | Open questions register, open items only (P11, P17) | Project `docs/` |
