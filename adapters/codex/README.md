@@ -232,20 +232,49 @@ https://developers.openai.com/plugins/build/plugins (checked 2026-09-30).
   mode) describe recurring routines. Codex scheduled tasks can run these
   workflows, but setup of their schedule, project list, and notification behavior remains a
   manual task unless one is explicitly created.
-- P6b can use a structured question tool when the active Codex surface exposes
-  one. The app-server documents an experimental `tool/requestUserInput` prompt;
-  a desktop session exposed structured question tools, with availability
-  depending on mode (observed 2026-09-30). The desktop app documents separate question and
-  turn-completion notification settings and an Activity view for chats waiting
-  for a response. These are user-controlled settings, not a confirmed
-  agent-callable notification for a specific closeout. Use the structured tool
-  when available and the closeout or question in chat; whether the desktop's
-  asynchronous question tool causes a waiting badge and notification at turn
-  end is unverified. https://learn.chatgpt.com/docs/app-server and
-  https://learn.chatgpt.com/docs/notifications (checked 2026-09-30).
+- P6b question-tool selection and delivery limits are recorded under
+  [Structured questions](#structured-questions).
 - `policy/AGENTS.md` says in P15 that closeouts name agents and models. Codex
   can provide those names; this is an instruction convention, not a Codex
   feature or schema field.
+
+## Structured questions
+
+The session binding selects a tool by its active contract, not just its
+presence in the tool list. In a desktop session on 2026-10-03,
+`request_user_input` was restricted to Plan mode, while
+`request_user_input_async` accepted clarification questions during normal
+work and returned immediately; replies were described as later user
+messages. The tools have different schemas and permitted uses. In
+particular, a tool restricted to clarification cannot be used for approval
+just because P6b asks for a structured prompt. These are observed tool
+contracts, unverified against official documentation for these desktop
+tools; do not assume they apply to every surface or build.
+
+Observed 2026-10-03 in a tooling repo: the user reported missing question
+options. Selective inspection of the preceding week's local session records
+found 49 structured-question calls across 12 files, all with
+`accepted: true` responses and no tool errors or unmatched calls. None were
+nested inside another tool call. This establishes submission only; it does
+not establish rendering, answers, or routing to another chat. The parent
+chat therefore presents delegated questions itself, calls the permitted tool
+directly, and repeats the full question and options in its final message
+when ending on a required answer. This text fallback is a mitigation whose
+effect on visibility still needs user confirmation.
+
+The official app-server documents an experimental `tool/requestUserInput`
+prompt and says pending requests may be cleared on turn start, completion
+or interruption, or resolved by a configured timeout. Whether the desktop
+asynchronous tool shares that lifecycle is unverified; do not infer that
+turn completion caused the reported missing cards.
+https://learn.chatgpt.com/docs/app-server (checked 2026-10-03).
+
+Desktop notification settings include separate question and turn-completion
+controls, and Activity can show chats waiting for a response. These are
+user-controlled settings, not a confirmed agent-callable closeout
+notification. Whether the asynchronous tool produces that waiting state or
+notification remains unverified.
+https://learn.chatgpt.com/docs/notifications (checked 2026-10-03).
 
 ## Not verified
 
