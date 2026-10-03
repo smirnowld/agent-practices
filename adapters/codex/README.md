@@ -262,6 +262,26 @@ directly, and repeats the full question and options in its final message
 when ending on a required answer. This text fallback is a mitigation whose
 effect on visibility still needs user confirmation.
 
+Observed 2026-10-03 in a tooling repo: a typed answer can coincide with
+question-card dismissal. A card disappearing does not establish withdrawal
+of an answer: use an unambiguous typed reply as the answer, and clarify
+ambiguous replies before drawing conclusions. Keep interaction transcripts
+and corrected trial interpretations in PR evidence, not in this guide.
+
+A subsequent test kept the turn active with an interruptible `clock.sleep`
+after a direct asynchronous question call. The user selected an option in
+the card, and an incoming `send_user_message_question_reply` message linked
+the answer to that call and interrupted the wait. This confirms one card
+was visible, selectable and delivered its answer. It does not isolate
+whether waiting, reply method or another condition made the difference,
+nor establish reliability across sessions. The session binding therefore
+keeps the turn active for required asynchronous answers, using supported
+interruptible waits in intervals of at most 60 seconds after independent
+work, until an answer or a user stop request. If waiting is unavailable or
+the turn must end, the complete question remains in the final text.
+This is an observed mitigation, unverified against official documentation
+for these desktop tools; it is not a guarantee of card persistence.
+
 The official app-server documents an experimental `tool/requestUserInput`
 prompt and says pending requests may be cleared on turn start, completion
 or interruption, or resolved by a configured timeout. Whether the desktop

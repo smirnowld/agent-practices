@@ -66,11 +66,20 @@ unverified (2026-09-30).
   for the question, ask in chat. Call the tool directly from the parent
   chat; delegated agents return questions to the parent to present.
   `accepted: true` confirms submission, not display or an answer. Continue
-  only independent work while a required answer is pending. When ending a
-  turn waiting for me, include the complete question, all options and the
+  only independent work while a required answer is pending. For an
+  asynchronous question that needs an answer, keep the turn active: after
+  independent work, use an exposed interruptible wait (such as
+  `clock.sleep`) in intervals of at most 60 seconds until an answer arrives
+  or I ask to stop. Do not finish just because submission was accepted.
+  Tell me I can answer through the card; a clear typed reply is also an
+  answer when it unambiguously matches the pending question. If the card
+  disappears after that reply, do not treat its disappearance as withdrawal
+  of my answer. Clarify ambiguous replies before drawing conclusions.
+  If waiting is unavailable or the turn must end with an answer pending,
+  include the complete question, all options and the
   recommended choice in the final chat message as well as any structured
   prompt, so the question remains answerable if the card is missing. Never
   treat silence, elapsed time or a preselected option as an answer or
   approval. No agent-callable notification is checked; send the card or
-  closeout and questions in chat, and act on actual answers next turn.
+  closeout and questions in chat, and act on actual answers when they arrive.
   Evidence and limits: [README.md](README.md#structured-questions).
