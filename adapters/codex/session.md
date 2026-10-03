@@ -57,7 +57,20 @@ unverified (2026-09-30).
   `~/.codex/agents/` or the project's `.codex/agents/`.
 - **Model check** (P2d): no tool to switch a running session is checked; on
   a mismatch, ask me to switch the model and effort and stop.
-- **Ask me, or wait on me** (P6b): the structured question tool where the
-  surface exposes one; otherwise the question in chat. No agent-callable
-  notification is checked; end with the card or closeout in chat, followed
-  by the closeout's questions, and act on the answers next turn.
+- **Ask me, or wait on me** (P6b): check the active mode and exposed tool
+  contract. Use `request_user_input` only where the mode permits it (the
+  observed desktop contract restricts it to Plan mode); use
+  `request_user_input_async` for clarification during normal work when
+  exposed and permitted. Follow the tool's allowed scope: a clarification
+  tool is not an approval mechanism. If no permitted structured tool exists
+  for the question, ask in chat. Call the tool directly from the parent
+  chat; delegated agents return questions to the parent to present.
+  `accepted: true` confirms submission, not display or an answer. Continue
+  only independent work while a required answer is pending. When ending a
+  turn waiting for me, include the complete question, all options and the
+  recommended choice in the final chat message as well as any structured
+  prompt, so the question remains answerable if the card is missing. Never
+  treat silence, elapsed time or a preselected option as an answer or
+  approval. No agent-callable notification is checked; send the card or
+  closeout and questions in chat, and act on actual answers next turn.
+  Evidence and limits: [README.md](README.md#structured-questions).
