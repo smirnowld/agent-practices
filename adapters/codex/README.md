@@ -262,6 +262,29 @@ directly, and repeats the full question and options in its final message
 when ending on a required answer. This text fallback is a mitigation whose
 effect on visibility still needs user confirmation.
 
+Later in the same trial, the user reported that a structured question did
+appear, then was cancelled when they typed an option letter as a chat reply.
+An attached screenshot showed automation cards rather than question cards;
+it did not establish that the question had failed to render. Earlier agent
+interpretations that the text fallback had first worked and then failed
+were withdrawn after the user clarified the sequence. A card disappearing
+does not establish withdrawal of an answer: use an unambiguous typed reply
+as the answer, and clarify ambiguous replies before classifying the trial.
+
+A subsequent test kept the turn active with an interruptible `clock.sleep`
+after a direct asynchronous question call. The user selected an option in
+the card, and an incoming `send_user_message_question_reply` message linked
+the answer to that call and interrupted the wait. This confirms one card
+was visible, selectable and delivered its answer. It does not isolate
+whether waiting, reply method or another condition made the difference,
+nor establish reliability across sessions. The session binding therefore
+keeps the turn active for required asynchronous answers, using supported
+interruptible waits in intervals of at most 60 seconds after independent
+work, until an answer or a user stop request. If waiting is unavailable or
+the turn must end, the complete question remains in the final text.
+This is an observed mitigation, unverified against official documentation
+for these desktop tools; it is not a guarantee of card persistence.
+
 The official app-server documents an experimental `tool/requestUserInput`
 prompt and says pending requests may be cleared on turn start, completion
 or interruption, or resolved by a configured timeout. Whether the desktop
