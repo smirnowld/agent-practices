@@ -262,14 +262,11 @@ directly, and repeats the full question and options in its final message
 when ending on a required answer. This text fallback is a mitigation whose
 effect on visibility still needs user confirmation.
 
-Later in the same trial, the user reported that a structured question did
-appear, then was cancelled when they typed an option letter as a chat reply.
-An attached screenshot showed automation cards rather than question cards;
-it did not establish that the question had failed to render. Earlier agent
-interpretations that the text fallback had first worked and then failed
-were withdrawn after the user clarified the sequence. A card disappearing
-does not establish withdrawal of an answer: use an unambiguous typed reply
-as the answer, and clarify ambiguous replies before classifying the trial.
+Observed 2026-10-03 in a tooling repo: a typed answer can coincide with
+question-card dismissal. A card disappearing does not establish withdrawal
+of an answer: use an unambiguous typed reply as the answer, and clarify
+ambiguous replies before drawing conclusions. Keep interaction transcripts
+and corrected trial interpretations in PR evidence, not in this guide.
 
 A subsequent test kept the turn active with an interruptible `clock.sleep`
 after a direct asynchronous question call. The user selected an option in
