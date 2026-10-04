@@ -61,11 +61,12 @@ on every Codex host or cloud environment.
 The workflow binding lives in [session.md](session.md). Proposals stay in the
 originating chat until an explicit start request, so the user can review,
 revise and start them individually. Approving a brief's contents does not
-start it. A request such as "Approve and start B1 using its displayed model
-and effort" authorizes creation and those settings; "start all using each
-brief's displayed model and effort" may start independent briefs, while
-dependent briefs remain pending. Pending does
-not schedule a future run: check prerequisites when this chat is next asked
+start it. An explicit request to start a selected brief also approves its
+displayed model and effort. "Start B1" or "kick it off" is sufficient when
+the selected brief and settings are unambiguous; no separate settings
+confirmation is needed. "Start all" may start independent briefs using each
+brief's displayed model and effort, while dependent briefs remain pending.
+Pending does not schedule a future run: check prerequisites when this chat is next asked
 to continue. Briefs are not committed to the repository (P17).
 
 The Codex desktop instructions exposed on 2026-09-30 support an inline
@@ -103,13 +104,13 @@ The `codex-app-tools` tool definitions exposed in a desktop session on
 - `create_thread`: a complete prompt, title, project or projectless target,
   local or explicitly requested worktree environment, and optional `model`
   and `thinking`. The tool requires an explicit request for a new chat;
-  model overrides require an explicit request for that model. A start action
-  naming the displayed settings supplies that request. For brief launches,
+  model overrides require an explicit request for that model. Under this
+  workflow, a request to start an unambiguous displayed brief approves its
+  named model and effort; the user need not repeat them. For brief launches,
   both fields are mandatory in the call and must match the approved Model
   line. Putting the settings only in the prompt leaves them unconfigured.
-  A start request that does not explicitly approve the settings needs one
-  clarification before dispatch, not a launch with omitted fields. If the
-  pair is unavailable or rejected, keep the brief pending rather than retry
+  Ask before dispatch if the selected brief or either setting is missing or
+  ambiguous. If the pair is unavailable or rejected, keep the brief pending rather than retry
   with defaults. Creation dispatches
   work asynchronously; there is no exposed draft or paused-start parameter.
 - `list_threads` and `read_thread`: chat status and summaries for checking
@@ -139,8 +140,9 @@ and the actual tool arguments. For a brief naming `gpt-6-luna` at high:
 | Case | Required result |
 |---|---|
 | Explicit request to start with the displayed model and effort | Pass `model: "gpt-6-luna"` and `thinking: "high"` together with the complete brief. |
-| Model and effort appear only in the prompt | Do not dispatch; fill both tool fields after settings approval. |
-| Request says only "start B1" or "start all" | Obtain an explicit settings-approved start request before dispatching. |
+| Model and effort appear only in the prompt | Do not dispatch until both tool fields match the approved Model line. |
+| Request says "start B1", "kick it off" or "start all" with unambiguous displayed briefs and settings | Treat the start request as approval of those settings; pass both tool fields for each selected independent brief without asking again. |
+| Selected brief, model or effort is missing or ambiguous | Ask for the missing information before dispatching. |
 | Either setting differs from the approved Model line | Do not dispatch; resolve the discrepancy first. |
 | Exact pair unsupported or creation rejects it | Report the blocker and retain the brief; no default or more expensive retry. |
 
@@ -159,6 +161,12 @@ exposed on 2026-10-01; end-to-end enforcement is still unverified against
 official documentation. The app-server's explicit model configuration is
 documented at https://learn.chatgpt.com/docs/app-server (checked 2026-10-01),
 but that API does not establish this desktop tool's behavior.
+
+Workflow preference updated 2026-10-04 in a tooling repo: the user confirmed
+that asking to start a displayed brief also validates its model and effort.
+The adapter therefore uses that start request as settings approval while
+still requiring both creation arguments. This is an authorization convention;
+end-to-end launch behavior remains unverified.
 
 ## Models
 
