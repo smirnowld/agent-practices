@@ -4,13 +4,15 @@ visible (session.md, "Ask me, or wait on me").
 
 Thinking is not shown to me; the desktop app shows only a summary of it, which
 reads as if the content was sent. Sessions planned commands in thinking, asked
-"tell me when you've run them" and I never saw the commands. So a call holding
-a short question (under SHORT characters; such questions lean on content
-elsewhere, while long ones carry their own) with no chat text after the last tool result (text written before other tool
+"tell me when you've run them" and I never saw the commands. So a question
+with no chat text after the last tool result (text written before other tool
 calls in the turn is an earlier step, not this question's content) is denied
-once with a reason; the same call right after that denial passes, so a
-self-contained question costs one retry. Any error lets the question through
-with a note on stderr; a broken check must not block questions.
+until the agent writes some. There is no retry allowance and no length
+threshold: agents that were offered "call again unchanged if self-contained"
+took it almost every time, because they believed the commands in their
+thinking had been sent, and long questions pointed at unseen commands too.
+Any error lets the question through with a note on stderr; a broken check
+must not block questions.
 """
 import json
 import sys
@@ -18,15 +20,13 @@ import sys
 # Results of tools that only send or load something do not start a new step:
 # the closeout's question follows its PushNotification.
 QUIET = {"PushNotification", "ToolSearch"}
-# Replayed on 413 questions from ten days of sessions (2026-10-05), this hook
-# denies 102; those held every one I found that I could not answer.
-SHORT = 100
-
+# Replayed on 486 questions from ten days of sessions (2026-10-05), 350 had no
+# chat text right before them; each costs one denial until the agent writes it.
 REASON = (
-    "No chat text came right before this question, and thinking is not shown to the user (P6b). "
-    "If this question depends on commands, steps, a card or anything else the user must "
-    "see, write it as chat text first, then ask. If the question is self-contained, call "
-    "AskUserQuestion again unchanged."
+    "The user has seen no chat text since your last tool call; thinking is never shown "
+    "(P6b). If you planned commands, steps or a card in thinking, the user has NOT seen "
+    "them: write them in full as chat text now, then ask. If the question truly stands "
+    "alone, write one sentence of context first, then ask."
 )
 
 
@@ -43,10 +43,9 @@ def typed(entry, content):
     return any(isinstance(c, dict) and c.get("type") == "text" for c in content or [])
 
 
-def visible_or_retry(path):
-    """Whether chat text was written after the last tool result, or the last
-    question since then was denied by this hook."""
-    shown, denied, asks, quiet = False, False, set(), set()
+def visible(path):
+    """Whether chat text was written after the last tool result or typed message."""
+    shown, quiet = False, set()
     with open(path) as f:
         for line in f:
             try:
@@ -60,28 +59,20 @@ def visible_or_retry(path):
             if entry.get("type") == "user":
                 results = [c for c in parts if c.get("type") == "tool_result"
                            and c.get("tool_use_id") not in quiet]
-                if any(c.get("tool_use_id") in asks and REASON in json.dumps(c.get("content"))
-                       for c in results):
-                    denied = True
-                elif typed(entry, content) or results:
-                    shown, denied = False, False
+                if typed(entry, content) or results:
+                    shown = False
             elif entry.get("type") == "assistant":
                 for c in parts:
                     if c.get("type") == "text" and (c.get("text") or "").strip():
                         shown = True
-                    elif c.get("type") == "tool_use" and c.get("name") == "AskUserQuestion":
-                        asks.add(c.get("id"))
                     elif c.get("type") == "tool_use" and c.get("name") in QUIET:
                         quiet.add(c.get("id"))
-    return shown or denied
+    return shown
 
 
 def main():
     data = json.load(sys.stdin)
-    questions = (data.get("tool_input") or {}).get("questions") or []
-    if not any(len(str(q.get("question") or "")) < SHORT for q in questions if isinstance(q, dict)):
-        return
-    if visible_or_retry(data["transcript_path"]):
+    if visible(data["transcript_path"]):
         return
     json.dump({"hookSpecificOutput": {
         "hookEventName": "PreToolUse",
