@@ -17,10 +17,23 @@ not reasoning. The receiver must not need the sender's transcript. -->
 <!-- Not to be reopened. Link the ADR or message where each was made. -->
 - <decision> (<link>)
 
-## Owned files and resources
+## Core files and resources
 
-<!-- Only these may be changed. Anything else: stop and report. -->
+<!-- Where the work is expected. Other files may change under fix on the go
+(policy P6, practices/scope-and-batching.md); log them in the report. -->
 - <path or resource>
+
+## No-go
+
+<!-- Never changed by this session: files and resources another session
+holds, ADR statuses, secrets and infrastructure, plus anything listed here. -->
+- <path or resource>
+
+## Related issues
+
+<!-- Open issues (deferred-review too) on the core files or goal. Fix each
+that passes the fix-on-the-go test in this PR (Fixes #N); report the rest. -->
+- <#N: title | none found>
 
 ## Already verified
 

@@ -23,6 +23,9 @@ phone, and knows what comes next. The closeout goes in chat and in the PR
   any fallback when a role's agent was unavailable.
 - Anything not verified, deferred review findings, records updated, cleanup
   done.
+- What was fixed on the go and which issues the PR closed (P6). Work left
+  over that would have passed the fix-on-the-go test is a miss: say so under
+  **Deferred** and why it was not done.
 
 ## 2. Fill the template
 
@@ -80,12 +83,15 @@ whichever of these apply, together in one structured question prompt:
   why it is mine and its head commit; merging is proposed first. A yes is my
   explicit OK (P1) for that commit only, and counts only if I also accepted
   and left no decision open. Merge by the project's procedure or the `merge`
-  skill, whose other checks still apply. Any new commit needs the question
-  again.
-- **Follow-ups**: when **Deferred**, **Next** or **Continuation** lists work
-  for a new session. Ask whether to brief it: all (proposed first), let me
-  pick (a second prompt lists them), or none. On a yes, run `brief` with
-  those candidates.
+  skill, whose other checks still apply. A new commit needs the question
+  again, unless I approved it after seeing its diff and the change needs no
+  critical reviewer (P4b).
+- **Follow-ups**, only for work that is not small: the next plan step this
+  session unblocked, and changes deferred as bigger or riskier than the
+  fix-on-the-go test allows. Merge duplicates first. For each, ask now or
+  later: now briefs it (or, for a deferred change in an unmerged PR, does
+  it in this PR); later leaves the plan row or issue. On "now", run `brief`
+  with those candidates. Small leftovers are not asked about.
 
 After acting on the answers, rewrite the closeout in the PR description
 (`gh pr edit --body-file`; a comment does not replace it) so Outcome, Proof
@@ -99,3 +105,6 @@ the tools.
 
 A product repository, 2026-09: the done rule, blocked outcome, cleanup
 checklist, blocker owner and continuation routing came from its closeout.
+All projects, 2026-10: about a fifth of answered questions were "brief this
+small fix?", so small fixes now land in the PR and only real follow-ups are
+asked about.

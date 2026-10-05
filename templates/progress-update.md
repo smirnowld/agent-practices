@@ -11,7 +11,7 @@ without the transcript. Short bullets; omit empty sections. -->
 - Done: <items, with GitHub PR or commit URLs (P18)>
 - Pending CI: <run URL, or "none">
 - In progress: <item — where it stands>
-- Owned files / resources: <list>
+- Core and no-go files / resources: <list>; also fixed: <list>
 
 **Verification:** <what is proven and how; what is not yet>
 

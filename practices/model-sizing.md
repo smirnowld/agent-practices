@@ -33,7 +33,7 @@ Effort (reasoning budget): low, medium, high, extra-high.
 A brief's tier comes from two questions, answered from what the brief
 already holds, not from the task's title:
 
-- **Exploration left.** *None*: the brief names the owned files and the facts
+- **Exploration left.** *None*: the brief names the core files and the facts
   to rely on. *Bounded*: a known area, a few files to read. *Open*: the
   cause or the place to change is still to be found.
 - **Reasoning left.** *Specified*: the change follows from the settled

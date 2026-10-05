@@ -7,7 +7,8 @@ description: Routine every three days (baseline T4). Reviews a project's open Gi
 
 Goal: open issues stay true and prioritised, and none is forgotten, at the
 lowest cost that can tell. Read-only: it never labels, closes, comments on or
-edits anything; the proposed session applies the actions after my OK.
+edits anything; the proposed session applies the actions, closing addressed
+issues without asking (P6) and the rest after my OK.
 
 Runs from a scheduled routine, one run per project. The routine proposes a
 session only when there is an action to take.
@@ -45,6 +46,8 @@ For each selected issue, from evidence only:
 - **Roll up:** it fits an item already planned: a row in `docs/plan.md` or
   the roadmap where present, or an open issue or PR that item links. Name the
   item.
+- **Cluster:** still open, and it touches the same files or module as other
+  still-open issues; together they fit one S or M session. Name the cluster.
 - **Still open:** none of the above.
 
 Cite the evidence for each verdict (PR, commit or file link, P18). Unsure
@@ -62,9 +65,14 @@ prioritised like any other.
 | Result | Output |
 |---|---|
 | Nothing to change | One line: "issues current", with counts by priority |
-| Closures, roll-ups, duplicates or label changes only | Proposed session: apply them after my OK, fast tier |
+| Closures of addressed issues only | Proposed session that closes them with the evidence link and reports, fast tier; no question |
+| Roll-ups, duplicates or label changes | Proposed session: apply them after my OK, fast tier |
+| Clusters | One proposed session per cluster that fixes its issues in one PR (`Fixes #N` each), written with `brief`; issues that fail the fix-on-the-go test (`practices/scope-and-batching.md`) stay open |
 | Open `p1` issue not in planned work | Proposed session that asks me first whether to plan or start it |
 | A verdict needs my decision (scope, requirement, overturning a decision) | Proposed session that asks me first and records the question (P11); do not propose the change |
+
+With more than 25 open `deferred-review` issues, review them all on this
+run, not only the selected ones, to form clusters; say so in the report.
 
 Ask about an issue once. The log records what was asked; later runs only
 count it until the issue changes or I answer.

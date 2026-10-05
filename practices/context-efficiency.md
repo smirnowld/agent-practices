@@ -47,7 +47,9 @@ same files, at about 120k context per call.
 - A new task gets a new session with a brief, not a fork: a fork inherits the
   history.
 - Delegated agents get a brief, not the transcript, and return conclusions.
-- When a late tweak meets a large context, hand it to a fresh small session.
+- A late tweak goes into the same PR, before the final review and CI
+  (`practices/scope-and-batching.md`). Hand it to a fresh small session only
+  when this context cannot take it, or the PR has already merged.
 - Summarise tool output, except exact diffs and visual renders when the task
   needs them.
 - Add machinery (for example re-injecting state after compaction) only when a
