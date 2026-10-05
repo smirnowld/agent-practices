@@ -61,7 +61,7 @@ made a decision keeps that history: my words quoted (P11), who decided, when.
 - **No names.** Leave the person out when the sentence works without one:
   "Secrets are created by hand in the dashboard; agents never see them." When
   a person is needed, files that speak in my voice say "me": an `AGENTS.md`
-  and every file in this repository. A project's other docs and code comments,
+  and every file in agent-practices. A project's other docs and code comments,
   including text a template puts there, say "the maintainer". Not "the owner"
   or "the operator": products use those words for their own roles. An accepted
   ADR needs no "decided by"; only I accept decisions (P11). Anyone else is
