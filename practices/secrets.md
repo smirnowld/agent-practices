@@ -30,8 +30,9 @@ and [rate limits](https://www.1password.dev/service-accounts/rate-limits).
 | `agents-<project>` | Keys this project's agents use, and keys they generate | That project's service account |
 | `<project>-ops` | Production, signing, backup and recovery keys | Only me, through the desktop app |
 
-- One service account per project: read on its vault and `agents-shared`,
-  write on its own vault only if its agents store keys they generate. A
+- One service account per project: read on its vault and `agents-shared`.
+  Give it write on its own vault too if agents should later store keys they
+  generate; no tool does that yet, so for now an agent asks me to. A
   service account's vaults and permissions can't be changed after it is
   created; to change them, create a new one and revoke the old.
 - A service account can't use Personal or Private vaults.
@@ -45,8 +46,9 @@ and [rate limits](https://www.1password.dev/service-accounts/rate-limits).
 
 ### Token in the Keychain
 
-The service account's token lives in the macOS Keychain, readable without a
-prompt by the `security` tool only:
+The service account's token lives in the macOS Keychain. `-T /usr/bin/security`
+lets any of my processes read it without a prompt through that tool, agents
+included; the vault scope, not the Keychain, is the boundary.
 
 ```sh
 security add-generic-password -s op-agent-<project> -a "$USER" -T /usr/bin/security -w
@@ -58,26 +60,32 @@ token, replacing the item (`-U`), then revoking the old token.
 ### Running with secrets
 
 - `with-secrets -- CMD` (agent mode) reads the token from the Keychain and
-  runs `CMD` under `op run` with the template's `op://` references; the token
-  goes to `op` only, not to `CMD`. `op run` masks values in output.
+  runs `CMD` under `op run` with the template's `op://` references. The token
+  is kept out of `CMD`'s environment (hygiene for logs, not a boundary).
+  `op run` masks values in output. `op://` references in the caller's
+  environment are refused, since `op run` would resolve them too.
   `--template FILE` picks a template; a brief's `## Secrets` names it.
 - `with-secrets --operator -- CMD` is the same for me, through the desktop
-  app: one prompt per run, any vault.
+  app, any vault. Agents never run it.
 - Templates are committed, hold one `NAME=op://VAULT/ITEM/FIELD` per line and
-  nothing else; plain values are refused. Agent templates name an `agents-*`
-  vault or give vault and item IDs.
+  nothing else; plain values are refused. In agent mode the vault must be an
+  `agents-*` name or an ID; agent templates use IDs for vault and item (see
+  Quotas).
 - `push-secrets MANIFEST` copies values from 1Password into GitHub
   environment or repository secrets and Render environment groups. Values go
   through pipes, never argv or the screen. `--dry-run` lists what it would
-  push. Operator only.
-- Install both with `make install-bin` in this repository.
+  push, and the whole manifest is checked before the first push. Operator
+  only. `gh` may trim a trailing newline from a value.
+- Install both with `make install-bin` from this repository's main checkout
+  (links from a worktree dangle once it is removed).
 
 ### Quotas
 
 Families and Teams accounts allow 1,000 service-account requests per day for
 the whole account, and 1,000 reads per hour per token. Reading a reference by
-name costs about 3 requests; by vault and item ID, 1. So agent templates use
-IDs. Desktop-app sign-in doesn't count against these quotas. Check usage with
+name costs 3 requests; by vault and item ID, 1
+([multiple requests](https://www.1password.dev/service-accounts/use-with-1password-cli.md)).
+So agent templates use IDs. Desktop-app sign-in doesn't count against these quotas. Check usage with
 `op service-account ratelimit`.
 
 ### Trade-offs
@@ -86,7 +94,14 @@ IDs. Desktop-app sign-in doesn't count against these quotas. Check usage with
   brief's `## Secrets` limits which; the vault limits the worst case.
 - Anyone using my unlocked Mac can use the token. Lock the screen; revoke the
   token if the Mac is lost.
-- Which items a brief allows is not enforced by a hook yet; the template is
-  the boundary.
+- Desktop-app authorisation covers a terminal session and its sub-shells
+  for 10 minutes after last use, up to 12 hours
+  ([app integration security](https://www.1password.dev/cli/app-integration-security.md)).
+  An agent started from a terminal where I just ran `op` could use my
+  authorisation unprompted, so I run operator commands in a terminal no
+  agent runs from.
+- Which templates a brief allows is not enforced by a hook yet. The
+  service account's vaults are the hard limit; the template and brief
+  narrow use by convention.
 
 Lesson from a product repo and a server-config repo, 2026-10.

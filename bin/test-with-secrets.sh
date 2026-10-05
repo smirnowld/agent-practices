@@ -29,7 +29,7 @@ echo tok-demo
 FAKE
 chmod +x "$dir/bin/op" "$dir/bin/security"
 PATH="$dir/bin:$PATH"; export PATH
-lacks() { if grep -q "$1" "$2"; then echo "$2 holds $1"; exit 1; fi; }
+lacks() { [ -f "$2" ] || { echo "no $2"; exit 1; }; if grep -q "$1" "$2"; then echo "$2 holds $1"; exit 1; fi; }
 fails() { if "$@" >"$dir/out" 2>&1; then echo "expected failure: $*"; exit 1; fi; }
 
 printf '# agent\nA=op://agents-demo/item/field\nB=op://abcdefghijklmnopqrstuvwxyz/item with spaces/field\n' > "$dir/agent.tpl"
@@ -59,6 +59,10 @@ lacks hunter2plain "$dir/out"
 fails "$tool" --project demo --template "$dir/missing.tpl" -- true
 fails "$tool" --project other --template "$dir/agent.tpl" -- true
 grep -q 'no Keychain item op-agent-other' "$dir/out"
+
+# A reference in the environment would bypass the template: refused.
+fails env X=op://agents-demo/other/field "$tool" --project demo --template "$dir/agent.tpl" -- true
+grep -q 'environment holds op:// references (X)' "$dir/out"
 
 # Operator mode: any vault, and a token in the caller's shell is dropped.
 : > "$log"

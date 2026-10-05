@@ -34,13 +34,13 @@ FAKE
 cat > "$dir/bin/curl" <<FAKE
 #!/bin/sh
 echo "curl \$*" >> "$argv"
-cat <&3 > "$dir/got/curl-header"
+cat /dev/fd/3 > "$dir/got/curl-header"
 cat > "$dir/got/curl-body"
 printf '%s' "\${FAKE_STATUS:-200}"
 FAKE
 chmod +x "$dir/bin/op" "$dir/bin/gh" "$dir/bin/curl"
 PATH="$dir/bin:$PATH"; export PATH
-lacks() { if grep -q "$1" "$2"; then echo "$2 holds $1"; exit 1; fi; }
+lacks() { [ -f "$2" ] || { echo "no $2"; exit 1; }; if grep -q "$1" "$2"; then echo "$2 holds $1"; exit 1; fi; }
 fails() { if "$@" >"$dir/out" 2>&1; then echo "expected failure: $*"; exit 1; fi; }
 t=$(printf '\t')
 
@@ -58,7 +58,8 @@ grep -qx "gh-env:staging${t}API_KEY" "$dir/out"
 grep -qx "render-group:evg-123${t}SMTP_URL" "$dir/out"
 [ ! -s "$argv" ]
 
-# Real run: values go through stdin and fd 3 only, exact bytes.
+# Real run: values go through stdin and fd 3 only, bytes as read (the
+# fake keeps a trailing newline; real gh may trim it).
 OP_SERVICE_ACCOUNT_TOKEN=stray sh "$tool" --repo o/r "$dir/m.tsv" > "$dir/out" 2>&1
 [ "$(cat "$dir/got/gh-API_KEY")" = secret-apikey ]
 printf 'secret-pem\n' | cmp - "$dir/got/gh-P8"
@@ -73,10 +74,13 @@ grep -q '3 pushed' "$dir/out"
 # Filters.
 rm -f "$dir/got/"*
 sh "$tool" --only P8 "$dir/m.tsv" 2>/dev/null
-[ -f "$dir/got/gh-P8" ] && [ ! -f "$dir/got/gh-API_KEY" ] && [ ! -f "$dir/got/curl-body" ]
+[ -f "$dir/got/gh-P8" ]
+[ ! -f "$dir/got/gh-API_KEY" ]
+[ ! -f "$dir/got/curl-body" ]
 rm -f "$dir/got/"*
 sh "$tool" --destination gh-env:staging "$dir/m.tsv" 2>/dev/null
-[ -f "$dir/got/gh-API_KEY" ] && [ ! -f "$dir/got/gh-P8" ]
+[ -f "$dir/got/gh-API_KEY" ]
+[ ! -f "$dir/got/gh-P8" ]
 
 # Refusals: an empty or unreadable value pushes nothing; Render errors fail.
 rm -f "$dir/got/"*
@@ -91,7 +95,19 @@ fails sh "$tool" "$dir/bad.tsv"
 grep -q 'needs a render-key' "$dir/out"
 printf 'gh-repo X op://ops/a/credential\n' > "$dir/bad.tsv"
 fails sh "$tool" "$dir/bad.tsv"
-FAKE_STATUS=401 fails sh "$tool" --destination render-group:evg-123 "$dir/m.tsv"
+: > "$argv"
+printf 'render-key\trnd_pastedkey\n' > "$dir/bad.tsv"
+fails sh "$tool" "$dir/bad.tsv"
+lacks 'op ' "$argv"
+lacks rnd_pastedkey "$dir/out"
+printf 'render-key\top://ops/k/c\nrender-key\top://ops/k2/c\n' > "$dir/bad.tsv"
+fails sh "$tool" "$dir/bad.tsv"
+grep -q 'second render-key' "$dir/out"
+# A bad line anywhere stops the run before anything is pushed.
+printf 'gh-repo\tGOOD\top://ops/a/credential\nnowhere\tX\top://ops/a/credential\n' > "$dir/bad.tsv"
+fails sh "$tool" "$dir/bad.tsv"
+[ ! -f "$dir/got/gh-GOOD" ]
+fails env FAKE_STATUS=401 sh "$tool" --destination render-group:evg-123 "$dir/m.tsv"
 grep -q 'Render answered 401 for SMTP_URL' "$dir/out"
 lacks secret- "$dir/out"
 echo "push-secrets self-test passed"
