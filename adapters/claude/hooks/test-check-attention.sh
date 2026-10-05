@@ -187,6 +187,13 @@ session u:go 'b:gh pr create --fill' r q
 passes 'Asked whether to merge.'
 session u:go 'b:gh pr create --fill' r a:"$closeout" u:'thanks'
 passes 'You are welcome.'
+# A dismissed question leaves the turn waiting on me: no closeout is forced,
+# even with a card or open PR. Another answer does not.
+session u:go 'b:gh pr create --fill' r q 'r:[User dismissed — do not proceed, wait for next instruction]'
+passes 'I will wait.'
+passes '**Waiting on me:** the commands above'
+session u:go 'b:gh pr create --fill' r q 'r:[User dismissed]' u:'carry on' 'b:git status' r
+blocks 'Carried on.' '' "$open"
 # An answered question does not cover a stop after it.
 session u:go 'b:gh pr create --fill' r q r 'b:git status' r
 blocks 'Carried on.' '' "$open"

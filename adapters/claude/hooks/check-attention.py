@@ -15,7 +15,9 @@ without rewriting the PR description afterwards or without any closeout in
 chat this session. A PR this session or its subagents created with
 `gh pr create` and has not merged, set to auto-merge or closed since is not a
 stopping point (P5): the turn is blocked unless a closeout was sent this
-session or this turn asked me with AskUserQuestion. Any error
+session or this turn asked me with AskUserQuestion. When I dismissed its
+question, the turn is waiting on me: neither rule fires, so a dismissal does
+not push the session into a closeout. Any error
 lets the turn end with a note on stderr; a broken check must not trap a
 session.
 """
@@ -59,6 +61,8 @@ ASSIGN = re.compile(r"(?:(?:then|do|else)\s+|\()*(?:export\s+)?(\w+)=")
 PULL = re.compile(r"/pull/(\d+)\b")
 NOT_ACTION = re.compile(r"\s(--help|-h|--dry-run)\b")
 EDIT = re.compile(r"gh pr edit\b.*\s(--body|--body-file|-b|-F)\b|gh api\b.*\sbody=")
+# The tool result of a question I dismissed (observed 2026-10-05, not documented).
+DISMISSED = "User dismissed"
 LOAD = " (if it is not in your tools, load it with ToolSearch 'select:{0}' first)"
 
 
@@ -90,15 +94,17 @@ def entries(path):
 
 def turn_tools(path):
     """Tool calls since I last spoke (typed, or answered AskUserQuestion), in
-    order as (name, input), and whether any earlier message held a closeout."""
-    names, asks, failed, closeout = [], set(), set(), False
+    order as (name, input), whether any earlier message held a closeout, and
+    whether I dismissed the question that started the turn."""
+    names, asks, failed, closeout, dismissed = [], set(), set(), False, False
     for entry, content, parts in entries(path):
         if entry.get("type") == "user":
             failed |= {c.get("tool_use_id") for c in parts
                        if c.get("type") == "tool_result" and c.get("is_error")}
-            if typed(entry, content) or any(
-                    c.get("type") == "tool_result" and c.get("tool_use_id") in asks for c in parts):
+            answers = [c for c in parts if c.get("type") == "tool_result" and c.get("tool_use_id") in asks]
+            if typed(entry, content) or answers:
                 names = []
+                dismissed = any(DISMISSED in json.dumps(c.get("content")) for c in answers)
         elif entry.get("type") == "assistant":
             for c in parts:
                 if c.get("type") == "text" and re.search(
@@ -108,7 +114,7 @@ def turn_tools(path):
                     names.append((c.get("name"), c.get("input") or {}, c.get("id")))
                     if c.get("name") == "AskUserQuestion":
                         asks.add(c.get("id"))
-    return [(n, i) for n, i, k in names if k not in failed], closeout
+    return [(n, i) for n, i, k in names if k not in failed], closeout, dismissed
 
 
 def session_bash(path):
@@ -278,7 +284,9 @@ def main():
     text = FENCE.sub("", data.get("last_assistant_message") or "")
     found = lambda rules: [what for pattern, what in rules if re.search(pattern, text, re.M)]
     ask, notify = found(ASK), found(NOTIFY)
-    calls, earlier = turn_tools(data["transcript_path"])
+    calls, earlier, dismissed = turn_tools(data["transcript_path"])
+    if dismissed:
+        return
     gaps = merge_gaps(calls, earlier or bool(notify))
     missing = missing_fields(text) if notify else []
     if missing:

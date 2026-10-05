@@ -10,6 +10,9 @@ back. Write it for the person deciding, not for the code:
 - Describe options by their effect: what users see, what it costs, what is
   hard to undo later, what it blocks.
 - Give a proposed default and the reason in one line.
+- Everything the answer depends on (commands to run, steps, a card) is in
+  the question or written in the chat right above it. Never point at
+  something I have not been shown.
 - Make it answerable in one reply ("A", "B", or a short sentence). If you
   cannot write the options yet, you are not ready to ask: find out more first.
 - Ask only what is mine to decide. Low-impact, reversible implementation
