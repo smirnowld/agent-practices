@@ -259,7 +259,8 @@ just because P6b asks for a structured prompt. These are observed tool
 contracts, unverified against official documentation for these desktop
 tools; do not assume they apply to every surface or build.
 
-Observed 2026-10-03 in a tooling repo: I saw question options missing. Selective inspection of the preceding week's local session records
+Observed 2026-10-03 in a tooling repo: I saw question options
+missing. Selective inspection of the preceding week's local session records
 found 49 structured-question calls across 12 files, all with
 `accepted: true` responses and no tool errors or unmatched calls. None were
 nested inside another tool call. This establishes submission only; it does

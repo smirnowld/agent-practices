@@ -296,7 +296,7 @@ novel one (a new runtime, framework, service or vendor) needs an ADR. Detail:
 
 ## P21. Writing to me
 
-Write every message meant for me in plain words, for the person running the project rather than a
-code reviewer: result first, effects over mechanisms, asks and real risks
+Write every message meant for me in plain words, for the person running the
+project rather than a code reviewer: result first, effects over mechanisms, asks and real risks
 easy to spot, no internal labels unless I must act on one. Templates set
 the structure. Rules and examples: `practices/writing-to-me.md`.

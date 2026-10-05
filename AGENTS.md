@@ -24,7 +24,8 @@ is in [policy/AGENTS.md](policy/AGENTS.md).
 - Adapter facts cite the vendor doc URL and the date checked. Mark anything not
   confirmed against the official page as unverified.
 - Practices record where a lesson came from by kind of project, never by
-  name, with a date only where the lesson may age
+  name, with a date only on a measured number or an observed tool or model
+  behaviour
   ([practices/record-keeping.md](practices/record-keeping.md#outcomes-not-conversations)).
 
 ## Public and portable

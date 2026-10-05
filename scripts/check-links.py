@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check links in text meant for the owner (P18): a closeout, PR body or update.
+"""Check links in text meant for me (P18): a closeout, PR body or update.
 
 Usage: check-links.py [--offline] [--closeout | --closeout-pr] FILE   (reads stdin without FILE)
 

@@ -60,21 +60,24 @@ made a decision keeps that history: my words quoted (P11), who decided, when.
   "Promotions come after phase 2a", not my sentence in quotation marks.
 - **No names.** Leave the person out when the sentence works without one:
   "Secrets are created by hand in the dashboard; agents never see them." When
-  a person is needed, write "me" in an `AGENTS.md`, which speaks in my voice
-  like the policy, and "the maintainer" elsewhere. Not "the owner" or "the
+  a person is needed, files that speak in my voice say "me": an `AGENTS.md`,
+  and this repository's policy, practices, skills and templates. A project's
+  other docs and code comments say "the maintainer". Not "the owner" or "the
   operator": products use those words for their own roles. An accepted ADR
   needs no "decided by"; only I accept decisions (P11). Anyone else is named
   by role.
 - **A date only where it helps the reader** judge how fresh a fact is: when an
-  outside fact was checked, when a measurement or observation was made where
-  tool or model behaviour may since have changed, a deadline, how long live
-  state has been in place, an ADR's date. Drop a date that only records when
-  something was said, decided or moved; git has it.
+  outside fact was checked, a measured number, an observation of a tool's,
+  vendor's or model's behaviour (versions change it), a deadline, how long
+  live state or an open question has stood, when a doc was last reviewed, an
+  ADR's date. A lesson about how we work carries none. Drop a date that only
+  records when something was said, decided or moved; git has it.
 - **Lessons say where they came from by kind of project** ("a product repo"),
   so a reader can judge whether they apply, with a date only under the rule
   above.
-- **Text found breaking this** is reworded when found, as a fix on the go
-  (P6): keep the fact, drop the attribution.
+- **Text found breaking this** is reworded as a fix on the go when it passes
+  P6's test (`practices/scope-and-batching.md`); otherwise it is a
+  `docs-gardening` item. Keep the fact, drop the attribution.
 
 Learnt across all projects: agents copied my words, my name and the date of
 each conversation into docs and code comments, where no later reader needed
