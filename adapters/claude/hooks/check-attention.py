@@ -15,9 +15,10 @@ without rewriting the PR description afterwards or without any closeout in
 chat this session. A PR this session or its subagents created with
 `gh pr create` and has not merged, set to auto-merge or closed since is not a
 stopping point (P5): the turn is blocked unless a closeout was sent this
-session or this turn asked me with AskUserQuestion. When I dismissed its
-question, the turn is waiting on me: neither rule fires, so a dismissal does
-not push the session into a closeout. Any error
+session or this turn asked me with AskUserQuestion. When the turn began with
+my dismissing a question, it is waiting on me: neither the open-PR rule nor
+the ask-signal rule fires, so a dismissal does not push the session into a
+closeout or a repeat question. Any error
 lets the turn end with a note on stderr; a broken check must not trap a
 session.
 """
@@ -63,6 +64,8 @@ NOT_ACTION = re.compile(r"\s(--help|-h|--dry-run)\b")
 EDIT = re.compile(r"gh pr edit\b.*\s(--body|--body-file|-b|-F)\b|gh api\b.*\sbody=")
 # The tool result of a question I dismissed (observed 2026-10-05, not documented).
 DISMISSED = "User dismissed"
+# A question a hook denied was never shown to me (observed tool result prefix).
+DENIED = "PreToolUse:AskUserQuestion hook error"
 LOAD = " (if it is not in your tools, load it with ToolSearch 'select:{0}' first)"
 
 
@@ -100,8 +103,10 @@ def turn_tools(path):
     for entry, content, parts in entries(path):
         if entry.get("type") == "user":
             failed |= {c.get("tool_use_id") for c in parts
-                       if c.get("type") == "tool_result" and c.get("is_error")}
-            answers = [c for c in parts if c.get("type") == "tool_result" and c.get("tool_use_id") in asks]
+                       if c.get("type") == "tool_result"
+                       and (c.get("is_error") or DENIED in json.dumps(c.get("content")))}
+            answers = [c for c in parts if c.get("type") == "tool_result" and c.get("tool_use_id") in asks
+                       and DENIED not in json.dumps(c.get("content"))]
             if typed(entry, content) or answers:
                 names = []
                 dismissed = any(DISMISSED in json.dumps(c.get("content")) for c in answers)
@@ -285,15 +290,13 @@ def main():
     found = lambda rules: [what for pattern, what in rules if re.search(pattern, text, re.M)]
     ask, notify = found(ASK), found(NOTIFY)
     calls, earlier, dismissed = turn_tools(data["transcript_path"])
-    if dismissed:
-        return
     gaps = merge_gaps(calls, earlier or bool(notify))
     missing = missing_fields(text) if notify else []
     if missing:
         gaps.append("add the closeout fields it lacks, with their labels (\"none\" where "
                     "nothing applies): " + ", ".join(missing))
     reasons = ["Closeout incomplete (closeout skill): " + "; ".join(gaps) + "."] if gaps else []
-    if (not (earlier or notify) and "AskUserQuestion" not in {n for n, _ in calls}
+    if (not (earlier or notify or dismissed) and "AskUserQuestion" not in {n for n, _ in calls}
             and pr_left_open(session_bash(data["transcript_path"]))):
         reasons.append(
             "A PR this session created is still open and no closeout was sent; an open PR "
@@ -302,7 +305,7 @@ def main():
             "the `closeout` skill and its PushNotification. If I already merged it or "
             "said I will, the closeout records that hand-off. If you are waiting on me, "
             "ask with AskUserQuestion" + LOAD.format("AskUserQuestion") + ".")
-    if (ask or notify) and not {n for n, _ in calls} & SIGNALS:
+    if ((ask and not dismissed) or notify) and not {n for n, _ in calls} & SIGNALS:
         reasons.append(signal_reason(ask))
     if reasons:
         json.dump({"decision": "block", "reason": " ".join(reasons)}, sys.stdout)

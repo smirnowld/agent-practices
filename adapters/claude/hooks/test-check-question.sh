@@ -10,7 +10,8 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
 # Transcript entries: u:TYPED, a:ASSISTANT_TEXT, t (thinking), b (a Bash call),
-# q (AskUserQuestion), r[:OUTPUT] (result of the last tool call).
+# q (AskUserQuestion), p (PushNotification), r[:OUTPUT] (result of the last
+# tool call), l:OUTPUT (the same, as a list of text blocks).
 session() {
   python3 -c '
 import json, sys
@@ -20,17 +21,19 @@ for arg in sys.argv[1:]:
     if kind == "u": e = {"type": "user", "message": {"content": v}}
     elif kind == "a": e = {"type": "assistant", "message": {"content": [{"type": "text", "text": v}]}}
     elif kind == "t": e = {"type": "assistant", "message": {"content": [{"type": "thinking", "thinking": "I laid out the commands."}]}}
-    elif kind in ("b", "q"):
+    elif kind in ("b", "q", "p"):
         k += 1
         e = {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "s%d" % k,
-             "name": "Bash" if kind == "b" else "AskUserQuestion", "input": {}}]}}
-    else: e = {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "s%d" % k, "content": v}]}}
+             "name": {"b": "Bash", "q": "AskUserQuestion", "p": "PushNotification"}[kind], "input": {}}]}}
+    else:
+        body = [{"type": "text", "text": v}] if kind == "l" else v
+        e = {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "s%d" % k, "content": body}]}}
     print(json.dumps(e))' "$@" >"$tmp/t.jsonl"
 }
-# ask QUESTION: the hook input for an AskUserQuestion call.
+# ask QUESTION...: the hook input for an AskUserQuestion call.
 ask() {
-  python3 -c 'import json,sys; print(json.dumps({"transcript_path": sys.argv[2], "tool_input": {"questions": [{"question": sys.argv[1]}]}}))' \
-    "$1" "$tmp/t.jsonl" | python3 "$hook" 2>&1
+  python3 -c 'import json,sys; print(json.dumps({"transcript_path": sys.argv[1], "tool_input": {"questions": [{"question": q} for q in sys.argv[2:]]}}))' \
+    "$tmp/t.jsonl" "$@" | python3 "$hook" 2>&1
 }
 denied() { ask "$1" | grep -qF '"permissionDecision": "deny"' || { echo "error: not denied: $2" >&2; exit 1; }; }
 passes() { out=$(ask "$1"); [ -z "$out" ] || { echo "error: expected silent pass: $2 -> $out" >&2; exit 1; }; }
@@ -48,6 +51,18 @@ passes "$long" 'long question'
 reason=$(ask "$short" | python3 -c 'import json,sys; print(json.load(sys.stdin)["hookSpecificOutput"]["permissionDecisionReason"])')
 session u:go t q "r:PreToolUse:AskUserQuestion hook error: $reason"
 passes "$short" 'retry after a denial'
+# A short question beside a long one is still checked.
+session u:go t
+ask "$long" "$short" | grep -qF '"permissionDecision": "deny"' || { echo "error: not denied: mixed lengths" >&2; exit 1; }
+# A closeout, its notification, then its question: the notification is not a step.
+session u:go b r a:'# Closeout: Done' p r:'Mobile push requested.'
+passes "$short" 'question after a closeout and its notification'
+# A denial whose result is a list of blocks still allows the retry; another
+# tool call after it does not.
+session u:go t q "l:PreToolUse:AskUserQuestion hook error: $reason"
+passes "$short" 'retry after a denial in blocks'
+session u:go t q "r:PreToolUse:AskUserQuestion hook error: $reason" b r
+denied "$short" 'tool call between denial and retry'
 # An answered question starts a new step; so does my typed message.
 session u:go a:'Commands.' q r:'User answered' t
 denied "$short" 'after an answer'

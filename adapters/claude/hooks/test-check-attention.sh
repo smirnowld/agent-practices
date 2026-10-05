@@ -189,11 +189,18 @@ session u:go 'b:gh pr create --fill' r a:"$closeout" u:'thanks'
 passes 'You are welcome.'
 # A dismissed question leaves the turn waiting on me: no closeout is forced,
 # even with a card or open PR. Another answer does not.
-session u:go 'b:gh pr create --fill' r q 'r:[User dismissed — do not proceed, wait for next instruction]'
+dismissed='r:The user answered: "Tell me when it is done."="[User dismissed — do not proceed, wait for next instruction]"'
+session u:go 'b:gh pr create --fill' r q "$dismissed"
 passes 'I will wait.'
 passes '**Waiting on me:** the commands above'
-session u:go 'b:gh pr create --fill' r q 'r:[User dismissed]' u:'carry on' 'b:git status' r
+session u:go 'b:gh pr create --fill' r q "$dismissed" u:'carry on' 'b:git status' r
 blocks 'Carried on.' '' "$open"
+# A dismissal does not excuse a merge without its closeout.
+session u:go 'b:gh pr create --fill' r q "$dismissed" 'b:gh pr merge 5 --squash' r
+blocks 'Merged.' '' 'Closeout incomplete'
+# A question a hook denied was not an answer from me: the open PR still counts.
+session u:go 'b:gh pr create --fill' r q 'r:PreToolUse:AskUserQuestion hook error: write it first'
+blocks 'Stopped.' '' "$open"
 # An answered question does not cover a stop after it.
 session u:go 'b:gh pr create --fill' r q r 'b:git status' r
 blocks 'Carried on.' '' "$open"

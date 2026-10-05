@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """PreToolUse hook for AskUserQuestion: what a question depends on must be
-visible (P6b).
+visible (session.md, "Ask me, or wait on me").
 
 Thinking is not shown to me; the desktop app shows only a summary of it, which
 reads as if the content was sent. Sessions planned commands in thinking, asked
@@ -15,6 +15,9 @@ with a note on stderr; a broken check must not block questions.
 import json
 import sys
 
+# Results of tools that only send or load something do not start a new step:
+# the closeout's question follows its PushNotification.
+QUIET = {"PushNotification", "ToolSearch"}
 # Of 411 questions in ten days of sessions, 288 had no chat text right before
 # them; the 78 under this length held every one I found that I could not answer.
 SHORT = 100
@@ -43,7 +46,7 @@ def typed(entry, content):
 def visible_or_retry(path):
     """Whether chat text was written after the last tool result, or the last
     question since then was denied by this hook."""
-    shown, denied, asks = False, False, set()
+    shown, denied, asks, quiet = False, False, set(), set()
     with open(path) as f:
         for line in f:
             try:
@@ -55,7 +58,8 @@ def visible_or_retry(path):
             content = (entry.get("message") or {}).get("content")
             parts = [c for c in content if isinstance(c, dict)] if isinstance(content, list) else []
             if entry.get("type") == "user":
-                results = [c for c in parts if c.get("type") == "tool_result"]
+                results = [c for c in parts if c.get("type") == "tool_result"
+                           and c.get("tool_use_id") not in quiet]
                 if any(c.get("tool_use_id") in asks and REASON in json.dumps(c.get("content"))
                        for c in results):
                     denied = True
@@ -67,6 +71,8 @@ def visible_or_retry(path):
                         shown = True
                     elif c.get("type") == "tool_use" and c.get("name") == "AskUserQuestion":
                         asks.add(c.get("id"))
+                    elif c.get("type") == "tool_use" and c.get("name") in QUIET:
+                        quiet.add(c.get("id"))
     return shown or denied
 
 
