@@ -13,7 +13,7 @@ already here (P11). Budget: 30 open items or 20 KB
 
 ## Q1. <The question in one plain sentence>
 
-Raised <YYYY-MM-DD> · Decides: <role, e.g. owner>
+Raised <YYYY-MM-DD> · Decides: <role, e.g. maintainer>
 
 <Why it matters, Options, Until answered, Technical note and Context, as in
 `templates/question.md`.>

@@ -20,6 +20,7 @@ Compare with the budgets; list what is over.
 |---|---|
 | Session log, closeout, brief, verification log | Delete; move any lasting fact into the current-state doc or an ADR first |
 | Current-state doc with history in it | Rewrite to "how it is now"; drop narrative |
+| Quotes from me, my name, or a date that only records when something was said | Reword (`practices/record-keeping.md#outcomes-not-conversations`) |
 | ADR missing the summary layer | Add Decision/Consequences above a divider (`templates/adr.md`) |
 | ADR superseded or rejected | Move to `docs/adr/archive/`; update the index |
 | Answered question | Answer into an ADR or doc; remove from the register |

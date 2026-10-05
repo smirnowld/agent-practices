@@ -152,7 +152,7 @@ subsequent inspection establishes it. P2d remains a second check; it does not
 replace configuring the launch.
 
 Observed 2026-10-01 in a product repo: three brief launches named a model and
-effort in their prompts but omitted both creation arguments. The user reported
+effort in their prompts but omitted both creation arguments. I saw
 unexpected Astra usage. The omitted arguments are confirmed; which configured
 default selected Astra and the resulting spend were not independently
 verified. These launch checks replace the adapter's previous instruction to
@@ -162,8 +162,8 @@ official documentation. The app-server's explicit model configuration is
 documented at https://learn.chatgpt.com/docs/app-server (checked 2026-10-01),
 but that API does not establish this desktop tool's behavior.
 
-Workflow preference updated 2026-10-04 in a tooling repo: the user confirmed
-that asking to start a displayed brief also validates its model and effort.
+My preference: asking to start a displayed brief also validates its model
+and effort.
 The adapter therefore uses that start request as settings approval while
 still requiring both creation arguments. This is an authorization convention;
 end-to-end launch behavior remains unverified.
@@ -259,8 +259,7 @@ just because P6b asks for a structured prompt. These are observed tool
 contracts, unverified against official documentation for these desktop
 tools; do not assume they apply to every surface or build.
 
-Observed 2026-10-03 in a tooling repo: the user reported missing question
-options. Selective inspection of the preceding week's local session records
+Observed 2026-10-03 in a tooling repo: I saw question options missing. Selective inspection of the preceding week's local session records
 found 49 structured-question calls across 12 files, all with
 `accepted: true` responses and no tool errors or unmatched calls. None were
 nested inside another tool call. This establishes submission only; it does
@@ -268,7 +267,7 @@ not establish rendering, answers, or routing to another chat. The parent
 chat therefore presents delegated questions itself, calls the permitted tool
 directly, and repeats the full question and options in its final message
 when ending on a required answer. This text fallback is a mitigation whose
-effect on visibility still needs user confirmation.
+effect on visibility I have yet to confirm.
 
 Observed 2026-10-03 in a tooling repo: a typed answer can coincide with
 question-card dismissal. A card disappearing does not establish withdrawal

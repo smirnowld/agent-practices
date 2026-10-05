@@ -134,7 +134,7 @@ the tools.
 
 ## Origin
 
-A product repository, 2026-09: the done rule, blocked outcome, cleanup
+A product repository: the done rule, blocked outcome, cleanup
 checklist, blocker owner and continuation routing came from its closeout.
 All projects, 2026-10: about a fifth of answered questions were "brief this
 small fix?", so small fixes now land in the PR and only real follow-ups are

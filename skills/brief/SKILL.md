@@ -106,7 +106,7 @@ what was dropped as in flight or not relevant, and why.
 
 ## Origin
 
-2026-09, all projects: follow-ups were listed in closeouts and lost, and
-fresh sessions spent their start working out what to do next. 2026-10, a
+All projects: follow-ups were listed in closeouts and lost, and
+fresh sessions spent their start working out what to do next. A
 product repo and others: strict owned-file lists stopped sessions over
 one-line fixes, and the same follow-up was proposed several times.

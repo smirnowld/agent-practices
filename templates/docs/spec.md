@@ -3,7 +3,7 @@
 <!-- Current-state doc (P17): describes how it works now, updated in place.
 History lives in git; decisions live in ADRs and are linked, not retold. -->
 
-**Owner:** <me> · **Last reviewed:** <YYYY-MM-DD>
+**Last reviewed:** <YYYY-MM-DD>
 
 ## Purpose
 

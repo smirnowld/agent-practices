@@ -229,6 +229,11 @@ asking.
 The repository holds current truth and lasting decisions; git history is the
 archive, so removing a stale record loses nothing.
 
+- **Outcomes, not conversations.** Checked-in files, code comments included,
+  state what was decided and what is true, not who said it: no quotes from
+  me, no names, and a date only where a reader needs it
+  (`practices/record-keeping.md#outcomes-not-conversations`). The PR keeps
+  the conversation.
 - **Current-state docs** (specs, guides, runbooks) are updated in place; a
   closeout updates them rather than adding documents.
 - **ADRs** only for decisions with lasting effect that someone could
@@ -291,7 +296,7 @@ novel one (a new runtime, framework, service or vendor) needs an ADR. Detail:
 
 ## P21. Writing to me
 
-Write every message meant for me in plain words, for the owner rather than a
+Write every message meant for me in plain words, for the person running the project rather than a
 code reviewer: result first, effects over mechanisms, asks and real risks
 easy to spot, no internal labels unless I must act on one. Templates set
 the structure. Rules and examples: `practices/writing-to-me.md`.

@@ -10,9 +10,9 @@ it; the check fails while it remains. Checked by `scripts/check-adrs.py`
 
 One file per lasting decision, format from the shared ADR template.
 
-**Status meanings.** *Accepted*: decided by the owner. *Proposed*:
+**Status meanings.** *Accepted*: decided by the maintainer. *Proposed*:
 recommended by the session that wrote it and used as the working baseline
-until the owner rules (P11); build on it, disagree with reasons, never work
+until the maintainer rules (P11); build on it, disagree with reasons, never work
 around it. Superseded and rejected ADRs leave this index for
 [archive/](archive/) (P17); a changed decision is a new ADR.
 
