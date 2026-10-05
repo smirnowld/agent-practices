@@ -191,9 +191,9 @@ unverified against vendor docs.
   sent this session or the turn called `AskUserQuestion` that is not yet
   answered. A turn that starts with my dismissing a question is waiting on me,
   so neither this rule nor the ask-signal rule fires; the merge and closeout
-  checks still do. A question a hook denied counts as neither asked nor
-  answered: in a home-server repo (2026-10-05) the open-PR
-  rule turned a dismissal into a premature closeout. A dismissal's tool
+  checks still do. In a home-server repo (2026-10-05) the open-PR
+  rule turned a dismissal into a premature closeout. A question a hook denied
+  counts as neither asked nor answered. A dismissal's tool
   result reads "User dismissed" (observed, not documented). Each PR is tracked by the one PR URL its create printed, else by
   the first number or URL a merge or close names for it as its first
   argument that is not a flag or a flag's value. One naming no PR settles
@@ -236,10 +236,9 @@ unverified against vendor docs.
   the content first, or to call again unchanged if the question is
   self-contained, and the retry passes. It knows its own denial by its reason
   in the tool result. That a denial lands as a tool result carrying the
-  reason was observed on the chip hook, not documented. Of 411 questions in
-  ten days of sessions, 288 had no text right before them; the threshold cuts
-  the denials to 78, and those held every case I found that I could not
-  answer. Limits: a long question can still point at unseen content; text
+  reason was observed on the chip hook, not documented. Replayed on 413
+  questions from ten days of sessions (2026-10-05), it denies 102, about one
+  in four, and those held every case I found that I could not answer. Limits: a long question can still point at unseen content; text
   written but not yet in the transcript when the hook runs, or text before
   parallel tool calls whose results land first, would cause a needless
   denial (neither observed).

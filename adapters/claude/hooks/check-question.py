@@ -18,8 +18,8 @@ import sys
 # Results of tools that only send or load something do not start a new step:
 # the closeout's question follows its PushNotification.
 QUIET = {"PushNotification", "ToolSearch"}
-# Of 411 questions in ten days of sessions, 288 had no chat text right before
-# them; the 78 under this length held every one I found that I could not answer.
+# Replayed on 413 questions from ten days of sessions (2026-10-05), this hook
+# denies 102; those held every one I found that I could not answer.
 SHORT = 100
 
 REASON = (

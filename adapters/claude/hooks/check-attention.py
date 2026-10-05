@@ -104,7 +104,8 @@ def turn_tools(path):
         if entry.get("type") == "user":
             failed |= {c.get("tool_use_id") for c in parts
                        if c.get("type") == "tool_result"
-                       and (c.get("is_error") or DENIED in json.dumps(c.get("content")))}
+                       and (c.get("is_error") or (c.get("tool_use_id") in asks
+                                                  and DENIED in json.dumps(c.get("content"))))}
             answers = [c for c in parts if c.get("type") == "tool_result" and c.get("tool_use_id") in asks
                        and DENIED not in json.dumps(c.get("content"))]
             if typed(entry, content) or answers:
