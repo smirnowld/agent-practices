@@ -29,8 +29,8 @@ when ToolSearch cannot find it either, and the report says so.
   `PushNotification`, one line under 200 characters, then asks its questions
   (acceptance, merge, follow-ups) in one `AskUserQuestion` call, one question
   per topic. Thinking is never shown to me: every question has chat text
-  right before the call, and whatever it depends on (commands, steps, a card)
-  is in that text in full, commands in code blocks, never only in thinking.
-  A reply that asks for clarification or says I can't see something
+  after the last tool result, and whatever it depends on (commands, steps, a
+  card) is in that text in full, commands in code blocks, never only in
+  thinking. A reply that asks for clarification or says I can't see something
   is answered in chat text first; never re-ask an unchanged question. When I
   dismiss a question, end the turn restating what waits on me; no closeout.

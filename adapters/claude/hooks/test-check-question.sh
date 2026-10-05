@@ -59,6 +59,24 @@ session u:go t q "l:PreToolUse:AskUserQuestion hook error: $reason" t
 denied "$short" 'unchanged retry, result in blocks'
 session u:go t q "r:PreToolUse:AskUserQuestion hook error: $reason" 'a:Run: `make deploy`'
 passes "$short" 'retry after writing text'
+# Text not yet in the transcript when the first call ran: the retry finds it.
+session u:go b r 'a:Run: `make deploy`' q "r:PreToolUse:AskUserQuestion hook error: $reason"
+passes "$short" 'retry after a race with text already written'
+# A ToolSearch result is not a step; whitespace is not text; stop-hook
+# feedback (isMeta) is not my message.
+session u:go b r a:'Card.' b
+python3 - "$tmp/t.jsonl" <<'PY'
+import json, sys
+p = sys.argv[1]
+lines = open(p).read().splitlines()
+lines[-1] = lines[-1].replace('"Bash"', '"ToolSearch"')
+lines.append(json.dumps({"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "s2", "content": "loaded"}]}}))
+lines.append(json.dumps({"type": "user", "isMeta": True, "message": {"content": "Stop hook feedback: ask now"}}))
+open(p, "w").write("\n".join(lines) + "\n")
+PY
+passes "$short" 'after ToolSearch and stop-hook feedback'
+session u:go b r 'a:   '
+denied "$short" 'whitespace-only text'
 # A closeout, its notification, then its question: the notification is not a step.
 session u:go b r a:'# Closeout: Done' p r:'Mobile push requested.'
 passes "$short" 'question after a closeout and its notification'
