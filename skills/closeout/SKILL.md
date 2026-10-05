@@ -53,10 +53,9 @@ the template's order: the asks and the TL;DR come last, where a chat opens.
   or two sentences. A change with nothing visible says what it protects or
   makes possible.
 
-Plain words throughout (P21, `practices/writing-to-me.md`). Write for the owner of the product, not for a
-reviewer of the code: no policy numbers, commit hashes, file paths, check
-names or internal labels unless I have to act on one. About 120 words, links
-aside. If it runs longer, cut process, not the ask or the risk.
+Plain words throughout (P21, `practices/writing-to-me.md`): no policy
+numbers, commit hashes, file paths, check names or internal labels unless I
+have to act on one. About 120 words, links aside. If it runs longer, cut process, not the ask or the risk.
 
 Then fill the Record field by field for the PR. Keep each field to what a
 reader needs; leave out process detail. Every Record field appears in the PR,
