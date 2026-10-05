@@ -14,3 +14,79 @@ secrets included, into the transcript (observed; unverified against a primary
 source). The shell check above keeps the value out of the agent's context.
 
 Cross-project lesson, 2026-09; moved out of policy P10 on 2026-09-28.
+
+## Secrets from a password manager
+
+How agents and I use secrets without pasting them or approving a prompt per
+lookup. Built on 1Password service accounts and its CLI, `op`; checked
+2026-10-05 against [service accounts](https://www.1password.dev/service-accounts/get-started.md)
+and [rate limits](https://www.1password.dev/service-accounts/rate-limits).
+
+### Vaults
+
+| Vault | Holds | Who reads it |
+|---|---|---|
+| `agents-shared` | Keys several projects' agents use | Every project's service account |
+| `agents-<project>` | Keys this project's agents use, and keys they generate | That project's service account |
+| `<project>-ops` | Production, signing, backup and recovery keys | Only me, through the desktop app |
+
+- One service account per project: read on its vault and `agents-shared`,
+  write on its own vault only if its agents store keys they generate. A
+  service account's vaults and permissions can't be changed after it is
+  created; to change them, create a new one and revoke the old.
+- A service account can't use Personal or Private vaults.
+- Each key lives in one vault. An operator template may point at an
+  `agents-*` item rather than keep a copy.
+- Agents archive items, never delete them. Deleting is mine.
+- Never in an agent vault: production keys, signing keys, backup private
+  keys, recovery codes, anything that can't be revoked on its own. Where a
+  service can't scope a key (an account-wide API key), give agents their own
+  key so it can be revoked without breaking mine.
+
+### Token in the Keychain
+
+The service account's token lives in the macOS Keychain, readable without a
+prompt by the `security` tool only:
+
+```sh
+security add-generic-password -s op-agent-<project> -a "$USER" -T /usr/bin/security -w
+```
+
+`-w` last asks for the token without echoing it. Rotate by creating a new
+token, replacing the item (`-U`), then revoking the old token.
+
+### Running with secrets
+
+- `with-secrets -- CMD` (agent mode) reads the token from the Keychain and
+  runs `CMD` under `op run` with the template's `op://` references; the token
+  goes to `op` only, not to `CMD`. `op run` masks values in output.
+  `--template FILE` picks a template; a brief's `## Secrets` names it.
+- `with-secrets --operator -- CMD` is the same for me, through the desktop
+  app: one prompt per run, any vault.
+- Templates are committed, hold one `NAME=op://VAULT/ITEM/FIELD` per line and
+  nothing else; plain values are refused. Agent templates name an `agents-*`
+  vault or give vault and item IDs.
+- `push-secrets MANIFEST` copies values from 1Password into GitHub
+  environment or repository secrets and Render environment groups. Values go
+  through pipes, never argv or the screen. `--dry-run` lists what it would
+  push. Operator only.
+- Install both with `make install-bin` in this repository.
+
+### Quotas
+
+Families and Teams accounts allow 1,000 service-account requests per day for
+the whole account, and 1,000 reads per hour per token. Reading a reference by
+name costs about 3 requests; by vault and item ID, 1. So agent templates use
+IDs. Desktop-app sign-in doesn't count against these quotas. Check usage with
+`op service-account ratelimit`.
+
+### Trade-offs
+
+- An agent running with a template sees those values in its process. The
+  brief's `## Secrets` limits which; the vault limits the worst case.
+- Anyone using my unlocked Mac can use the token. Lock the screen; revoke the
+  token if the Mac is lost.
+- Which items a brief allows is not enforced by a hook yet; the template is
+  the boundary.
+
+Lesson from a product repo and a server-config repo, 2026-10.

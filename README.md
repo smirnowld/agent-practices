@@ -33,6 +33,7 @@ Makefile                `make check`: the same checks CI runs
 | A delegated agent's job | `roles/` | Is it a kind of worker the parent hands work to? |
 | The shape of an output | `templates/` | Does it describe *what* a result looks like? |
 | Anything naming a vendor's file format, key or event | `adapters/<vendor>/` | Would it change if the vendor changed? |
+| A helper projects run from their own checkout | `bin/` | Does a project session call it, not this repo's CI? |
 
 Policy stays short because it loads into every session and some agents cap
 instruction size (see adapters). Detail belongs in a practice, skill or

@@ -176,7 +176,10 @@ project's agreed host is not publishing (P17).
 
 Never read, print, copy or commit a secret. Name it and where I place it.
 Never open env files holding secrets with file read, write or edit tools
-(why and how to check a key: `practices/secrets.md`).
+(why and how to check a key: `practices/secrets.md`). Use a secret only
+through `with-secrets` and a template the brief's Secrets section names;
+store a key you generate straight into the project's agent vault, unseen
+(`practices/secrets.md`, "Secrets from a password manager").
 
 ## P11. Requirements and decisions
 
