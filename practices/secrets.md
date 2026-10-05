@@ -50,12 +50,25 @@ The service account's token lives in the macOS Keychain. `-T /usr/bin/security`
 lets any of my processes read it without a prompt through that tool, agents
 included; the vault scope, not the Keychain, is the boundary.
 
+Copy the token from 1Password, then store it from the clipboard and clear the
+clipboard:
+
 ```sh
-security add-generic-password -s op-agent-<project> -a "$USER" -T /usr/bin/security -w
+security add-generic-password -U -s op-agent-<project> -a "$USER" -T /usr/bin/security -w "$(pbpaste)" && pbcopy </dev/null
 ```
 
-`-w` last asks for the token without echoing it. Rotate by creating a new
-token, replacing the item (`-U`), then revoking the old token.
+Not `-w` last: its prompt keeps only the first 128 characters, and a token is
+several times longer, so `op` later fails to decode it. Check the stored
+length and prefix, never the value:
+
+```sh
+security find-generic-password -s op-agent-<project> -w | awk '{print length($0), substr($0,1,4)}'
+```
+
+The token is in argv for the moment `security` runs; on a single-user Mac
+that is the accepted trade-off. Rotate by creating a new token on
+1Password.com (Developer, Service accounts), storing it the same way (`-U`
+replaces the item), then revoking the old token.
 
 ### Running with secrets
 
