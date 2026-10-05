@@ -101,8 +101,9 @@ advisory instead.
 Work is done only when the project's required checks pass on the final commit.
 Done also means merged with cleanup finished (P16), or handed to me when P6
 or the project leaves the merge to me; a ready branch or open pull request is
-progress. Stop earlier only for a blocker, missing authority or a decision
-I own, and say so in the outcome.
+progress. Report work handed to me as "ready for you", not "partly done".
+Stop earlier only for a blocker, missing authority or a decision I own, and
+say so in the status.
 Never bypass, skip or weaken a check; implement a missing step instead. Say
 what could not be verified. Work whose verification is blocked from outside
 the session (hardware, access, an external service) may still count as done
@@ -209,8 +210,10 @@ choose. Thresholds live in adapters and are tuned by that practice.
 ## P15. Closeout
 
 Every session ends with a closeout written with the `closeout` skill
-(`templates/closeout.md`), for a reader with no context, naming the agents and
-models used. PR descriptions name them too. Where closeouts are kept: P17.
+(`templates/closeout.md`). Chat gets a short summary in plain words: what
+changed for me and my users, what needs me, real risks. The full record,
+naming the agents and models used, goes in the PR. Where closeouts are kept:
+P17.
 
 ## P16. Cleanup
 

@@ -1,13 +1,14 @@
 ---
 name: closeout
-description: Write the end-of-session closeout (P15) from templates/closeout.md, with every link opening on my phone after the session ends (P18) and the agents and models named. Use before the final message of any session that changed something, and for the closeout part of a PR description.
+description: Write the end-of-session closeout (P15) from templates/closeout.md - a short plain-language summary in chat, the full record with agents and models in the PR - with every link opening on my phone after the session ends (P18). Use before the final message of any session that changed something, and for the closeout part of a PR description.
 ---
 
 # Closeout
 
-Goal: a reader with no context knows what happened, can check it from their
-phone, and knows what comes next. The closeout goes in chat and in the PR
-(P17), never in the repository.
+Goal: in under a minute I know what is different, whether anything needs me
+and whether anything is risky. The PR keeps the full record, so anyone can
+check the work from their phone later. The closeout goes in chat and in the
+PR (P17), never in the repository.
 
 ## 1. Gather
 
@@ -29,10 +30,38 @@ phone, and knows what comes next. The closeout goes in chat and in the PR
 
 ## 2. Fill the template
 
-Fill `templates/closeout.md` field by field. Keep each field to what a reader
-needs; leave out process detail. Every field appears, with its label, in the
-chat closeout as well as the PR: short is fine, "none" where it applies, but
-a closeout in the PR never replaces the one in chat.
+Write the summary first, from what I will see, not from what you did.
+
+- **TL;DR**: what is different now for me, my users or my customers, in one
+  or two sentences. A change with nothing visible says what it protects or
+  makes possible.
+- **Status**:
+  - **done**: merged and cleaned up;
+  - **ready for you**: finished, reviewed and green, waiting only on my
+    acceptance or merge;
+  - **partly done**: assigned work is left undone;
+  - **blocked**: cannot go on without something outside the session;
+  - **abandoned**: stopped, with the reason.
+- **Needs you**: every step that waits on me, in order, each with the exact
+  command, link or choice. Name an irreversible effect next to its step
+  ("merging deploys"). Check the order against what I have already done. An
+  acceptance waits on its own card (`templates/acceptance-card.md`); point
+  to it rather than repeating it.
+- **Watch out**: only what could hurt users, data, money or time if I
+  missed it: something untested that matters, a surprise, a new cost. Not
+  routine gaps such as a skipped local check that CI covered.
+- **Next**: one line, only when there is a real next task.
+
+Plain words throughout. Write for the owner of the product, not for a
+reviewer of the code: no policy numbers, commit hashes, file paths, check
+names or internal labels unless I have to act on one. About 120 words, links
+aside. If it runs longer, cut process, not the ask or the risk.
+
+Then fill the Record field by field for the PR. Keep each field to what a
+reader needs; leave out process detail. Every Record field appears in the PR,
+"none" where it applies. In chat, send the summary only and link the PR under
+**Full record**; with no PR, add the Record fields that apply below the
+summary and leave out the rest.
 
 For **Continuation**:
 
@@ -59,7 +88,8 @@ working directory changes.
 ## 4. Check before sending
 
 Save the draft to a scratch file and run the link check that ships next to
-this skill, with an absolute path to the draft:
+this skill, with an absolute path to the draft: `--closeout` for the chat
+summary, `--closeout-pr` for the PR description.
 
 ```
 python3 SKILL_DIR/../../scripts/check-links.py --closeout /ABSOLUTE/PATH/DRAFT.md
@@ -70,11 +100,11 @@ symlinked install. Fix each failure. A flagged token that is not a file
 reference (a command, a branch name) can stay. Without `gh` or network, rerun
 with `--offline` for the local checks and name the unchecked links under
 **Not verified**. Check the exact text you will send and send it unchanged;
-drop `--closeout` only for a PR body that holds no closeout.
+drop the flag only for a PR body that holds no closeout.
 
 ## 5. Signal and ask
 
-Send the closeout, then the notification with the outcome (P6b). Then ask
+Send the closeout, then the notification with the status (P6b). Then ask
 whichever of these apply, together in one structured question prompt:
 
 - **Acceptance or decision** the closeout waits on (P6).
@@ -96,8 +126,8 @@ whichever of these apply, together in one structured question prompt:
   not a question.
 
 After acting on the answers, rewrite the closeout in the PR description
-(`gh pr edit --body-file`; a comment does not replace it) so Outcome, Proof
-(with any post-merge run), Blocked on and Cleanup match the merged state,
+(`gh pr edit --body-file`; a comment does not replace it) so Status, Needs
+you, Proof (with any post-merge run) and Cleanup match the merged state,
 and check it again as in step 4. Then say in one line in chat what happened
 (merge SHA, sessions proposed); do not repost the closeout. If no full
 closeout went to chat earlier, send it now. The adapter's `session.md` names
@@ -110,3 +140,8 @@ checklist, blocker owner and continuation routing came from its closeout.
 All projects, 2026-10: about a fifth of answered questions were "brief this
 small fix?", so small fixes now land in the PR and only real follow-ups are
 asked about.
+All projects, 2026-10: two days of closeouts ran a median of about 450
+words, over 40% of them process fields; asks sat in the tenth field or later,
+two were missed or wrong, and finished work waiting on my merge read as
+"partly done". The chat closeout became a summary led by a TL;DR, with the
+record moved to the PR.

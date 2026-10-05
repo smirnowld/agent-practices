@@ -1,6 +1,12 @@
 # Closeout: add a field check
 
-**Outcome:** done — the check catches a shortened closeout.
+**TL;DR:** A closeout that leaves out a field is now caught before it is sent.
+
+**Status:** done — merged and cleaned up.
+
+**Full record:** [PR](https://github.com/o/r/pull/3)
+
+## Record
 
 **What changed:** [PR](https://github.com/o/r/pull/3)
 
@@ -21,7 +27,5 @@
 **Agents and models:** implementer — a model at medium — wrote the check
 
 **Cleanup:** PR merged, branches and worktree removed
-
-**Next:** none
 
 **Continuation:** none — nothing left in scope.

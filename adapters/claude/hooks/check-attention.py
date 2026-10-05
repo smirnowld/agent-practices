@@ -9,9 +9,9 @@ block the stop once and say which to call. My last words are my last typed
 message or my last answer to AskUserQuestion, so an early clarifying
 question does not cover a card or closeout written an hour later.
 
-It also holds the closeout to its template (P15): a closeout missing a field
-of templates/closeout.md is blocked, and so is a turn that merged a PR
-without rewriting the PR description afterwards or without any closeout in
+It also holds the closeout to its template (P15): a chat closeout missing a
+required summary field of templates/closeout.md (TL;DR, Status) is blocked,
+and so is a turn that merged a PR without rewriting the PR description afterwards or without any closeout in
 chat this session. A PR this session or its subagents created with
 `gh pr create` and has not merged, set to auto-merge or closed since is not a
 stopping point (P5): the turn is blocked unless a closeout was sent this
@@ -275,7 +275,7 @@ def merge_gaps(calls, closeout):
     gaps = []
     if not any(EDIT.match(c) for c in steps[merged[-1] + 1:]):
         gaps.append("rewrite the closeout in the PR description with `gh pr edit --body-file` "
-                    "(Outcome, Proof with the post-merge run, Blocked on, Cleanup); a comment "
+                    "(Status, Needs you, Proof with the post-merge run, Cleanup); a comment "
                     "does not replace it")
     if not closeout:
         gaps.append("send the full closeout in chat if the session's work ends here; none "
@@ -294,8 +294,8 @@ def main():
     gaps = merge_gaps(calls, earlier or bool(notify))
     missing = missing_fields(text) if notify else []
     if missing:
-        gaps.append("add the closeout fields it lacks, with their labels (\"none\" where "
-                    "nothing applies): " + ", ".join(missing))
+        gaps.append("start the closeout with the summary fields it lacks, in plain words "
+                    "(the full record goes in the PR): " + ", ".join(missing))
     reasons = ["Closeout incomplete (closeout skill): " + "; ".join(gaps) + "."] if gaps else []
     if (not (earlier or notify or dismissed) and "AskUserQuestion" not in {n for n, _ in calls}
             and pr_left_open(session_bash(data["transcript_path"]))):
@@ -323,7 +323,7 @@ def signal_reason(ask):
     else:
         reason = (
             "You wrote a closeout; I may have walked away (P6b). Call PushNotification"
-            + LOAD.format("PushNotification") + " with the outcome and what, if anything, "
+            + LOAD.format("PushNotification") + " with the status and what, if anything, "
             "waits on me, in one line under 200 characters; it is skipped if I am at the "
             "session. Then ask any closeout questions (acceptance, merge, "
             "follow-ups) with AskUserQuestion. Do not repeat the message."

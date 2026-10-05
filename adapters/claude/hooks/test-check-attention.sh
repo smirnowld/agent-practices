@@ -95,8 +95,8 @@ x
 
 # A closeout missing template fields is blocked, naming each.
 transcript PushNotification
-short=$(printf '%s\n' "$closeout" | grep -v -e '^\*\*Proof:' -e '^\*\*Next:')
-blocks "$short" '' '**Proof:**, **Next:**'
+short=$(printf '%s\n' "$closeout" | grep -v -e '^\*\*TL;DR:' -e '^\*\*Status:')
+blocks "$short" '' '**TL;DR:**, **Status:**'
 
 # A turn that merged a PR: bash CMD... as tool calls m1, m2... after my message; TEXT
 # is an earlier assistant message.
