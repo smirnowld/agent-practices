@@ -71,6 +71,8 @@ Fill `templates/brief.md`, every section.
   brief's No-go list carries the core files of the others and of sessions in
   flight. Where one must follow another, its Handoff says "start after BRIEF
   merges".
+- **Secrets** lists only templates the work needs, from the project's
+  committed ones; `none` when it needs none. Never a new template or a value.
 - **Related issues.** Search open issues (`deferred-review` too) that name
   the core files, their modules or the goal (`gh issue list --search`, then
   `issue-review` step 2 on each hit) and list them, so the session fixes

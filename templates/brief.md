@@ -29,6 +29,12 @@ not reasoning. The receiver must not need the sender's transcript. -->
 holds, ADR statuses, secrets and infrastructure, plus anything listed here. -->
 - <path or resource>
 
+## Secrets
+
+<!-- Templates this session may run with `with-secrets` (policy P10), or
+none. Each line: the template path and what it is for. -->
+- <template path: use | none>
+
 ## Related issues
 
 <!-- Open issues (deferred-review too) on the core files or goal. Fix each
