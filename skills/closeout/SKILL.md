@@ -61,8 +61,8 @@ aside. If it runs longer, cut process, not the ask or the risk.
 Then fill the Record field by field for the PR. Keep each field to what a
 reader needs; leave out process detail. Every Record field appears in the PR,
 "none" where it applies. In chat, send the summary only and link the PR under
-**Full record**; with no PR, add the Record fields that apply below the
-summary and leave out the rest.
+**Full record**; with no PR, put the Record fields that apply between
+the heading and the summary, so the chat still ends on Status and TL;DR.
 
 For **Continuation**:
 
@@ -144,5 +144,5 @@ asked about.
 All projects, 2026-10: two days of closeouts ran a median of about 450
 words, over 40% of them process fields; asks sat in the tenth field or later,
 two were missed or wrong, and finished work waiting on my merge read as
-"partly done". The chat closeout became a summary led by a TL;DR, with the
-record moved to the PR.
+"partly done". The chat closeout became a short summary ending with a
+colour-marked status and a TL;DR, with the record moved to the PR.
