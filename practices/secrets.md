@@ -62,8 +62,8 @@ token, replacing the item (`-U`), then revoking the old token.
 - `with-secrets -- CMD` (agent mode) reads the token from the Keychain and
   runs `CMD` under `op run` with the template's `op://` references. The token
   is kept out of `CMD`'s environment (hygiene for logs, not a boundary).
-  `op run` masks values in output. `op://` references in the caller's
-  environment are refused, since `op run` would resolve them too.
+  `op run` masks values in output. In both modes, `op://` references in the
+  caller's environment are refused, since `op run` would resolve them too.
   `--template FILE` picks a template; a brief's `## Secrets` names it.
 - `with-secrets --operator -- CMD` is the same for me, through the desktop
   app, any vault. Agents never run it.
