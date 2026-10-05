@@ -95,8 +95,12 @@ x
 
 # A closeout missing template fields is blocked, naming each.
 transcript PushNotification
-short=$(printf '%s\n' "$closeout" | grep -v -e '^\*\*Proof:' -e '^\*\*Next:')
-blocks "$short" '' '**Proof:**, **Next:**'
+short=$(printf '%s\n' "$closeout" | grep -v -e '^\*\*TL;DR:' -e '^\*\*Status:')
+blocks "$short" '' '**Status:**, **TL;DR:**'
+# A summary-only chat closeout, its record left to the PR, passes once signalled.
+chat=$(cat "$dir/../../../scripts/fixtures/closeout-chat.md")
+passes "$chat"
+transcript ''; blocks "$chat" '' 'PushNotification'
 
 # A turn that merged a PR: bash CMD... as tool calls m1, m2... after my message; TEXT
 # is an earlier assistant message.
@@ -119,7 +123,7 @@ blocks 'Merged as abc.' '' 'gh pr edit --body-file'
 merge_turn "$closeout" 'gh pr merge 5 --squash' 'gh pr edit 5 --body-file b.md'
 passes 'Merged as abc.'
 merge_turn 'Merged, all good.' 'gh pr merge 5 --squash' 'gh pr edit 5 --body-file b.md'
-blocks 'Merged as abc.' '' 'send the full closeout in chat'
+blocks 'Merged as abc.' '' 'send the closeout summary in chat'
 merge_turn 'Paused.' 'gh pr merge 5 --disable-auto'
 passes 'Paused.'
 # Not merges: help, a search, a pending auto-merge, a quoted mention.

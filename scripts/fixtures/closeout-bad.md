@@ -1,6 +1,8 @@
 # Closeout: add a field check
 
-**Outcome:** done — the check catches a shortened closeout.
+**Status:** 🟢 done — merged and cleaned up.
+
+## Record
 
 **What changed:** [PR](https://github.com/o/r/pull/3)
 
@@ -15,7 +17,5 @@
 
 **Agents and models:** implementer — a model at medium — wrote the check
 
-
-**Next:** none
 
 **Continuation:** none — nothing left in scope.

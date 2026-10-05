@@ -1,9 +1,40 @@
 # Closeout: <title>
 
-<!-- End of session (P15), written with the closeout skill. For a reader with
-no context. Lives in the PR and chat, not the repo (P17). -->
+<!-- End of session (P15), written with the closeout skill. Lives in the PR
+and chat, not the repo (P17).
 
-**Outcome:** <done | partly done | blocked | abandoned> — <one sentence>
+Chat gets the part above "Record" only: about 120 words, links aside, read
+in under a minute on a phone. Plain words about what changes for me, my
+users and my customers; no policy numbers, commit hashes, file paths or
+check names unless I have to act on one. Leave out a field marked "only
+when" if it does not apply; never fill it with "none". The summary ends with
+Status and TL;DR, the lines I see first when a chat opens at its end. The PR
+description holds the whole closeout. With no PR, the Record fields that
+apply go in chat between the heading and the summary. -->
+
+**Watch out:** <only when there is a real risk or gap I should know about:
+something untested that could hurt users, data or money, an irreversible
+effect, a surprise. One line each>
+
+**Next:** <only when there is a recommended next task: what and why, in one
+line>
+
+**Full record:** <only when there is a PR: its link>
+
+**Needs you:** <only when something waits on me: each step in the order to
+do it, with the exact command, link or choice, and what happens if I do it
+(for example "merging deploys")>
+
+**Status:** <🟢 done | 🔵 ready for you | 🟡 partly done | 🔴 blocked |
+⚪ abandoned> — <one sentence>
+
+**TL;DR:** <one or two sentences: what is different now, as I or a user
+would notice it>
+
+## Record
+
+<!-- For the PR description, and for chat only when there is no PR. Every
+field appears in the PR; short is fine, "none" where it applies. -->
 
 **What changed:** <bullets; full GitHub URLs to PRs and merged commits (P18)>
 
@@ -31,9 +62,6 @@ the question register (P11), other blockers where tracked; or "none">
 
 **Cleanup:** <state of each: review, PR, CI, merge, local default branch
 updated, remote branch, local branch, worktree, other resources released>
-
-**Next:** <one recommended next task, why it is next and what it depends on;
-or "none">
 
 **Continuation:** <continue this session | start a new session |
 wait for me | none> — <why>. <For a new session: the task in one line, briefed once I say
