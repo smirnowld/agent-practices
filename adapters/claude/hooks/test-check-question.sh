@@ -62,6 +62,9 @@ passes "$short" 'retry after writing text'
 # Text not yet in the transcript when the first call ran: the retry finds it.
 session u:go b r 'a:Run: `make deploy`' q "r:PreToolUse:AskUserQuestion hook error: $reason"
 passes "$short" 'retry after a race with text already written'
+# Another tool's output that quotes the denial is still a step.
+session u:go a:'Status.' b "r:DENIED = \"PreToolUse:AskUserQuestion hook error\"" t
+denied "$short" 'denial text in a Bash result'
 # A ToolSearch result is not a step; whitespace is not text; stop-hook
 # feedback (isMeta) is not my message.
 session u:go b r a:'Card.' b

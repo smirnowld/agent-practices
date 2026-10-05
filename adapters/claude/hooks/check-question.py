@@ -22,7 +22,7 @@ import sys
 QUIET = {"PushNotification", "ToolSearch"}
 # This hook's own denial does not start one either. Text written just before a
 # question is sometimes not yet in the transcript when the hook runs (3 of 13
-# denials on 2026-10-05); the unchanged retry then finds it and passes. With
+# questions with text before them were denied on 2026-10-05); the unchanged retry then finds it and passes. With
 # only thinking before the question, the retry is denied again.
 DENIED = "PreToolUse:AskUserQuestion hook error"
 # Replayed on 486 questions from ten days of sessions (2026-10-05), 350 had no
@@ -31,7 +31,8 @@ REASON = (
     "The transcript holds no chat text since the last tool result; thinking is never "
     "shown to the user (P6b). If you planned commands, steps or a card in thinking, the "
     "user has NOT seen them: write them in full as chat text now, then ask. If you did "
-    "write chat text right before this call, ask again unchanged: the check runs again. "
+    "write chat text (outside thinking) right before this call, ask again unchanged: the "
+    "check runs again. "
     "If the question stands alone, write one sentence of context first, then ask."
 )
 
@@ -51,7 +52,7 @@ def typed(entry, content):
 
 def visible(path):
     """Whether chat text was written after the last tool result or typed message."""
-    shown, quiet = False, set()
+    shown, quiet, asks = False, set(), set()
     with open(path) as f:
         for line in f:
             try:
@@ -65,7 +66,8 @@ def visible(path):
             if entry.get("type") == "user":
                 results = [c for c in parts if c.get("type") == "tool_result"
                            and c.get("tool_use_id") not in quiet
-                           and DENIED not in json.dumps(c.get("content"))]
+                           and not (c.get("tool_use_id") in asks
+                                    and DENIED in json.dumps(c.get("content")))]
                 if typed(entry, content) or results:
                     shown = False
             elif entry.get("type") == "assistant":
@@ -74,6 +76,8 @@ def visible(path):
                         shown = True
                     elif c.get("type") == "tool_use" and c.get("name") in QUIET:
                         quiet.add(c.get("id"))
+                    elif c.get("type") == "tool_use" and c.get("name") == "AskUserQuestion":
+                        asks.add(c.get("id"))
     return shown
 
 

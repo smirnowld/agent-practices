@@ -245,8 +245,9 @@ unverified against vendor docs.
   to do first. The hook cannot judge whether that text holds what the
   question depends on: thinking is mostly stored empty, so it cannot be
   compared. Text written in the same message as the question is sometimes
-  not yet in the transcript when the hook runs: 3 of the 13 denials on
-  2026-10-05 had text 3 to 5 seconds before the call. The denial's own result
+  not yet in the transcript when the hook runs: of 13 questions with text
+  before them on 2026-10-05, 3 were denied, the text 3 to 5 seconds before the
+  call. The denial's own result
   therefore does not count as a step, so the unchanged retry finds that text
   and passes. Text before parallel tool calls whose results land first would
   still cause a needless denial (not observed).
