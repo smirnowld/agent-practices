@@ -13,9 +13,16 @@ no context. Lives in the PR and chat, not the repo (P17). -->
 
 **Records updated:** <docs, ADRs, question register changed in place; or "none">
 
+**Also fixed:** <fixes made on the go and review findings fixed in the PR
+(P6); or "none">
+
+**Issues closed:** <issue links, each fixed by this PR (Fixes #N) or closed
+as already fixed with the evidence link; or "none">
+
 **Deferred:** <unfinished assigned work, review findings as issue links, or
 advisory links for security findings (P4), and other follow-ups with where
-they are tracked; or "none">
+they are tracked; only work that failed the fix-on-the-go test, each with
+the reason; or "none">
 
 **Blocked on:** <each blocker or decision and who resolves it, decisions in
 the question register (P11), other blockers where tracked; or "none">

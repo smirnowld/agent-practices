@@ -22,6 +22,13 @@ repository, check each finding against this copy and report every way this
 copy or its setting (secrets, runners, deploy targets, rulesets) differs
 from the reviewed one: each difference needs a critical review.
 
+When briefed to confirm a delta (P4b), review only the commits after the
+last reviewed SHA and how they interact with the code they touch. Do not
+review the rest of the change again. Aim to finish within about 5 responses;
+say if the delta goes wider than its brief, which needs a full review, or
+raises the change's risk to critical, which needs the critical reviewer
+(P4).
+
 For docs, check implications: missing or broken references, contradictions
 between documents, stale mentions and, for a decision status change, what
 depends on it.

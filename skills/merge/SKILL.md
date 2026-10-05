@@ -12,7 +12,11 @@ safeguards, which always hold: never bypass branch protection (no admin
 override such as `gh pr merge --admin`, no relaxing the ruleset; only I do,
 for a case I name), and a change that needs the critical reviewer under P4
 is handed to me to merge unless I OK its head commit in the conversation
-(the closeout asks); after any new commit, ask again.
+(the closeout asks); after any new commit, ask again. Other new commits
+follow P4b: classify the commit's own risk; one I approved after seeing its
+diff needs no new review if neither it nor the PR needs the critical
+reviewer; any other gets a delta-only confirmation from the resumed reviewer
+of the change's tier, the critical reviewer for a critical delta.
 
 ## 1. Check that merging is allowed
 
@@ -61,7 +65,8 @@ the reviewed commit. A PR that is already mergeable (checks green, nothing
 pending) cannot get auto-merge; merge it directly with the same
 `--match-head-commit` and go to step 5. Before any later push:
 `gh pr merge PR --disable-auto`,
-get the new commits reviewed, then enable again with the new SHA.
+get the new commits reviewed under P4b (delta only), then enable again with
+the new SHA. Batch late fixes into one push so CI runs once.
 
 ## 4. Wait once
 
