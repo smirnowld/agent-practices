@@ -276,8 +276,7 @@ def merge_gaps(calls, closeout):
     if not any(EDIT.match(c) for c in steps[merged[-1] + 1:]):
         gaps.append("rewrite the closeout in the PR description with `gh pr edit --body-file` "
                     "(Status, Needs you, Proof with the post-merge run, Blocked on, Cleanup, "
-                    "Continuation); a comment "
-                    "does not replace it")
+                    "Continuation); a comment does not replace it")
     if not closeout:
         gaps.append("send the closeout summary in chat if the session's work ends here; none "
                     "was sent this session")
