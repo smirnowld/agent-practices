@@ -99,8 +99,8 @@ python3 SKILL_DIR/../../scripts/check-links.py --closeout /ABSOLUTE/PATH/DRAFT.m
 symlinked install. Fix each failure. A flagged token that is not a file
 reference (a command, a branch name) can stay. Without `gh` or network, rerun
 with `--offline` for the local checks and name the unchecked links under
-**Not verified** in the PR record. Check the exact text you will send and send it unchanged;
-drop the flag only for a PR body that holds no closeout.
+**Not verified** in the PR record. Check the exact text you will send and
+send it unchanged; drop the flag only for a PR body that holds no closeout.
 
 ## 5. Signal and ask
 
