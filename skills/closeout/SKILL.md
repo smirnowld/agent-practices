@@ -53,10 +53,8 @@ the template's order: the asks and the TL;DR come last, where a chat opens.
   or two sentences. A change with nothing visible says what it protects or
   makes possible.
 
-Plain words throughout. Write for the owner of the product, not for a
-reviewer of the code: no policy numbers, commit hashes, file paths, check
-names or internal labels unless I have to act on one. About 120 words, links
-aside. If it runs longer, cut process, not the ask or the risk.
+Plain words throughout (P21, `practices/writing-to-me.md`). About 120
+words, links aside. If it runs longer, cut process, not the ask or the risk.
 
 Then fill the Record field by field for the PR. Keep each field to what a
 reader needs; leave out process detail. Every Record field appears in the PR,
@@ -130,7 +128,7 @@ After acting on the answers, rewrite the closeout in the PR description
 (`gh pr edit --body-file`; a comment does not replace it) so Status, Needs
 you, Proof (with any post-merge run), Blocked on, Cleanup and Continuation
 match the merged state, and check it again as in step 4. Then say in one
-line in chat what happened (merge SHA, sessions proposed); do not repost the
+line in chat what happened (merged PR link, sessions proposed); do not repost the
 closeout. If no closeout summary went to chat earlier, send it now. The adapter's `session.md` names
 the tools.
 

@@ -5,8 +5,8 @@ able to answer it in under a minute, on my phone, without asking anything
 back. Write it for the person deciding, not for the code:
 
 - Lead with the question. No preamble, no history of how it came up.
-- Plain words. Name a library, file or internal term only when the choice is
-  about it; otherwise describe what it does.
+- Plain words (P21). Name a library, file or internal term only when the
+  choice is about it; otherwise describe what it does.
 - Describe options by their effect: what users see, what it costs, what is
   hard to undo later, what it blocks.
 - Give a proposed default and the reason in one line.
