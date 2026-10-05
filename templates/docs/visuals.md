@@ -25,7 +25,7 @@ The same meaning has the same look in every visual of a project.
 | Green | Apps and surfaces people touch |
 | Violet | A service we rent |
 | Neutral | Open source we build on |
-| Amber | A milestone or something waiting on me |
+| Amber | A milestone or something waiting on the maintainer |
 | Dashed outline | A boundary, or something not yet built or confirmed |
 
 Every visual carries a legend for the encodings it uses.

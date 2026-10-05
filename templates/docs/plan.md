@@ -9,7 +9,7 @@ the roadmap and docs. Budget: practices/record-keeping.md. -->
 **Goal:** <what the user can see or do when this phase ends>
 **Status:** <on track | at risk | blocked> — <one sentence why>
 **Progress:** <done>/<total> packages · **Started:** <date> · **Expected:** <date range>
-**Waiting on me:** <decision or acceptance, with link — or "nothing">
+**Waiting on the maintainer:** <decision or acceptance, with link — or "nothing">
 
 ## Order
 

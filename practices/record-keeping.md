@@ -65,7 +65,9 @@ made a decision keeps that history: my words quoted (P11), who decided, when.
   including text a template puts there, say "the maintainer". Not "the owner"
   or "the operator": products use those words for their own roles. An accepted
   ADR needs no "decided by"; only I accept decisions (P11). Anyone else is
-  named by role.
+  named by role. Keep the role where it is evidence: "confirmed by the
+  maintainer" is not "verified over SSH", and a confirmed value is no longer
+  a default open to veto.
 - **A date only where it helps the reader** judge how fresh a fact is: when an
   outside fact was checked, a measured number, an observation of a tool's,
   vendor's or model's behaviour (versions change it), a deadline, how long
