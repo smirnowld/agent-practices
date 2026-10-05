@@ -1,6 +1,6 @@
 # Closeout: add a field check
 
-**Status:** done — merged and cleaned up.
+**Status:** 🟢 done — merged and cleaned up.
 
 ## Record
 

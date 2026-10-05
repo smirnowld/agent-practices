@@ -96,7 +96,7 @@ x
 # A closeout missing template fields is blocked, naming each.
 transcript PushNotification
 short=$(printf '%s\n' "$closeout" | grep -v -e '^\*\*TL;DR:' -e '^\*\*Status:')
-blocks "$short" '' '**TL;DR:**, **Status:**'
+blocks "$short" '' '**Status:**, **TL;DR:**'
 # A summary-only chat closeout, its record left to the PR, passes once signalled.
 chat=$(cat "$dir/../../../scripts/fixtures/closeout-chat.md")
 passes "$chat"

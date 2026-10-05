@@ -1,10 +1,10 @@
 # Closeout: add a field check
 
-**TL;DR:** A closeout that leaves out a field is now caught before it is sent.
-
-**Status:** done — merged and cleaned up.
-
 **Full record:** [PR](https://github.com/o/r/pull/3)
+
+**Status:** 🟢 done — merged and cleaned up.
+
+**TL;DR:** A closeout that leaves out a field is now caught before it is sent.
 
 ## Record
 

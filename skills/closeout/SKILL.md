@@ -30,27 +30,28 @@ PR (P17), never in the repository.
 
 ## 2. Fill the template
 
-Write the summary first, from what I will see, not from what you did.
+Write the summary first, from what I will see, not from what you did. Keep
+the template's order: the asks and the TL;DR come last, where a chat opens.
 
-- **TL;DR**: what is different now for me, my users or my customers, in one
-  or two sentences. A change with nothing visible says what it protects or
-  makes possible.
-- **Status**:
-  - **done**: merged and cleaned up;
-  - **ready for you**: finished, reviewed and green, waiting only on my
-    acceptance or merge;
-  - **partly done**: assigned work is left undone;
-  - **blocked**: cannot go on without something outside the session;
-  - **abandoned**: stopped, with the reason.
+- **Watch out**: only what could hurt users, data, money or time if I
+  missed it: something untested that matters, a surprise, a new cost. Not
+  routine gaps such as a skipped local check that CI covered.
+- **Next**: one line, only when there is a real next task.
 - **Needs you**: every step that waits on me, in order, each with the exact
   command, link or choice. Name an irreversible effect next to its step
   ("merging deploys"). Check the order against what I have already done. An
   acceptance waits on its own card (`templates/acceptance-card.md`); point
   to it rather than repeating it.
-- **Watch out**: only what could hurt users, data, money or time if I
-  missed it: something untested that matters, a surprise, a new cost. Not
-  routine gaps such as a skipped local check that CI covered.
-- **Next**: one line, only when there is a real next task.
+- **Status**, with its colour mark so I can read it at a glance:
+  - 🟢 **done**: merged and cleaned up;
+  - 🔵 **ready for you**: finished, reviewed and green, waiting only on my
+    acceptance or merge;
+  - 🟡 **partly done**: assigned work is left undone;
+  - 🔴 **blocked**: cannot go on without something outside the session;
+  - ⚪ **abandoned**: stopped, with the reason.
+- **TL;DR**: what is different now for me, my users or my customers, in one
+  or two sentences. A change with nothing visible says what it protects or
+  makes possible.
 
 Plain words throughout. Write for the owner of the product, not for a
 reviewer of the code: no policy numbers, commit hashes, file paths, check

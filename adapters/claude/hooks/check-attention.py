@@ -10,7 +10,7 @@ message or my last answer to AskUserQuestion, so an early clarifying
 question does not cover a card or closeout written an hour later.
 
 It also holds the closeout to its template (P15): a chat closeout missing a
-required summary field of templates/closeout.md (TL;DR, Status) is blocked,
+required summary field of templates/closeout.md (Status, TL;DR) is blocked,
 and so is a turn that merged a PR without rewriting the PR description afterwards or without any closeout in
 chat this session. A PR this session or its subagents created with
 `gh pr create` and has not merged, set to auto-merge or closed since is not a
@@ -294,7 +294,7 @@ def main():
     gaps = merge_gaps(calls, earlier or bool(notify))
     missing = missing_fields(text) if notify else []
     if missing:
-        gaps.append("start the closeout with the summary fields it lacks, in plain words "
+        gaps.append("add the summary fields the closeout lacks, in plain words "
                     "(the full record goes in the PR): " + ", ".join(missing))
     reasons = ["Closeout incomplete (closeout skill): " + "; ".join(gaps) + "."] if gaps else []
     if (not (earlier or notify or dismissed) and "AskUserQuestion" not in {n for n, _ in calls}

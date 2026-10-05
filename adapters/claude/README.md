@@ -181,7 +181,7 @@ unverified against vendor docs.
   called since my last message or my last answer to `AskUserQuestion`. It
   finds that boundary in the transcript by entry shape (observed, not
   documented). It also blocks a chat closeout missing a required summary field of
-  `templates/closeout.md` (TL;DR, Status), and a turn whose `gh pr merge` call succeeded
+  `templates/closeout.md` (Status, TL;DR), and a turn whose `gh pr merge` call succeeded
   (not `--auto`, `--disable-auto` or `--help`) without a later body rewrite
   (`gh pr edit` with a body flag, or `gh api` with `body=`) or with no
   closeout sent in chat this session. It blocks a turn that ends while a PR
