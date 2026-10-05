@@ -13,8 +13,10 @@ override such as `gh pr merge --admin`, no relaxing the ruleset; only I do,
 for a case I name), and a change that needs the critical reviewer under P4
 is handed to me to merge unless I OK its head commit in the conversation
 (the closeout asks); after any new commit, ask again. Other new commits
-follow P4b: one I approved after seeing its diff needs no new review; any
-other gets a delta-only confirmation from the resumed reviewer.
+follow P4b: classify the commit's own risk; one I approved after seeing its
+diff needs no new review if neither it nor the PR needs the critical
+reviewer; any other gets a delta-only confirmation from the resumed reviewer
+of the change's tier, the critical reviewer for a critical delta.
 
 ## 1. Check that merging is allowed
 

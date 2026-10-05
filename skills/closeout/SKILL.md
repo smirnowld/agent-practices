@@ -84,11 +84,12 @@ whichever of these apply, together in one structured question prompt:
   explicit OK (P1) for that commit only, and counts only if I also accepted
   and left no decision open. Merge by the project's procedure or the `merge`
   skill, whose other checks still apply. A new commit needs the question
-  again, unless I approved it after seeing its diff and the change needs no
-  critical reviewer (P4b).
+  again, unless I approved it after seeing its diff and neither the PR nor
+  the new commit needs the critical reviewer (P4b).
 - **Follow-ups**, only for real ones: the next plan step this session
-  unblocked, and work deferred because it failed the fix-on-the-go test,
-  bigger or riskier changes above all. Merge duplicates first. For each, ask now or
+  unblocked, work deferred because it failed the fix-on-the-go test
+  (bigger or riskier changes above all), and anything under **Not
+  verified** that a session could still verify. Merge duplicates first. For each, ask now or
   later: now briefs it (or, for a deferred change in an unmerged PR, does
   it in this PR); later leaves the plan row or issue. On "now", run `brief`
   with those candidates. Leftovers that passed the test are a miss to report,
