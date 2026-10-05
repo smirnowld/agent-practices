@@ -1,8 +1,8 @@
 #!/bin/sh
-# Offline self-test for the question hook: a short question with no chat text
-# after the last tool result is denied; text right before it, a long question
-# or the retry after a denial passes; text before an earlier tool call does
-# not count; bad input passes with a note on stderr.
+# Offline self-test for the question hook: a question with no chat text after
+# the last tool result is denied, however long, and so is its unchanged retry;
+# text right before it passes; text before an earlier tool call does not count;
+# bad input passes with a note on stderr.
 set -eu
 dir=$(dirname "$0")
 hook="$dir/check-question.py"
@@ -47,30 +47,47 @@ denied "$short" 'text before an earlier tool call'
 session u:go b r 'a:Run these: `make deploy`'
 passes "$short" 'text right before'
 session u:go t
-passes "$long" 'long question'
+denied "$long" 'long question'
+session u:go t
+ask "$long" "$short" | grep -qF '"permissionDecision": "deny"' || { echo "error: not denied: two questions" >&2; exit 1; }
+# The unchanged retry after a denial is denied again, as a string or as blocks;
+# writing text first lets it through.
 reason=$(ask "$short" | python3 -c 'import json,sys; print(json.load(sys.stdin)["hookSpecificOutput"]["permissionDecisionReason"])')
 session u:go t q "r:PreToolUse:AskUserQuestion hook error: $reason"
-passes "$short" 'retry after a denial'
-# A short question beside a long one is still checked.
-session u:go t
-ask "$long" "$short" | grep -qF '"permissionDecision": "deny"' || { echo "error: not denied: mixed lengths" >&2; exit 1; }
+denied "$short" 'unchanged retry'
+session u:go t q "l:PreToolUse:AskUserQuestion hook error: $reason" t
+denied "$short" 'unchanged retry, result in blocks'
+session u:go t q "r:PreToolUse:AskUserQuestion hook error: $reason" 'a:Run: `make deploy`'
+passes "$short" 'retry after writing text'
+# Text not yet in the transcript when the first call ran: the retry finds it.
+session u:go b r 'a:Run: `make deploy`' q "r:PreToolUse:AskUserQuestion hook error: $reason"
+passes "$short" 'retry after a race with text already written'
+# Another tool's output that quotes the denial is still a step.
+session u:go a:'Status.' b "r:DENIED = \"PreToolUse:AskUserQuestion hook error\"" t
+denied "$short" 'denial text in a Bash result'
+# A ToolSearch result is not a step; whitespace is not text; stop-hook
+# feedback (isMeta) is not my message.
+session u:go b r a:'Card.' b
+python3 - "$tmp/t.jsonl" <<'PY'
+import json, sys
+p = sys.argv[1]
+lines = open(p).read().splitlines()
+lines[-1] = lines[-1].replace('"Bash"', '"ToolSearch"')
+lines.append(json.dumps({"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "s2", "content": "loaded"}]}}))
+lines.append(json.dumps({"type": "user", "isMeta": True, "message": {"content": "Stop hook feedback: ask now"}}))
+open(p, "w").write("\n".join(lines) + "\n")
+PY
+passes "$short" 'after ToolSearch and stop-hook feedback'
+session u:go b r 'a:   '
+denied "$short" 'whitespace-only text'
 # A closeout, its notification, then its question: the notification is not a step.
 session u:go b r a:'# Closeout: Done' p r:'Mobile push requested.'
 passes "$short" 'question after a closeout and its notification'
-# A denial whose result is a list of blocks still allows the retry; another
-# tool call after it does not.
-session u:go t q "l:PreToolUse:AskUserQuestion hook error: $reason"
-passes "$short" 'retry after a denial in blocks'
-session u:go t q "r:PreToolUse:AskUserQuestion hook error: $reason" b r
-denied "$short" 'tool call between denial and retry'
 # An answered question starts a new step; so does my typed message.
 session u:go a:'Commands.' q r:'User answered' t
 denied "$short" 'after an answer'
 session a:'Commands.' u:'I see nothing' t
 denied "$short" 'after my message'
-# The retry allowance ends when I speak again.
-session u:go t q "r:PreToolUse:AskUserQuestion hook error: $reason" u:'what?' t
-denied "$short" 'after a denial and my message'
 
 for bad in 'not json' '{"tool_input":{"questions":[{"question":"x"}]}}' '{"tool_input":{"questions":[{"question":"x"}]},"transcript_path":"/nonexistent"}'; do
   err=$(printf '%s\n' "$bad" | python3 "$hook" 2>&1 >/dev/null) || { echo "error: hook exited non-zero on: $bad" >&2; exit 1; }

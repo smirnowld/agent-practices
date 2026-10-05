@@ -28,8 +28,9 @@ when ToolSearch cannot find it either, and the report says so.
   accept / change / reject, proposed first. A closeout or hand-off to me sends
   `PushNotification`, one line under 200 characters, then asks its questions
   (acceptance, merge, follow-ups) in one `AskUserQuestion` call, one question
-  per topic. Thinking is never shown to me: whatever a question depends on
-  (commands, steps, a card) is chat text right before the call, or in the
-  question. A reply that asks for clarification or says I can't see something
+  per topic. Thinking is never shown to me: every question has chat text
+  after the last tool result, and whatever it depends on (commands, steps, a
+  card) is in that text in full, commands in code blocks, never only in
+  thinking. A reply that asks for clarification or says I can't see something
   is answered in chat text first; never re-ask an unchanged question. When I
   dismiss a question, end the turn restating what waits on me; no closeout.

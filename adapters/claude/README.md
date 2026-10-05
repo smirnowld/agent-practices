@@ -230,18 +230,27 @@ unverified against vendor docs.
   collapsed a sent message, but their transcripts held no text block; that
   explanation was wrong. The `PreToolUse` hook
   [`hooks/check-question.py`](hooks/check-question.py) denies an
-  `AskUserQuestion` call once when it holds a question under 100 characters
-  and no chat text came after the last tool result (a `PushNotification` or
-  `ToolSearch` result does not count, so a closeout's question passes). The reason says to write
-  the content first, or to call again unchanged if the question is
-  self-contained, and the retry passes. It knows its own denial by its reason
-  in the tool result. That a denial lands as a tool result carrying the
-  reason was observed on the chip hook, not documented. Replayed on 413
-  questions from ten days of sessions (2026-10-05), it denies 102, about one
-  in four, and those held every case I found that I could not answer. Limits: a long question can still point at unseen content; text
-  written but not yet in the transcript when the hook runs, or text before
-  parallel tool calls whose results land first, would cause a needless
-  denial (neither observed).
+  `AskUserQuestion` call when no chat text came after the last tool result (a
+  `PushNotification` or `ToolSearch` result does not count, so a closeout's
+  question passes, and so does this hook's own denial); the reason says the
+  user has not seen anything planned in thinking. Its first version (2026-10-05) checked only questions under 100
+  characters and let an unchanged retry through if the question was
+  self-contained. Within hours agents took that retry almost every time, three
+  seconds after the denial, still believing their thinking had been sent, and
+  questions over 100 characters pointed at commands only in thinking too
+  (a product repo, a home-server repo). So now every question needs text
+  before it, and a retry passes only if that text is in the transcript. Replayed on 486 questions from ten
+  days of sessions (2026-10-05), 350 had no text right before them; each
+  costs one denial until the agent writes some, which the session rule says
+  to do first. The hook cannot judge whether that text holds what the
+  question depends on: thinking is mostly stored empty, so it cannot be
+  compared. Text written in the same message as the question is sometimes
+  not yet in the transcript when the hook runs: of 13 questions with text
+  before them on 2026-10-05, 3 were denied, the text 3 to 5 seconds before the
+  call. The denial's own result
+  therefore does not count as a step, so the unchanged retry finds that text
+  and passes. Text before parallel tool calls whose results land first would
+  still cause a needless denial (not observed).
 - Scheduled routines (`docs-drift-check`, `triage`, `issue-review`,
   `project-setup` audit) run as local desktop-app scheduled tasks, one per
   project; a proposed session appears as a chip. Local tasks fire only while the app is open and the
