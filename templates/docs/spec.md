@@ -11,8 +11,8 @@ History lives in git; decisions live in ADRs and are linked, not retold. -->
 
 ## Behaviour
 
-<What it does now: rules, states, edge cases. Requirements I stated, not
-invented ones (P11).>
+<What it does now: rules, states, edge cases. Requirements the maintainer
+stated, not invented ones (P11).>
 
 ## Constraints
 

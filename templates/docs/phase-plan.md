@@ -61,8 +61,8 @@ here; plan.md shows "Parked" and links this section. -->
 
 ### WP<N>: <what it would deliver> (<area, if any>; <size>)
 
-Briefed only if <condition> (<my decision, date, link>). <Scope and "Done
-when", kept so it can be briefed without replanning.>
+Briefed only if <condition> (<the maintainer's decision, date, link>).
+<Scope and "Done when", kept so it can be briefed without replanning.>
 
 ## Estimate
 

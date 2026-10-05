@@ -36,11 +36,13 @@ transcript Bash
 blocks "$card" '' 'AskUserQuestion'
 blocks '# Question: Keep 30-day sign-in?' '' 'AskUserQuestion'
 blocks '**Waiting on me:** acceptance of phase 2' '' 'AskUserQuestion'
+blocks '**Waiting on the maintainer:** acceptance of phase 2' '' 'AskUserQuestion'
 blocks "$closeout" '' 'PushNotification'
 blocks "$card" '{"background_tasks":[]}' '"decision": "block"'
 
 passes '**Waiting on me:** nothing'
 passes '**Waiting on me:** "Nothing"'
+passes '**Waiting on the maintainer:** nothing'
 passes 'Here is the answer: 42.'
 passes "$card" '{"stop_hook_active":true}'
 passes "$card" '{"background_tasks":[{"id":"t1","type":"subagent"}]}'

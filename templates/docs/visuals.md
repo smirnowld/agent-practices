@@ -42,6 +42,6 @@ Every visual carries a legend for the encodings it uses.
 | Visual | Shape |
 |---|---|
 | Roadmap | Phases in order as cards: name, size, deliverables in user terms, "Done when". Milestone flags. A parallel track for work outside engineering. No dates unless the source commits to them. |
-| Plan | The current phase: goal and status up top; the dependency order as a diagram with nodes coloured by status (done, including engineering complete with a marker; active; blocked; not started; parked, dashed); a progress count; what waits on me highlighted. |
+| Plan | The current phase: goal and status up top; the dependency order as a diagram with nodes coloured by status (done, including engineering complete with a marker; active; blocked; not started; parked, dashed); a progress count; what waits on the maintainer highlighted. |
 | Architecture | Boxes grouped by boundary (clients, our system, rented services), arrows for who calls whom, a caption saying so; principles below as short cards. |
 | Tech stack | One band per layer with its one-line intent; each choice tagged by kind (write, build on, rent, unconfirmed). |

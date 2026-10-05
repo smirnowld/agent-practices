@@ -45,8 +45,8 @@ issue URL, or the package's section in the phase plan as a SHA permalink
 
 ## Acceptance
 
-<What I will check to accept the phase, as the user would experience it.
-Evidence per the acceptance-evidence skill.>
+<What the maintainer checks to accept the phase, as the user would
+experience it. Evidence per the acceptance-evidence skill.>
 
 ## Not in this phase
 

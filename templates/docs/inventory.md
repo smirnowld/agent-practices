@@ -38,7 +38,7 @@ files rather than copying them.>
 
 | Account | Used for | Owner | Renewal |
 |---|---|---|---|
-| <provider> | <purpose> | me | <date or auto> |
+| <provider> | <purpose> | the maintainer | <date or auto> |
 
 ## Manual state
 

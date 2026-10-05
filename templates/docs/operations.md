@@ -21,7 +21,7 @@ alerts:
   - { name: down, condition: <...>, severity: page, notifies: <channel>, runbook: docs/runbooks/down.md }
   - { name: error-spike, condition: <...>, severity: notify, notifies: <channel>, runbook: docs/runbooks/error-spike.md }
 access:
-  - { signal: <errors>, needs: <SECRET_NAME>, stored: <where I keep it> }
+  - { signal: <errors>, needs: <SECRET_NAME>, stored: <where the maintainer keeps it> }
 normal:
   error_rate: <baseline>
   notes: <routine noise>
