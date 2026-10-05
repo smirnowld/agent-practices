@@ -41,8 +41,8 @@ For **Continuation**:
   authority. A ready branch or open PR is not a reason to stop (P5).
 - **Start a new session** after merge and cleanup, when the next task is a
   distinct objective, needs another worktree or owner, or would benefit from
-  fresh context. It, and any leftover work the closeout lists, is proposed
-  with the `brief` skill once I say yes in step 5.
+  fresh context. It, and leftover work that failed the fix-on-the-go test,
+  is proposed with the `brief` skill once I say "now" in step 5.
 - **Wait for me** when the next step is a decision, acceptance, merge,
   production action or other step that is mine. Never for work with nothing
   left to wait on.
@@ -86,12 +86,13 @@ whichever of these apply, together in one structured question prompt:
   skill, whose other checks still apply. A new commit needs the question
   again, unless I approved it after seeing its diff and the change needs no
   critical reviewer (P4b).
-- **Follow-ups**, only for work that is not small: the next plan step this
-  session unblocked, and changes deferred as bigger or riskier than the
-  fix-on-the-go test allows. Merge duplicates first. For each, ask now or
+- **Follow-ups**, only for real ones: the next plan step this session
+  unblocked, and work deferred because it failed the fix-on-the-go test,
+  bigger or riskier changes above all. Merge duplicates first. For each, ask now or
   later: now briefs it (or, for a deferred change in an unmerged PR, does
   it in this PR); later leaves the plan row or issue. On "now", run `brief`
-  with those candidates. Small leftovers are not asked about.
+  with those candidates. Leftovers that passed the test are a miss to report,
+  not a question.
 
 After acting on the answers, rewrite the closeout in the PR description
 (`gh pr edit --body-file`; a comment does not replace it) so Outcome, Proof

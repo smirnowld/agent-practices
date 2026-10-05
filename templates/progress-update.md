@@ -20,5 +20,5 @@ without the transcript. Short bullets; omit empty sections. -->
 **Next step:** <exactly what happens next>
 
 **Context:** <tokens used vs the compaction point> — suggest <compact | new
-session | continue>. Compact keep line: `keep: goal, decisions, owned files,
+session | continue>. Compact keep line: `keep: goal, decisions, core files,
 proof status, next step`.

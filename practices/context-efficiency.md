@@ -42,7 +42,7 @@ same files, at about 120k context per call.
 - Never shrink the context window to force compaction; move the compaction
   point instead.
 - Compact at a checkpoint, never mid-step, after a progress update
-  (`templates/progress-update.md`) so the summary keeps goal, decisions, owned
+  (`templates/progress-update.md`) so the summary keeps goal, decisions, core
   files, proof status and next step.
 - A new task gets a new session with a brief, not a fork: a fork inherits the
   history.

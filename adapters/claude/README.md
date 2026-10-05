@@ -228,7 +228,7 @@ unverified against vendor docs.
 - Context: the compaction threshold is `autoCompactWindow` in user settings
   (model-config.md); tuned per `practices/context-efficiency.md`. Before
   suggesting compaction, check `/context`; suggest
-  `/compact keep: goal, decisions, owned files, proof status, next step`
+  `/compact keep: goal, decisions, core files, proof status, next step`
   (https://code.claude.com/docs/en/claude-code-on-the-web.md, "Manage
   context").
 
