@@ -99,7 +99,7 @@ python3 SKILL_DIR/../../scripts/check-links.py --closeout /ABSOLUTE/PATH/DRAFT.m
 symlinked install. Fix each failure. A flagged token that is not a file
 reference (a command, a branch name) can stay. Without `gh` or network, rerun
 with `--offline` for the local checks and name the unchecked links under
-**Not verified**. Check the exact text you will send and send it unchanged;
+**Not verified** in the PR record. Check the exact text you will send and send it unchanged;
 drop the flag only for a PR body that holds no closeout.
 
 ## 5. Signal and ask
@@ -127,7 +127,8 @@ whichever of these apply, together in one structured question prompt:
 
 After acting on the answers, rewrite the closeout in the PR description
 (`gh pr edit --body-file`; a comment does not replace it) so Status, Needs
-you, Proof (with any post-merge run) and Cleanup match the merged state,
+you, Proof (with any post-merge run), Blocked on, Cleanup and Continuation
+match the merged state,
 and check it again as in step 4. Then say in one line in chat what happened
 (merge SHA, sessions proposed); do not repost the closeout. If no full
 closeout went to chat earlier, send it now. The adapter's `session.md` names

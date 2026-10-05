@@ -114,7 +114,7 @@ def check(text, offline):
 
 TEMPLATE = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                         "..", "templates", "closeout.md")
-FIELD = re.compile(r"^\*\*([^*]+):\*\* (<only when)?", re.M)
+FIELD = re.compile(r"^\*\*([^*]+):\*\*\s*(<only when)?", re.M)
 
 
 def missing_fields(text, record=False):
