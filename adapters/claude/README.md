@@ -189,7 +189,12 @@ unverified against vendor docs.
   `gh pr merge` (`--auto` counts; a later `--disable-auto` undoes it unless
   the PR was already merged or closed) or `gh pr close`, unless a closeout was
   sent this session or the turn called `AskUserQuestion` that is not yet
-  answered. Each PR is tracked by the one PR URL its create printed, else by
+  answered. A turn that starts with my dismissing a question is waiting on me,
+  so neither this rule nor the ask-signal rule fires; the merge and closeout
+  checks still do. In a home-server repo (2026-10-05) the open-PR
+  rule turned a dismissal into a premature closeout. A question a hook denied
+  counts as neither asked nor answered. A dismissal's tool
+  result reads "User dismissed" (observed, not documented). Each PR is tracked by the one PR URL its create printed, else by
   the first number or URL a merge or close names for it as its first
   argument that is not a flag or a flag's value. One naming no PR settles
   the latest still open, else the latest on auto-merge; one naming it by a
@@ -217,6 +222,26 @@ unverified against vendor docs.
   are my app settings (settings-reference.md, `preferredNotifChannel`;
   remote-control.md, "Mobile push notifications"; not checked on this
   machine).
+- Questions that point at unseen content (P6b): thinking is not shown to me;
+  the desktop app shows a one-line summary of it, which reads as if the
+  content was sent. Sessions in a product repo (2026-10-04) and a home-server
+  repo (2026-10-05) wrote the commands I was to run only in thinking, then
+  asked "tell me when you've run them". Both later told me the app had
+  collapsed a sent message, but their transcripts held no text block; that
+  explanation was wrong. The `PreToolUse` hook
+  [`hooks/check-question.py`](hooks/check-question.py) denies an
+  `AskUserQuestion` call once when it holds a question under 100 characters
+  and no chat text came after the last tool result (a `PushNotification` or
+  `ToolSearch` result does not count, so a closeout's question passes). The reason says to write
+  the content first, or to call again unchanged if the question is
+  self-contained, and the retry passes. It knows its own denial by its reason
+  in the tool result. That a denial lands as a tool result carrying the
+  reason was observed on the chip hook, not documented. Replayed on 413
+  questions from ten days of sessions (2026-10-05), it denies 102, about one
+  in four, and those held every case I found that I could not answer. Limits: a long question can still point at unseen content; text
+  written but not yet in the transcript when the hook runs, or text before
+  parallel tool calls whose results land first, would cause a needless
+  denial (neither observed).
 - Scheduled routines (`docs-drift-check`, `triage`, `issue-review`,
   `project-setup` audit) run as local desktop-app scheduled tasks, one per
   project; a proposed session appears as a chip. Local tasks fire only while the app is open and the
