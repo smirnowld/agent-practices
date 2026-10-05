@@ -50,25 +50,30 @@ The service account's token lives in the macOS Keychain. `-T /usr/bin/security`
 lets any of my processes read it without a prompt through that tool, agents
 included; the vault scope, not the Keychain, is the boundary.
 
-Copy the token from 1Password, then store it from the clipboard and clear the
-clipboard:
+Copy the token with the 1Password app's copy button (it marks the copy as
+concealed for clipboard managers and clears it later; a browser page does
+neither), then store it from the clipboard and clear the clipboard. `-U`
+replaces an existing item unconditionally, so the guard refuses a clipboard
+that holds no token:
 
 ```sh
-security add-generic-password -U -s op-agent-<project> -a "$USER" -T /usr/bin/security -w "$(pbpaste)" && pbcopy </dev/null
+case "$(pbpaste)" in ops_*) security add-generic-password -U -s op-agent-<project> -a "$USER" -T /usr/bin/security -w "$(pbpaste)" && pbcopy </dev/null ;; *) echo "the clipboard holds no token" >&2 ;; esac
 ```
 
-Not `-w` last: its prompt keeps only the first 128 characters, and a token is
-several times longer, so `op` later fails to decode it. Check the stored
-length and prefix, never the value:
+Not `-w` last: its prompt reads through `getpass(3)`, which keeps only the
+first 128 characters, and a token is several times longer, so `op` later
+fails to decode it. Check the stored length and prefix, never the value:
 
 ```sh
 security find-generic-password -s op-agent-<project> -w | awk '{print length($0), substr($0,1,4)}'
 ```
 
 The token is in argv for the moment `security` runs; on a single-user Mac
-that is the accepted trade-off. Rotate by creating a new token on
-1Password.com (Developer, Service accounts), storing it the same way (`-U`
-replaces the item), then revoking the old token.
+that is the accepted trade-off, since `-T /usr/bin/security` already lets
+any of my processes read it. Rotate with Rotate Token on the service account
+(1Password.com, Developer, Service accounts), letting the old token expire
+now or after a grace period, and store the new one the same way. Revoke
+Token there revokes the current token, so it is not part of a rotation.
 
 ### Running with secrets
 
