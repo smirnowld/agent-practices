@@ -178,7 +178,8 @@ unverified against vendor docs.
   blocks a turn once when its final message, outside code fences, holds an
   acceptance card, question, "Decision needed", a "Waiting on me" or
   "Waiting on the maintainer" line other than "nothing", "none" or "n/a",
-  or a closeout heading, and neither tool was called since my last message or my last answer to `AskUserQuestion`. It
+  or a closeout heading, and neither tool was called since my last message
+  or my last answer to `AskUserQuestion`. It
   finds that boundary in the transcript by entry shape (observed, not
   documented). It also blocks a chat closeout missing a required summary field of
   `templates/closeout.md` (Status, TL;DR), and a turn whose `gh pr merge` call succeeded
