@@ -13,8 +13,13 @@ is waiting on me and the rule does not fire for a question or card.
 
 It also holds the closeout to its template (P15): a chat closeout missing a
 required summary field of templates/closeout.md (Status, TL;DR) is blocked,
-and so is a turn that merged a PR without rewriting the PR description
-afterwards or without any closeout in chat this session.
+and so is one written without the closeout skill loaded this session. A turn
+that merged a PR is blocked without the PR description rewritten afterwards,
+a closeout in chat this session and the closeout skill. A merge is a direct
+`gh pr merge`, or, once this session turned auto-merge on, its landing: a
+background `wait-for pr-ci|pr-merged` that exits 0, a tool result holding
+wait-for's final line for a merge or a pass, or `"state":"MERGED"` from a
+`gh pr view`, each for the PR auto-merge was turned on for.
 
 A turn that says it waits on CI, a run or a merge while none of the
 session's own GitHub waits is running is blocked: nothing will wake the
@@ -55,6 +60,22 @@ HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1([^\n]*)\n.*?^\s*\2\s*$", re.M | re
 QUOTED = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"|(?<![^\s;&|()])#[^\n]*")
 QUOTED_VAR = re.compile(r'"\$(?:\w+|\{\w+\})"')
 ECHO = re.compile(r"(^|[\s(`=])(echo|printf)\s(?:[^)`$]|\$(?!\())*")
+AUTO = re.compile(r"\s--auto\b")
+DISABLE = re.compile(r"\s--disable-auto\b")
+# The PR a gh pr command names, by number or URL; none means the branch's own.
+PR_ARG = re.compile(r"\s(?:\S*/pull/)?(\d+)\b")
+# A background wait whose exit 0 means the PR merged or its auto-merge can land
+# (bin/wait-for); a wrapper after it (`; echo $?`) hides the exit code.
+WAIT_FOR = re.compile(r"(?:\S*/)?wait-for\b.*\s(?:pr-ci|pr-merged)\s+(\d+)(?:\s+\d?>&?\s*\S+)*\s*$")
+EXITED_0 = re.compile(r"<status>completed</status>.*\(exit code 0\)", re.S)
+NOTICE_ID = re.compile(r"<tool-use-id>([^<]+)</tool-use-id>")
+# wait-for's final line for a merged PR or passed CI; gh's JSON for a merged PR
+# counts only as the result of a `gh pr view` of that PR.
+LANDED = re.compile(r"^(?:merged: PR|passed: CI on PR) (\d+) at \S", re.M)
+VIEW = re.compile(r"gh pr view\b")
+MERGED_STATE = re.compile(r'"state":\s*"MERGED"')
+CLOSEOUT_SKILL = re.compile(r"^(?:[\w-]+:)?closeout$")
+CLOSEOUT_COMMAND = re.compile(r"<command-name>/(?:[\w-]+:)?closeout</command-name>")
 EDIT = re.compile(r"gh pr edit\b.*\s(--body|--body-file|-b|-F)\b|gh api\b.*\sbody=")
 # The tool result of a question I dismissed (observed 2026-10-05, not documented).
 DISMISSED = "User dismissed"
@@ -93,13 +114,13 @@ OPEN_REASON = (
 # notification or TaskStop (observed 2026-10-06, not documented).
 BG_ID = re.compile(r"running in background with ID: (\w+)|moved to the background \(ID: (\w+)\)")
 NOTICE = re.compile(r"<task-notification>(.*?)</task-notification>", re.S)
-NOTICE_ID = re.compile(r"<(task-id|tool-use-id)>\s*([^<\s]+)\s*</\1>")
+NOTICE_IDS = re.compile(r"<(task-id|tool-use-id)>\s*([^<\s]+)\s*</\1>")
 STOPS = {"TaskStop": "task_id", "KillShell": "shell_id"}  # KillShell: TaskStop's older name
 # Waits on GitHub: the session's own `wait-for`, and the watches it replaced.
 # A simple command's prefix: a group or loop keyword, an assignment, a wrapper.
 PREFIX = (r"(?:[({]\s*|(?:do|then|else|env|time|nohup|exec|command|sh|bash)\s+"
           r"|\w+=\S*\s+|timeout\s+\S+\s+)*")
-WAIT_FOR = re.compile(PREFIX + r"(?:\S*/)?wait-for(?:\s|$)")
+OWN_WAIT = re.compile(PREFIX + r"(?:\S*/)?wait-for(?:\s|$)")
 GH_WAIT = re.compile(PREFIX + r"gh(?:\s+(?:-R|--repo)\s+\S+)?\s+(?:run watch\b|pr checks\b.*\s--watch\b)")
 # What a sentence says it waits on, for the session's own open wait.
 WAIT_NOUN = re.compile(CI_NOUN.pattern + r"|\bwait(?:s|ing|-for)?\b", re.I)
@@ -132,26 +153,62 @@ def entries(path):
                 yield entry, content, parts
 
 
+def result_text(content):
+    """A tool result's or notice's text, however its content is shaped."""
+    if isinstance(content, str):
+        return content
+    return "\n".join(c.get("text") or "" for c in content or [] if isinstance(c, dict))
+
+
 def turn_tools(path):
     """Tool calls since I last spoke (typed, or answered AskUserQuestion), in
-    order as (name, input), whether any earlier message held a closeout,
-    whether I dismissed the question that started the turn, and, when the
-    turn began with my answer to a question and no text followed it, the
-    text I answered (None otherwise)."""
+    order as (name, input); whether any earlier message held a closeout;
+    whether the closeout skill was loaded this session; the index into those
+    calls at which an auto-merge this session turned on landed this turn
+    (None if none did); whether I dismissed the question that started the
+    turn; and, when the turn began with my answer to a question and no text
+    followed it, the text I answered (None otherwise)."""
     names, asks, failed, closeout, dismissed = [], set(), set(), False, False
+    skills, auto_ids, disable_ids, waits, views = set(), {}, {}, {}, {}
+    auto, landed, command = set(), None, False
     last, asked = "", None
+
+    def lands(pr):
+        """Whether PR is one this session's auto-merge is on for; it lands once."""
+        nonlocal auto, landed
+        hit = auto if pr is None else auto & {pr, None}
+        if hit:
+            auto, landed = auto - hit, len(names) if landed is None else landed
     for entry, content, parts in entries(path):
         if entry.get("type") == "user":
-            failed |= {c.get("tool_use_id") for c in parts
-                       if c.get("type") == "tool_result"
-                       and (c.get("is_error") or (c.get("tool_use_id") in asks
-                                                  and DENIED in json.dumps(c.get("content"))))}
-            answers = [c for c in parts if c.get("type") == "tool_result" and c.get("tool_use_id") in asks
+            results = [c for c in parts if c.get("type") == "tool_result"]
+            failed |= {c.get("tool_use_id") for c in results
+                       if c.get("is_error") or (c.get("tool_use_id") in asks
+                                                and DENIED in json.dumps(c.get("content")))}
+            answers = [c for c in results if c.get("tool_use_id") in asks
                        and DENIED not in json.dumps(c.get("content"))]
             if typed(entry, content) or answers:
-                names = []
+                names, landed = [], None
                 dismissed = any(DISMISSED in json.dumps(c.get("content")) for c in answers)
                 asked = last if answers and not typed(entry, content) else None
+            text = result_text(content)
+            command |= bool(CLOSEOUT_COMMAND.search(text))
+            for c in results:
+                k = c.get("tool_use_id")
+                if k in failed:
+                    continue
+                if k in auto_ids:
+                    auto.add(auto_ids[k])
+                if k in disable_ids:
+                    auto -= {disable_ids[k]} if disable_ids[k] else set(auto)
+                out = result_text(c.get("content"))
+                for m in LANDED.finditer(out):
+                    lands(m.group(1))
+                if k in views and MERGED_STATE.search(out):
+                    lands(views[k])
+            notice = NOTICE_ID.search(text)
+            if notice and notice.group(1) in waits and EXITED_0.search(text):
+                lands(waits[notice.group(1)])
         elif entry.get("type") == "assistant":
             for c in parts:
                 if c.get("type") == "text" and (c.get("text") or "").strip():
@@ -159,12 +216,33 @@ def turn_tools(path):
                 if c.get("type") == "text" and re.search(
                         NOTIFY[0][0], FENCE.sub("", c.get("text") or ""), re.M):
                     closeout = True
-                if c.get("type") == "tool_use":
-                    names.append((c.get("name"), c.get("input") or {}, c.get("id")))
-                    if c.get("name") == "AskUserQuestion" and c.get("id"):
-                        asks.add(c.get("id"))
-    calls = [(n, i) for n, i, k in names if k not in failed]
-    return calls, closeout, dismissed, asked
+                if c.get("type") != "tool_use":
+                    continue
+                name, args, k = c.get("name"), c.get("input") or {}, c.get("id")
+                names.append((name, args, k))
+                if name == "AskUserQuestion" and k:
+                    asks.add(k)
+                elif name == "Skill" and CLOSEOUT_SKILL.match(str(args.get("skill", ""))):
+                    skills.add(k)
+                elif name == "Bash":
+                    for step in steps_of([str(args.get("command", ""))]):
+                        pr = PR_ARG.search(step)
+                        pr = pr and pr.group(1)
+                        if MERGE.match(step) and AUTO.search(step):
+                            auto_ids[k] = pr
+                        elif MERGE.match(step) and DISABLE.search(step):
+                            disable_ids[k] = pr
+                        elif VIEW.match(step):
+                            views[k] = pr
+                        waits.pop(k, None)
+                        wait = WAIT_FOR.match(step)
+                        if wait and args.get("run_in_background"):
+                            waits[k] = wait.group(1)
+    kept = [(n, i, k) for n, i, k in names if k not in failed]
+    if landed is not None:
+        landed = sum(1 for _, _, k in names[:landed] if k not in failed)
+    skill = command or bool(skills - failed)
+    return [(n, i) for n, i, _ in kept], closeout, skill, landed, dismissed, asked
 
 
 def open_waits(path):
@@ -186,7 +264,7 @@ def open_waits(path):
                     ended.add(str(inp.get(STOPS[c["name"]])))
                 elif c.get("name") == "Bash":
                     steps = steps_of([str(inp.get("command", ""))])
-                    own = any(WAIT_FOR.match(s) for s in steps)
+                    own = any(OWN_WAIT.match(s) for s in steps)
                     if own or any(GH_WAIT.match(s) for s in steps):
                         waits[c.get("id")] = (own, " ".join(str(inp.get("command", "")).split())[:80])
             continue
@@ -197,7 +275,7 @@ def open_waits(path):
             c.get("text") for c in parts if c.get("type") == "text"]
         for text in (t for t in texts if isinstance(t, str)):
             for notice in NOTICE.findall(text):
-                ended |= {v for _, v in NOTICE_ID.findall(notice)}
+                ended |= {v for _, v in NOTICE_IDS.findall(notice)}
         for c in parts:
             if c.get("type") == "tool_result" and c.get("tool_use_id") in waits and not c.get("is_error"):
                 found = BG_ID.search(json.dumps(c.get("content")))
@@ -248,15 +326,26 @@ def _missing_fields(text):
     return [e.partition("missing: ")[2] for e in mod.missing_fields(text)]
 
 
-def merge_gaps(calls, closeout):
+def merge_gaps(calls, closeout, skill, landed=None):
     """What a turn that merged a PR still owes: the PR description rewritten
-    after the merge, and a closeout in chat (P15, closeout skill step 5)."""
-    steps = steps_of(str(i.get("command", "")) for n, i in calls if n == "Bash")
+    after the merge, a closeout in chat and the closeout skill (P15, closeout
+    skill step 5). A merge is a direct `gh pr merge`, or an auto-merge that
+    landed before call LANDED."""
+    steps, first = [], {}
+    for k, (n, i) in enumerate(calls):
+        first[k] = len(steps)
+        if n == "Bash":
+            steps += steps_of([str(i.get("command", ""))])
     merged = [k for k, c in enumerate(steps) if MERGE.match(c) and not NOT_MERGE.search(c)]
+    if landed is not None:
+        merged.append(first.get(landed, len(steps)) - 1)
     if not merged:
         return []
     gaps = []
-    if not any(EDIT.match(c) for c in steps[merged[-1] + 1:]):
+    if not skill:
+        gaps.append("load the closeout skill (Skill `agent-practices:closeout`) and write the "
+                    "PR description and the chat summary with it")
+    if not any(EDIT.match(c) for c in steps[max(merged) + 1:]):
         gaps.append("rewrite the closeout in the PR description with `gh pr edit --body-file` "
                     "(Status, Needs you, Proof with the post-merge run, Blocked on, Cleanup, "
                     "Continuation); a comment does not replace it")
@@ -270,14 +359,17 @@ def main():
     data = json.load(sys.stdin)
     if data.get("stop_hook_active"):
         return
-    calls, earlier, dismissed, asked = turn_tools(data["transcript_path"])
+    calls, earlier, skill, landed, dismissed, asked = turn_tools(data["transcript_path"])
     final = data.get("last_assistant_message") or ""
     # The final message is the one I answered (#45): it was checked when shown.
     stale = asked is not None and asked.strip() == final.strip()
     text = "" if stale else FENCE.sub("", final)
     found = lambda rules: [what for pattern, what in rules if re.search(pattern, text, re.M)]
     ask, notify = found(ASK), found(NOTIFY)
-    gaps = merge_gaps(calls, earlier or bool(notify))
+    gaps = merge_gaps(calls, earlier or bool(notify), skill, landed)
+    if notify and not skill and not gaps:
+        gaps.append("load the closeout skill (Skill `agent-practices:closeout`) and write the "
+                    "closeout with it; a closeout written without it misses its template")
     missing = missing_fields(text) if notify else []
     if missing:
         gaps.append("add the summary fields the closeout lacks, in plain words "
