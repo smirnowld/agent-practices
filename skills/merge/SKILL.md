@@ -76,8 +76,9 @@ the new SHA. Batch late fixes into one push so CI runs once.
 
 ## 4. Wait once, in the background
 
-Wait with `wait-for` from this repository's `bin/` as a background task, so its
-exit wakes the session (adapter):
+Wait with `wait-for` (`SKILL_DIR/../../bin/wait-for`, `SKILL_DIR` being the
+folder holding this file; the adapter says whether it is on the PATH) as a
+background task, so its exit wakes the session (adapter):
 
 ```sh
 wait-for pr-ci PR
