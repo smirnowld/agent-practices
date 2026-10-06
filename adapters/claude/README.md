@@ -254,7 +254,7 @@ unverified against vendor docs.
     per session.
   - Chat text alone is about 200 tokens, so the page costs about 2-3
     times that per wait. I chose the page on every wait, in addition to
-    the chat text and the push, for a few days; the binding is in
+    the chat text and the push, until 2026-10-10; the binding is in
     [session.md](session.md). An option label must read as a complete
     answer ("Only if 2+ wait", not "2+ items"), and Change or Other needs
     a note before Send. Tool behaviour observed 2026-10-06, unverified
