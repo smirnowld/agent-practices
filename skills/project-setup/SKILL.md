@@ -16,7 +16,7 @@ Two modes, same checklist: `practices/project-baseline.md`.
   propose one with the reason and ask me (P6); do not assume.
 - Public or private; hosting plan (see R4 in `practices/project-baseline.md`).
 - Deployed or not; holds user data or not; has code beyond docs; has
-  `docs/adr/`.
+  `docs/adr/`; has a staging or demo environment, and how its data is reset.
 - Languages and package ecosystems, for Dependabot and scanners.
 - Existing CI entry point and aggregate check name.
 
@@ -33,6 +33,13 @@ host's API, workflow run URL. Report per `practices/project-baseline.md`
 "Present" needs evidence; a setting assumed on is "unknown", which counts as
 missing. Rows that depend on external services (O1–O4) are checked from the
 observability manifest and a live health call; `triage` owns the signals.
+
+For O5, find the seed in the repository, the job that resets staging or the
+demo to it, and the seed rule in `AGENTS.md`. A seed without the reset or
+without the rule is "partial"; setup adds the rule, and a missing reset job
+is a gap for me (it changes infrastructure, P9). With no seed at all, O5 is
+"missing" and creating the seed is a gap for me; setup adds the rule only
+together with the seed.
 
 For R1, a present block must also be current: run
 `scripts/sync-policy.sh --check <project>` from a local agent-practices

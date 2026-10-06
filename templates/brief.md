@@ -52,7 +52,9 @@ that passes the fix-on-the-go test in this PR (Fixes #N); report the rest. -->
 
 ## Proof
 
-<!-- Commands and statuses that must be green; evidence for acceptance. -->
+<!-- Commands and statuses that must be green; evidence for acceptance. In a
+project with a staging or demo seed, what the seed must hold to show the
+work, or why it needs none (practices/project-baseline.md, O5). -->
 - <command or check>
 
 ## Delegation

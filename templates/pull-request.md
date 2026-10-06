@@ -13,6 +13,7 @@
 - <check / command> — <result>
 - Acceptance: <card link and my answer, or n/a>
 - Not verified: <item, or "nothing">
+- Seed: <updated: what it gained | not needed: why>  <!-- projects with a staging or demo seed only, practices/project-baseline.md O5 -->
 
 ## Review
 

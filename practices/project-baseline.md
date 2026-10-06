@@ -36,6 +36,7 @@ project elsewhere maps each row to its host's equivalent.
 | O2 | Minimum monitoring for the type: uptime, logs, errors, alerts with runbooks | ✓ | ✓ | — |
 | O3 | Backups with a tested restore; `docs/recovery.md` with the last test date | when user data | ✓ | — |
 | O4 | Restore test at least quarterly | when user data | ✓ | — |
+| O5 | Staging or demo data resets to a seed kept in the repository, and `AGENTS.md` carries the seed rule (note below) | when staging or demo | — | — |
 | **Routines** (scheduled, one entry per project) |||||
 | T1 | Weekly docs drift check (`docs-drift-check`) | ✓ | ✓ | when docs beyond README |
 | T2 | Daily triage of errors, alerts, uptime and logs (`triage`) | when deployed | ✓ | — |
@@ -66,6 +67,36 @@ only cost is CI minutes.
   ends with the old version; any trailing text leaves a stale version next to
   the new SHA. The pin check fails on a missing SHA or a comment that does not
   end in a version. Learnt in a product repo, 2026-09-27.
+
+## The seed follows behaviour
+
+For O5. A staging or demo environment is only useful for seeing and testing
+the product if its data shows what the product does now. Without a rule the
+seed falls behind each feature, and nobody notices until a check on staging
+finds nothing to look at.
+
+- **Reset to the seed.** The environment's data goes back to a seed kept in
+  the repository on a schedule or on each deploy. Changes made there by hand
+  do not last; data the work needs goes into the seed.
+- **The seed rule.** The project's `AGENTS.md` carries this wording, adapted
+  only to name its seed: a PR that adds a feature, a stored setting or a
+  state users or staff can see updates the seed and its loader in the same
+  PR, with data for its main and edge cases, or says why not. The PR
+  template's Seed line records which.
+- **Part of the feature.** The seed update is part of the feature's own
+  change, not a data migration or a fix on the go (P6); the review checks
+  that the seed covers the new behaviour.
+- **Dates relative to the reset**, not fixed, so seeded orders, bookings or
+  expiries stay current after every reset.
+- **Every stored setting the code reads** has a seeded value; secrets stay
+  in the secret store (P10).
+- **Every table** is listed by the loader as seeded, emptied or kept.
+- **Only staging or demo.** The reset refuses any other target. A change to
+  that guard or to which tables it empties is data-loss risk (P4).
+
+Origin: a product repo with a nightly staging reset. Before the rule
+its seed held a date already passed, lacked settings the API reads, and had
+no data for several shipped features.
 
 ## Dependency update PRs
 
