@@ -10,7 +10,7 @@ models. Adjust from evidence.
 | fast | Search, lookups, summarising evidence, mechanical edits, scoped slices from a complete brief |
 | standard | Implementation that needs exploration or judgement, routine and critical review |
 | strong | Hard design, debugging, reviewing standard-tier work that is non-trivial |
-| strongest | Critical review of harm a revert cannot undo that reaches production data, secrets, money or people's data (P4), deliberate architecture sessions |
+| strongest | Critical review of harm a revert cannot undo that reaches production data, backups, secrets or credentials, money, or real people's data (P4), deliberate architecture sessions |
 
 Effort (reasoning budget): low, medium, high, extra-high.
 
