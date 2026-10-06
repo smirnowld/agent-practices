@@ -30,6 +30,15 @@ when ToolSearch cannot find it either, and the report says so.
   one line under 200 characters naming what waits on me. Everything a
   question depends on (commands, steps, a card) is in the chat text, never
   only in thinking or a tool result. Never re-ask an unchanged question.
+- **Decision card** (trial 2026-10-06 to 2026-10-10, P6b): at every wait
+  with something for me to accept, start or answer, also publish the card
+  page; the chat text and the push still go out complete. Fill it with
+  `python3 PLUGIN_ROOT/adapters/claude/decision-card.py DATA.json SCRATCHPAD/decision-card.html`
+  (data and publish settings in its docstring), publish it with `Artifact`
+  and put the link in the chat text, and in the push if it fits. When I
+  reply "sent", read `ArtifactData` `get`, collection `answers`, doc_id the
+  card id, quote its `answer` in chat and act on it; a reply typed in chat
+  wins. If a step fails, say so in one line and rely on the chat text.
 - **Wait on CI or a merge** (P6b, `merge` step 4): run the wait with Bash
   `run_in_background` and a timeout longer than the run; its exit wakes the
   session. The app's Auto-fix monitor (`mcp__ccd_pr__set_monitor`) wakes it

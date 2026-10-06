@@ -230,11 +230,35 @@ unverified against vendor docs.
   waiting claim through; and a sentence that mentions both waiting and CI
   for another reason is blocked once (the reason says to end the turn again
   if nothing is awaited).
-- Questions as a form (trial, P6b): the desktop app can render an HTML form
-  in the conversation (`show_widget`, elicitation mode) whose answer returns
-  as my next message. Unverified: whether it renders on the phone, and the
-  session does not show "needs input" while it is open. Not part of the
-  rule until a trial shows it saves me reading.
+- Decision card (trial from 2026-10-06, P6b): one page per wait with a
+  colour strip (to accept, briefs, questions), one line per item with the
+  proposed option preselected, one-tap choices and a single answer line
+  ("#78 accept, Q1 B, briefs: 1"). Tried in a session of a tooling repo
+  with one acceptance, two briefs and two questions (2026-10-06):
+  - In-chat widget (`show_widget`): renders on desktop, in dark mode too,
+    but not on the phone. The app has two copies of the tool. With one,
+    the widget's `sendPrompt` posted nothing; with the other, it filled my
+    message box and I pressed Enter, 2 minutes after the card appeared. Host
+    button styles hid a class-based selected state, so the template paints
+    it inline. Each card is the full widget code as tool input, about
+    4.9 KB (about 1,500 output tokens), of which only about 1.1 KB is the
+    items; the tool's guide adds up to about 60 KB of input once per session.
+  - Private Artifact page with the `db` capability: renders on the phone;
+    Send saves the answer line and the session reads it with
+    `ArtifactData`. The page cannot wake the session, so I reply "sent".
+    It took me 1-2 minutes per card on the phone. With the fixed part in
+    [decision-card.html](decision-card.html), filled by
+    [decision-card.py](decision-card.py), a card costs the session only
+    the items (about 350 output tokens) plus a publish; the Artifact
+    guide and the capabilities skill add about 12,000 input tokens once
+    per session.
+  - Chat text alone is about 200 tokens, so the page costs about 2-3
+    times that per wait. I chose the page on every wait, in addition to
+    the chat text and the push, until 2026-10-10; the binding is in
+    [session.md](session.md). An option label must read as a complete
+    answer ("Only if 2+ wait", not "2+ items"), and Change or Other needs
+    a note before Send. Tool behaviour observed 2026-10-06, unverified
+    against vendor docs; sizes are estimates from file sizes.
 - Scheduled routines (`docs-drift-check`, `triage`, `issue-review`,
   `project-setup` audit) run as local desktop-app scheduled tasks, one per
   project; a proposed session appears as a chip. Local tasks fire only while the app is open and the
