@@ -21,12 +21,17 @@ background `wait-for pr-ci|pr-merged` that exits 0, a tool result holding
 wait-for's final line for a merge or a pass, or `"state":"MERGED"` from a
 `gh pr view`, each for the PR auto-merge was turned on for.
 
-A turn that says it waits on CI, a run or a merge while no background task is
-running is blocked: nothing will wake the session, since the app's monitor
-wakes it only on failures, conflicts and review comments. A sentence whose
-wait is on me ("once you accept") is left alone. Any running background task lets
-the turn end, as does a repeat stop. Any error lets the turn end with a note
-on stderr; a broken check must not trap a session.
+A turn that says it waits on CI, a run or a merge while none of the
+session's own GitHub waits is running is blocked: nothing will wake the
+session, since the app's monitor wakes it only on failures, conflicts and
+review comments. A sentence whose wait is on me ("once you accept") is left
+alone. A turn that ends while one of the session's own `wait-for` waits still
+runs, without saying it is waiting, is blocked too: a closeout leaves none
+running. Both read the waits from the transcript; another background task,
+such as a dev server, excuses nothing. When my answer to a question is the
+last thing in the turn, the final message is the one I answered and is not
+checked again. A repeat stop always ends the turn. Any error lets the turn end
+with a note on stderr; a broken check must not trap a session.
 """
 import importlib.util
 import json
@@ -86,18 +91,39 @@ WAITING = re.compile(
     r"|\bwill (?:wait|report|notify|wake)\b|\bnotif(?:y|ies) me\b"
     r"|\bwakes? (?:me|this session)\b"
     r"|\b(?:when|once) (?:it|ci|the run|the checks?|the build|everything) "
-    r"(?:finishes|passes|completes|is green|goes green)\b", re.I)
+    r"(?:finishes|passes|completes|is green|goes green)\b(?!\s+or\b)", re.I)
+# "when CI passes or fails" lists outcomes: it describes waits, it is not one.
 CI_NOUN = re.compile(
     r"\b(?:ci|checks?|runs?|builds?|tests?|lanes?|workflow|pipeline|deploy\w*|release"
     r"|auto-merge|merges?|verifier)\b", re.I)
 WAIT_REASON = (
-    "You say you are waiting on CI, a run or a merge, but no background task is running, "
-    "so nothing will wake this session. The app's Auto-fix monitor wakes it only on CI "
-    "failures, merge conflicts and review comments, never on success. Start the wait as a "
-    "background task (merge skill step 4: `gh run watch RUN_ID --exit-status` with "
-    "run_in_background and a long timeout) and end the turn; or, if what remains is mine, "
-    "say so and send PushNotification. If you are not waiting on anything, end the turn "
-    "again as is.")
+    "You say you are waiting on CI, a run or a merge, but none of this session's GitHub "
+    "waits is running, so nothing will wake this session. The app's Auto-fix monitor wakes "
+    "it only on CI failures, merge conflicts and review comments, never on success, and "
+    "a running dev server is not a wait. Start the wait as a background task (merge skill "
+    "step 4: `wait-for pr-ci PR` with run_in_background and a long timeout) and end the "
+    "turn; or, if what remains is mine, say so and send PushNotification. If you are not "
+    "waiting on GitHub, or wait on a background test run or subagent that notifies you "
+    "when it ends, end the turn again as is.")
+OPEN_REASON = (
+    "This session's own wait still runs ({0}), and your message does not say you are "
+    "waiting on it. If you are, say so in one line and end the turn; it wakes you when it "
+    "ends. Otherwise, or if it is stale, stop it with TaskStop" + "{1}" + " first: a "
+    "closeout leaves none of the session's own waits running (closeout skill).")
+# A background task's id in its Bash tool result, and its end in a task
+# notification or TaskStop (observed 2026-10-06, not documented).
+BG_ID = re.compile(r"running in background with ID: (\w+)|moved to the background \(ID: (\w+)\)")
+NOTICE = re.compile(r"<task-notification>(.*?)</task-notification>", re.S)
+NOTICE_IDS = re.compile(r"<(task-id|tool-use-id)>\s*([^<\s]+)\s*</\1>")
+STOPS = {"TaskStop": "task_id", "KillShell": "shell_id"}  # KillShell: TaskStop's older name
+# Waits on GitHub: the session's own `wait-for`, and the watches it replaced.
+# A simple command's prefix: a group or loop keyword, an assignment, a wrapper.
+PREFIX = (r"(?:[({]\s*|(?:do|then|else|env|time|nohup|exec|command|sh|bash)\s+"
+          r"|\w+=\S*\s+|timeout\s+\S+\s+)*")
+OWN_WAIT = re.compile(PREFIX + r"(?:\S*/)?wait-for(?:\s|$)")
+GH_WAIT = re.compile(PREFIX + r"gh(?:\s+(?:-R|--repo)\s+\S+)?\s+(?:run watch\b|pr checks\b.*\s--watch\b)")
+# What a sentence says it waits on, for the session's own open wait.
+WAIT_NOUN = re.compile(CI_NOUN.pattern + r"|\bwait(?:s|ing|-for)?\b", re.I)
 LOAD = " (if it is not in your tools, load it with ToolSearch 'select:{0}' first)"
 
 
@@ -139,11 +165,13 @@ def turn_tools(path):
     order as (name, input); whether any earlier message held a closeout;
     whether the closeout skill was loaded this session; the index into those
     calls at which an auto-merge this session turned on landed this turn
-    (None if none did); and whether I dismissed the question that started
-    the turn."""
+    (None if none did); whether I dismissed the question that started the
+    turn; and, when the turn began with my answer to a question and no text
+    followed it, the text I answered (None otherwise)."""
     names, asks, failed, closeout, dismissed = [], set(), set(), False, False
     skills, auto_ids, disable_ids, waits, views = set(), {}, {}, {}, {}
     auto, landed, command = set(), None, False
+    last, asked = "", None
 
     def lands(pr):
         """Whether PR is one this session's auto-merge is on for; it lands once."""
@@ -162,6 +190,7 @@ def turn_tools(path):
             if typed(entry, content) or answers:
                 names, landed = [], None
                 dismissed = any(DISMISSED in json.dumps(c.get("content")) for c in answers)
+                asked = last if answers and not typed(entry, content) else None
             text = result_text(content)
             command |= bool(CLOSEOUT_COMMAND.search(text))
             for c in results:
@@ -182,6 +211,8 @@ def turn_tools(path):
                 lands(waits[notice.group(1)])
         elif entry.get("type") == "assistant":
             for c in parts:
+                if c.get("type") == "text" and (c.get("text") or "").strip():
+                    last, asked = c["text"], None
                 if c.get("type") == "text" and re.search(
                         NOTIFY[0][0], FENCE.sub("", c.get("text") or ""), re.M):
                     closeout = True
@@ -189,7 +220,7 @@ def turn_tools(path):
                     continue
                 name, args, k = c.get("name"), c.get("input") or {}, c.get("id")
                 names.append((name, args, k))
-                if name == "AskUserQuestion":
+                if name == "AskUserQuestion" and k:
                     asks.add(k)
                 elif name == "Skill" and CLOSEOUT_SKILL.match(str(args.get("skill", ""))):
                     skills.add(k)
@@ -211,7 +242,46 @@ def turn_tools(path):
     if landed is not None:
         landed = sum(1 for _, _, k in names[:landed] if k not in failed)
     skill = command or bool(skills - failed)
-    return [(n, i) for n, i, _ in kept], closeout, skill, landed, dismissed
+    return [(n, i) for n, i, _ in kept], closeout, skill, landed, dismissed, asked
+
+
+def open_waits(path):
+    """The session's background GitHub waits still running, as (is wait-for,
+    command). A wait is a background Bash call (or one moved to the background
+    on timeout) that runs `wait-for`, `gh run watch` or `gh pr checks
+    --watch`; a task notification naming its task or tool-use id, or a
+    TaskStop of its task, ends it; a notification only quoted in a tool
+    result does not. An ending may come before or after the call's result;
+    a call without its background result is not counted."""
+    waits, tasks, ended = {}, {}, set()
+    for entry, content, parts in entries(path):
+        if entry.get("type") == "assistant":
+            for c in parts:
+                inp = c.get("input") or {}
+                if c.get("type") != "tool_use" or not isinstance(inp, dict):
+                    continue
+                if c.get("name") in STOPS:
+                    ended.add(str(inp.get(STOPS[c["name"]])))
+                elif c.get("name") == "Bash":
+                    steps = steps_of([str(inp.get("command", ""))])
+                    own = any(OWN_WAIT.match(s) for s in steps)
+                    if own or any(GH_WAIT.match(s) for s in steps):
+                        waits[c.get("id")] = (own, " ".join(str(inp.get("command", "")).split())[:80])
+            continue
+        # A notification is a user message, or, when it lands mid-turn, a
+        # queued-command attachment and queue operations (observed 2026-10-06).
+        attached = entry.get("attachment") if isinstance(entry.get("attachment"), dict) else {}
+        texts = [content, entry.get("content"), attached.get("prompt")] + [
+            c.get("text") for c in parts if c.get("type") == "text"]
+        for text in (t for t in texts if isinstance(t, str)):
+            for notice in NOTICE.findall(text):
+                ended |= {v for _, v in NOTICE_IDS.findall(notice)}
+        for c in parts:
+            if c.get("type") == "tool_result" and c.get("tool_use_id") in waits and not c.get("is_error"):
+                found = BG_ID.search(json.dumps(c.get("content")))
+                if found:
+                    tasks[c["tool_use_id"]] = found.group(1) or found.group(2)
+    return [waits[k] for k, t in tasks.items() if k not in ended and t not in ended]
 
 
 def unheredoc(command):
@@ -287,12 +357,15 @@ def merge_gaps(calls, closeout, skill, landed=None):
 
 def main():
     data = json.load(sys.stdin)
-    if data.get("stop_hook_active") or data.get("background_tasks"):
+    if data.get("stop_hook_active"):
         return
-    text = FENCE.sub("", data.get("last_assistant_message") or "")
+    calls, earlier, skill, landed, dismissed, asked = turn_tools(data["transcript_path"])
+    final = data.get("last_assistant_message") or ""
+    # The final message is the one I answered (#45): it was checked when shown.
+    stale = asked is not None and asked.strip() == final.strip()
+    text = "" if stale else FENCE.sub("", final)
     found = lambda rules: [what for pattern, what in rules if re.search(pattern, text, re.M)]
     ask, notify = found(ASK), found(NOTIFY)
-    calls, earlier, skill, landed, dismissed = turn_tools(data["transcript_path"])
     gaps = merge_gaps(calls, earlier or bool(notify), skill, landed)
     if notify and not skill and not gaps:
         gaps.append("load the closeout skill (Skill `agent-practices:closeout`) and write the "
@@ -304,8 +377,12 @@ def main():
     reasons = ["Closeout incomplete (closeout skill): " + "; ".join(gaps) + "."] if gaps else []
     if ((ask and not dismissed) or notify) and not {n for n, _ in calls} & SIGNALS:
         reasons.append(signal_reason(ask))
-    if waits_unwatched(text):
+    waits = open_waits(data["transcript_path"])
+    if waits_unwatched(text) and not waits:
         reasons.append(WAIT_REASON)
+    own = [cmd for is_own, cmd in waits if is_own]
+    if own and not stale and not waiting(text, WAIT_NOUN):
+        reasons.append(OPEN_REASON.format("; ".join("`" + c + "`" for c in own), LOAD.format("TaskStop")))
     if reasons:
         json.dump({"decision": "block", "reason": " ".join(reasons)}, sys.stdout)
 
@@ -323,12 +400,13 @@ def signal_reason(ask):
 
 def waits_unwatched(text):
     """Whether a sentence says it waits on CI, a run or a merge, and not on me."""
-    for sentence in SENTENCE.split(text):
-        if ON_ME.search(sentence):
-            continue
-        if WAITING.search(sentence) and CI_NOUN.search(sentence):
-            return True
-    return False
+    return waiting(text, CI_NOUN)
+
+
+def waiting(text, noun=None):
+    """Whether a sentence says it waits (on NOUN, if given), and not on me."""
+    return any(WAITING.search(s) and (noun is None or noun.search(s))
+               for s in SENTENCE.split(text) if not ON_ME.search(s))
 
 
 try:

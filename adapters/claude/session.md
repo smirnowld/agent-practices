@@ -43,5 +43,5 @@ when ToolSearch cannot find it either, and the report says so.
   with `TaskStop`; at closeout none of your own waits is still running. The
   app's Auto-fix monitor (`mcp__ccd_pr__set_monitor`) wakes it only on
   failures, conflicts and review comments, never on success, so it is not a
-  wait. Never end a turn saying you are waiting with no background task
+  wait. Never end a turn saying you are waiting with none of your own waits
   running.
