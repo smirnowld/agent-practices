@@ -25,11 +25,11 @@ when ToolSearch cannot find it either, and the report says so.
   no parent, ask me to switch with `/model` and `/effort` and stop.
 - **Ask me, or wait on me** (P6b): questions and acceptance cards are chat
   text, numbered Q1, Q2 with options and a proposed default, answered in one
-  reply ("Q1 A, Q2 B"), ending with that proposed reply on its own line so
-  the app's suggested reply can match it; `AskUserQuestion` is not
-  required. A turn that ends on my decision, acceptance, a closeout or a
-  hand-off sends `PushNotification`:
-  one line under 200 characters naming what waits on me. Everything a
+  reply ("Q1 A, Q2 B"); the closing Reply line
+  ([question.md](../../templates/question.md)) is what the app's suggested
+  reply can match. `AskUserQuestion` is not required. A turn that ends on
+  my decision, acceptance, a closeout or a hand-off sends
+  `PushNotification`: one line under 200 characters naming what waits on me. Everything a
   question depends on (commands, steps, a card) is in the chat text, never
   only in thinking or a tool result. Never re-ask an unchanged question.
 - **Wait on CI or a merge** (P6b, `merge` step 4): run the wait with Bash

@@ -19,8 +19,8 @@ back. Write it for the person deciding, not for the code:
   choices behind it are yours: decide and log them (P6).
 - In a batch, number the questions (Q1, Q2; reuse a register item's ID) so
   one reply answers all: "Q1 A, Q2 B".
-- End with the whole proposed reply on its own line ("Reply: Q1 A, Q2 B"),
-  so I can confirm it as is.
+- In chat, end with the whole proposed reply on its own line ("Reply: Q1 A,
+  Q2 B"), so I can confirm it as is. The register leaves it out.
 - Technical detail only when it changes the answer, in the Technical note.
   Everything else goes behind a link.
 
@@ -45,3 +45,5 @@ two lines>
 line>
 
 **Context:** <P18 link to the PR, doc or issue, if the reader might want more>
+
+Reply: <the proposed reply, e.g. "A" or "Q1 A, Q2 B"; in chat only>
