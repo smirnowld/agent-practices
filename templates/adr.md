@@ -7,7 +7,7 @@ Keep it under ~15 lines. List it in `docs/adr/README.md`
 Write the status as plain text. -->
 
 **Status:** <proposed | accepted | superseded by ADR-NNNN | rejected>
-**Date:** <YYYY-MM-DD> · **Decided by:** <me | NAME>
+**Date:** <YYYY-MM-DD>
 
 ## Decision
 

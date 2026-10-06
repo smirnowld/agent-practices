@@ -100,7 +100,7 @@ snapshot, lint); output is formulaic.
 
 Forks: record notable outcomes (tier too weak or wasteful) here.
 
-- 2026-09, all projects: "Tier for a brief" moved scoped slices from
+- All projects: "Tier for a brief" moved scoped slices from
   standard to fast tier. A starting point, not yet measured: record fast-tier
   briefs that had to move up, and standard-tier briefs that fast would have
   finished.

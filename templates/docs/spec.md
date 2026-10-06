@@ -3,7 +3,7 @@
 <!-- Current-state doc (P17): describes how it works now, updated in place.
 History lives in git; decisions live in ADRs and are linked, not retold. -->
 
-**Owner:** <me> · **Last reviewed:** <YYYY-MM-DD>
+**Last reviewed:** <YYYY-MM-DD>
 
 ## Purpose
 
@@ -11,8 +11,8 @@ History lives in git; decisions live in ADRs and are linked, not retold. -->
 
 ## Behaviour
 
-<What it does now: rules, states, edge cases. Requirements I stated, not
-invented ones (P11).>
+<What it does now: rules, states, edge cases. Requirements the maintainer
+stated, not invented ones (P11).>
 
 ## Constraints
 

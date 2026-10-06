@@ -14,7 +14,7 @@ ask me about it.
   planned as steps before a session starts, not split by the session once it
   is over budget.
 
-Cross-project lesson, 2026-09; moved out of policy P6 on 2026-09-28.
+Cross-project lesson.
 
 ## Two files per phase
 
@@ -46,4 +46,4 @@ delete the phase plan and write the next one in the same shape.
 Why: acceptance criteria must exist before a package is briefed, and briefs
 do not stay in the repository, so criteria need a file; but when both files
 carried status, sessions updated one and not the other, and two numbering
-schemes made them hard to read side by side. Product repo, 2026-09.
+schemes made them hard to read side by side. Product repo.

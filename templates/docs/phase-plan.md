@@ -5,7 +5,7 @@ living plan (P17). Scope of the open packages, no status; what belongs here
 and when a package leaves: practices/planning.md, "Two files per phase".
 Budget: practices/record-keeping.md. -->
 
-<Accepted by me on DATE; packages added later name their source.> Each work
+<Accepted; packages added later name their source.> Each work
 package is one agent and one pull request (or a small series), with criteria
 a reviewer can check. Package IDs are `WP` plus a number that continues
 across phases and is never reused. Size per `practices/model-sizing.md`; an L
@@ -61,8 +61,8 @@ here; plan.md shows "Parked" and links this section. -->
 
 ### WP<N>: <what it would deliver> (<area, if any>; <size>)
 
-Briefed only if <condition> (<my decision, date, link>). <Scope and "Done
-when", kept so it can be briefed without replanning.>
+Briefed only if <condition> (<the maintainer's decision, date, link>).
+<Scope and "Done when", kept so it can be briefed without replanning.>
 
 ## Estimate
 

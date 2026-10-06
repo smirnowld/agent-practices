@@ -13,7 +13,7 @@ read, write or edit tools, the harness can echo later edits to that file,
 secrets included, into the transcript (observed; unverified against a primary
 source). The shell check above keeps the value out of the agent's context.
 
-Cross-project lesson, 2026-09; moved out of policy P10 on 2026-09-28.
+Cross-project lesson.
 
 ## Secrets from a password manager
 
@@ -122,4 +122,4 @@ So agent templates use IDs. Desktop-app sign-in doesn't count against these quot
   service account's vaults are the hard limit; the template and brief
   narrow use by convention.
 
-Lesson from a product repo and a server-config repo, 2026-10.
+Lesson from a product repo and a server-config repo.

@@ -35,7 +35,7 @@ ASK = [
     (r"^\s*# Acceptance: \S", "an acceptance card"),
     (r"^\s*# Question: \S", "a question"),
     (r"^\s*\*\*Decision needed:\*\* \S", "a decision"),
-    (r"^\s*\*\*Waiting on me:\*\* (?![\"'`*_]*(?i:nothing|none|n/a)(?![a-z]))\S", "a 'Waiting on me' line"),
+    (r"^\s*\*\*Waiting on (?:me|the maintainer):\*\* (?![\"'`*_]*(?i:nothing|none|n/a)(?![a-z]))\S", "a 'Waiting on me' line"),
 ]
 NOTIFY = [(r"^\s*# Closeout: \S", "a closeout")]
 FENCE = re.compile(r"^\s*(```|~~~).*?^\s*\1", re.M | re.S)

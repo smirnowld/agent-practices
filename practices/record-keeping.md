@@ -27,7 +27,7 @@ starting points; adjust them from evidence.
   superseded, move it to the archive and remove its index row. The ADR check
   (baseline C5) catches a superseded status left in place or an archived ADR
   still listed, not an old ADR whose status was never changed. The index
-  scheme and check came from a product repo, in use since 2026-09.
+  scheme and check came from a product repo.
 - A question is answered: resolve it in the same PR.
 
 ## Visual evidence
@@ -49,6 +49,42 @@ image with no back control, which strands me in picture view on a phone
 image opens a full-screen dialog with "Back to overview" and an actual-size
 toggle, and its Back button, Escape and the back gesture close it. Learnt in
 a product repo, 2026-10-02.
+
+## Outcomes, not conversations
+
+Detail for P17. Future sessions read checked-in files, docs and code comments
+alike, for the result, not for the conversation that produced it. The PR that
+made a decision keeps that history: my words quoted (P11), who decided, when.
+
+- **No quotes from me.** State the decision or fact in plain words:
+  "Promotions come after phase 2a", not my sentence in quotation marks.
+- **No names.** Leave the person out when the sentence works without one:
+  "Secrets are created by hand in the dashboard; agents never see them." When
+  a person is needed, files that speak in my voice say "me": an `AGENTS.md`
+  and every file in agent-practices. A project's other docs and code comments,
+  including text a template puts there, say "the maintainer". Not "the owner"
+  or "the operator": products use those words for their own roles. An accepted
+  ADR needs no "decided by"; only I accept decisions (P11). Anyone else is
+  named by role. Keep the role where it is evidence: "confirmed by the
+  maintainer" is not "verified over SSH", and a confirmed value is no longer
+  a default open to veto.
+- **A date only where it helps the reader** judge how fresh a fact is: when an
+  outside fact was checked, a measured number, an observation of a tool's,
+  vendor's or model's behaviour (versions change it), a deadline, how long
+  live state or an open question has stood, when a doc was last reviewed, an
+  ADR's date. A lesson about how we work carries none unless it rests on a
+  measured number. Drop a date that only records when something was said,
+  decided or moved; git has it.
+- **Lessons say where they came from by kind of project** ("a product repo"),
+  so a reader can judge whether they apply, with a date only under the rule
+  above.
+- **Text found breaking this** is reworded as a fix on the go when it passes
+  P6's test (`practices/scope-and-batching.md`); otherwise it is a
+  `docs-gardening` item. Keep the fact, drop the attribution.
+
+Learnt across all projects: agents copied my words, my name and the date of
+each conversation into docs and code comments, where no later reader needed
+them.
 
 ## Why
 

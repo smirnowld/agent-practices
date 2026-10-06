@@ -48,7 +48,7 @@ decisions only I can make. Omit if none. -->
 
 | Item | Blocks | Owner | Status |
 |---|---|---|---|
-| <item> | Phase <N> | me | <waiting since date / done> |
+| <item> | Phase <N> | the maintainer | <waiting since date / done> |
 
 ## Later, unscheduled
 

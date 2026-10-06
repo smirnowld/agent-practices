@@ -80,7 +80,6 @@ Typical cost: a container VM left running for days, holding one idle service.
 
 ## Origin
 
-A product repository, 2026-09: a container database shared by several agent
-sessions on one laptop. The single-build rule: a mobile product repository,
-2026-09, parallel lanes rebuilding the app on one simulator. The simulator
-shutdown rule moved out of policy P16 on 2026-09-28.
+A product repository: a container database shared by several agent sessions
+on one laptop. The single-build rule: a mobile product repository, parallel
+lanes rebuilding the app on one simulator.
