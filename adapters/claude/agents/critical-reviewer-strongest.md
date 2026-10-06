@@ -1,6 +1,6 @@
 ---
 name: critical-reviewer-strongest
-description: "Strongest-tier read-only critical review (P4), only for a change whose harm a revert cannot undo and that reaches production data, backups, secrets or credentials, money, or real people's data. Examples - a backup copy job, a one-way migration with no backup, a job writing a real tenant's data, a production database role, secrets handling or redaction. Every other critical change, auth on a product with no live users included, goes to critical-reviewer. Never lower its model. Never fixes its findings."
+description: "Strongest-tier read-only critical review (P4), only for a change whose harm a revert cannot undo and that reaches production data, backups, secrets or credentials, money, or real people's data. Examples - a backup copy job, a one-way migration with no backup, a job writing a real tenant's data, a production database role, secrets handling or redaction. Every other critical change goes to critical-reviewer, auth included unless its brief shows a revert cannot undo the harm. Never lower its model. Never fixes its findings."
 tools: Read, Grep, Glob, Bash
 model: fable
 effort: xhigh
