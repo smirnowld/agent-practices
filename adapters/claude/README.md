@@ -122,13 +122,16 @@ Sources: plugins/loading.md, settings-reference.md
 move with releases, so no numbered model IDs. "Read-only" tool sets include
 the shell, so read-only is enforced by the role's instructions, not by tools.
 
-To run a role below its tier (critical review at standard, per
-`practices/model-sizing.md`), pass the standard tier's alias as the Agent
-tool's per-invocation `model`. It takes precedence over the agent's
-frontmatter `model` (sub-agents.md, "Choose a model", checked
-2026-09-30). The page lists no per-invocation effort, so the frontmatter
-`effort` is inferred to still apply, and whether `xhigh` is available on the
-standard model is unverified.
+Effort is fixed per role: the Agent tool takes a per-invocation `model`,
+which takes precedence over the agent's frontmatter `model`, but lists no
+per-invocation effort (sub-agents.md, "Choose a model", checked
+2026-09-30). So a review that needs a different effort is a different role
+(`critical-reviewer` at `opus`/`high`, `critical-reviewer-strongest` at
+`fable`/`xhigh`, `light-reviewer` at `sonnet`/`medium`), and `model` is
+passed only to keep a reviewer at the implementer's tier: `fable` for
+`critical-reviewer` or `reviewer` when a strong-tier session implemented
+the change (P4). That the frontmatter `effort` still applies under a
+per-invocation `model` is inferred, not stated on the page.
 
 ## Session rules specific to this agent
 

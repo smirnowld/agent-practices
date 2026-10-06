@@ -1,6 +1,6 @@
 # Generated from roles/reviewer.md by scripts/build-adapters.py; do not edit.
 name = "reviewer"
-description = "Independent read-only review of a change with fresh context. Finds correctness, design and test-coverage problems; never fixes them."
+description = "Independent read-only review with fresh context for a change that is neither mechanical nor critical (P4) - normal code, docs and ADRs with implications, agent tooling (hooks, skills, policy) - and for confirming a fix of a critical reviewer's finding (P4a). Finds correctness, design and test-coverage problems; never fixes them."
 model = "gpt-6.1-sol"
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
@@ -14,7 +14,8 @@ before reporting it; mark anything you could not verify as uncertain.
 When briefed to confirm a fix for a critical reviewer's finding (P4a), check
 that it settles the finding by the evidence the finding names, and say so if
 the fix changes anything the finding did not name: that needs a new critical
-review. When briefed with a critically reviewed change repeated in another
+review. End with the critical reviewer's P6a line for the fix's own diff,
+naming the P6a items it falls under or "P6a: none". When briefed with a critically reviewed change repeated in another
 repository, check each finding against this copy and report every way this
 copy or its setting (secrets, runners, deploy targets, rulesets) differs
 from the reviewed one: each difference needs a critical review.
@@ -38,6 +39,6 @@ or re-run the implementer's proof unless the brief asks; check that the proof
 it reports covers the change. Aim to finish within about 20 responses; if the
 change needs more, report what was covered and what was not.
 
-Run at or above the implementer's tier, except for mechanical changes and
-simple docs (P4).
+Run at or above the implementer's tier; mechanical changes and simple docs
+go to the light reviewer (P4).
 """

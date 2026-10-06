@@ -30,8 +30,9 @@ tools; fall back to chat only where it names none.
 
 The parent session plans, integrates, verifies and reports. Planning is never
 delegated. Roles, defined in `roles/`, name capability tiers, never models:
-explorer (read-only), implementer (one coding slice and its tests), reviewer
-(read-only, fresh context) and critical reviewer. Projects may add roles.
+explorer (read-only), implementer (one coding slice and its tests), and the
+read-only, fresh-context reviewers by stakes (P4): light reviewer, reviewer,
+critical reviewer and strongest critical reviewer. Projects may add roles.
 
 - **P2a. Size every task.** Choose tier and reasoning effort for the work, not
   by habit. Starting points: `practices/model-sizing.md`.
@@ -74,23 +75,35 @@ finding in a public repository gets a private security advisory instead.
 
 - The reviewer's tier is at least the implementer's. It may be lower only for
   mechanical changes with objective checks (renames, copy, formatting) or
-  simple docs. Security, data loss, concurrency, auth, payments, migrations and
-  release-critical work always get the critical reviewer. Release-critical
-  means the change can publish or deploy, can weaken a required check's
-  configuration or ruleset, or can make one pass without running what it
-  guards; moving jobs between runners is not. A reviewer from a different
+  simple docs, which go to the light reviewer.
+- A change is critical by what a mistake in it would do, not by its topic:
+  it can lose, rewrite or expose stored data or secrets, move money, let one
+  real user act as another or see another's data, or it is release-critical.
+  Release-critical means the change can publish or deploy, can weaken a
+  required check's configuration or ruleset, or can make one pass without
+  running what it guards; moving jobs between runners is not. Not critical:
+  docs and ADRs (the code that implements them is reviewed on its own),
+  agent tooling (hooks, skills, policy wording), renames, version bumps CI
+  proves, staging-only changes, and a change its brief, rated by this test,
+  puts at low or normal risk.
+- A critical change gets the critical reviewer, never below the
+  implementer's tier. The strongest critical reviewer takes its place only
+  when a revert cannot undo the harm and it reaches production data,
+  backups, secrets or credentials, money, or real people's data; the caller
+  never lowers it. Either is "the critical reviewer" elsewhere in this
+  policy. Examples: `practices/model-sizing.md`. A reviewer from a different
   model family adds independence where available.
 - **P4a. One critical review per change.** A fix that changes only what a
-  finding names is confirmed by the same reviewer agent, resumed, or by a
-  reviewer given the finding; a fix that goes wider is critically reviewed
-  again. The same diff applied in several repositories is critically reviewed
-  once; the others get a reviewer briefed with its findings, and any
-  difference needs its own critical review.
+  finding names is confirmed by the reviewer given the finding, never by a
+  critical role; a fix that goes wider is critically reviewed again. The
+  same diff applied in several repositories is critically reviewed once;
+  the others get a reviewer briefed with its findings, and any difference
+  needs its own critical review.
 - **P4b. Review the delta only.** Classify each post-review commit's risk
   on its own. One I approved after seeing its diff counts as my review if it
-  needs no critical reviewer; any other gets a delta-only confirmation from
-  the resumed reviewer of the change's tier, the critical reviewer for a
-  critical change or delta (P4a).
+  needs no critical reviewer; a fix of a finding is confirmed as P4a says;
+  any other gets a delta-only confirmation from the resumed reviewer of the
+  change's tier, the critical reviewer for a critical change or delta.
 - The brief states risk level and focus; review scope for docs is in
   `roles/reviewer.md`. A migration is checked against every build still
   running, installed app builds included, not only its branch.

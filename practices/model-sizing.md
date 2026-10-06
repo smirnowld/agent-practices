@@ -8,9 +8,9 @@ models. Adjust from evidence.
 | Tier | For |
 |---|---|
 | fast | Search, lookups, summarising evidence, mechanical edits, scoped slices from a complete brief |
-| standard | Implementation that needs exploration or judgement, routine review |
+| standard | Implementation that needs exploration or judgement, routine and critical review |
 | strong | Hard design, debugging, reviewing standard-tier work that is non-trivial |
-| strongest | Critical review of security, auth, payments and data loss, deliberate architecture sessions |
+| strongest | Critical review of harm a revert cannot undo that reaches production data, backups, secrets or credentials, money, or real people's data (P4), deliberate architecture sessions |
 
 Effort (reasoning budget): low, medium, high, extra-high.
 
@@ -20,13 +20,32 @@ Effort (reasoning budget): low, medium, high, extra-high.
 |---|---|
 | Exploration, doc lookup | fast / low |
 | Implementation slice, delegated or a session started from a brief | "Tier for a brief" below |
-| Review of mechanical change or simple docs | fast / medium |
-| Review of normal change | standard / high (never below the implementer) |
-| Docs review with implications (ADR status, cross-doc) | standard / high |
-| Critical review: security, auth, payments, data loss | strongest / extra-high; the caller never lowers it |
-| Critical review when none of those applies (concurrency, migrations, release-critical) | standard / extra-high, same role, never below the implementer |
+| Review of mechanical change or simple docs | fast / medium (light reviewer) |
+| Review of normal change, agent tooling, or a fix of a critical finding (P4a) | standard / high (reviewer; never below the implementer) |
+| Docs review with implications (ADR status, cross-doc) | standard / high (reviewer) |
+| Critical review (P4) | standard / high (critical reviewer); the caller raises the model to the implementer's tier, never lowers it |
+| Critical review of harm a revert cannot undo that reaches production data, backups, secrets or credentials, money, or real people's data | strongest / extra-high (strongest critical reviewer); the caller never lowers it |
 | Parent session coordinating a written plan | standard / medium |
 | Planning or analysis session | strong or strongest, chosen by me |
+
+## Which reviewer
+
+P4 sorts changes by what a mistake would do. Examples:
+
+- **Strongest critical reviewer**: a backup copy job; a one-way database
+  migration with no backup; a job that writes a real tenant's data; a
+  production database role; redacting secrets from scan output; a change
+  that handles secrets.
+- **Critical reviewer**: everything else P4 calls critical, such as a
+  migration with a backup or a way back, a release or deploy workflow, a
+  change to a required check, auth on a product with no live users yet, and
+  auth on a product with live users unless its brief shows a revert cannot
+  undo the harm (data already exposed).
+- **Reviewer or light reviewer**: docs and ADRs (the code that implements
+  them is reviewed on its own), agent tooling (hooks, skills, policy
+  wording), renames, version bumps CI proves, staging-only changes, moving
+  jobs between runners, a change its brief rates low or normal risk, and
+  every re-check of a fix given the finding (P4a).
 
 ## Tier for a brief
 
@@ -116,5 +135,20 @@ Forks: record notable outcomes (tier too weak or wasteful) here.
   blockers, and one real blocker the original missed, at about 40% of the
   cost. The blocker the standard-tier run missed was an operator rollout
   step on a change touching a runner token, which stays at strongest tier.
-  Led to P4a and the standard-tier row for critical review outside security,
-  auth, payments and data loss.
+  Led to P4a and a standard-tier critical review outside security, auth,
+  payments and data loss, since replaced (next entry).
+- 2026-09-29 to 2026-10-06, all projects: 87 critical reviews cost about
+  $380, about $4.30 each, with about 42k output tokens per run, mostly
+  thinking. After that split, 33 of 34 still ran at strongest / extra-high,
+  11 of them only release or migration work: the split depended on each
+  caller lowering the model, and callers did not. Sorted by what a mistake
+  would do, 6 needed the strongest tier, about 48 a standard-tier critical
+  review, and about 31 no critical review (9 fix re-checks, 5 agent tooling
+  changes, 5 rated low or normal risk, 4 ADRs and docs, plus runner moves, a
+  rename, a version bump CI proved and a table layout). The plain reviewer
+  ran 284 times; 29% were docs, plan or policy reviews, almost all at
+  standard / high, and callers who lowered the model to fast left effort at
+  high, since effort comes from the role, not the call. Led to the
+  effect-based critical list in P4, the strongest critical reviewer as a
+  separate role, the light reviewer, and P4a's fix re-check by the reviewer;
+  expected critical review spend about $125 a week.

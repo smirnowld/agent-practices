@@ -16,7 +16,8 @@ Fix without asking, and log it under **Also fixed**, when all hold:
   Size (`practices/model-sizing.md`, "Size in responses"); continuing past
   the budget stays my decision (P5).
 - **Same risk:** it keeps the PR in its risk category (P4). A fix that would
-  need the critical reviewer in a PR that does not is out.
+  need the critical reviewer in a PR that does not is out, and so is one that
+  would move a critical PR to the strongest level.
 - **Free to touch:** no file or resource on the brief's No-go list, and
   none a session started since the brief holds; check work in flight before
   touching a file outside Core.
@@ -74,10 +75,12 @@ commit's own risk first (P4), not only the PR's:
 
 - A commit I approved after seeing its diff, needing no critical reviewer,
   is reviewed by me (P4 allows a review "by me"); no reviewer rerun.
+- A commit that fixes only what a finding names is confirmed by the
+  reviewer given the finding, even in a critical PR (P4a).
 - Any other commit gets the resumed reviewer of the change's tier in
   delta-confirmation mode (`roles/reviewer.md`, `roles/critical-reviewer.md`):
   only the new commits, not the whole PR again. A delta that is critical in
-  a non-critical PR gets the critical reviewer.
+  a non-critical PR gets the critical reviewer of its level (P4).
 - A critical change or delta keeps P6a: my OK carries over only to a
   confirmed commit whose own diff is off the P6a list.
 

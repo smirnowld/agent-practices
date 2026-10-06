@@ -2,9 +2,11 @@
   "name": "agent-practices",
   "description": "Policy, skills, roles and templates from agent-practices",
   "agents": [
+    "./adapters/claude/agents/critical-reviewer-strongest.md",
     "./adapters/claude/agents/critical-reviewer.md",
     "./adapters/claude/agents/explorer.md",
     "./adapters/claude/agents/implementer.md",
+    "./adapters/claude/agents/light-reviewer.md",
     "./adapters/claude/agents/reviewer.md"
   ],
   "hooks": "./adapters/claude/hooks/hooks.json"
