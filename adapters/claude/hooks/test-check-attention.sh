@@ -3,16 +3,20 @@
 # ends a turn without a signal is blocked once; a turn that already signalled,
 # a repeat stop, pending background work and plain answers pass silently; bad
 # input passes with a note on stderr. A merge without its closeout, and a turn
-# that says it waits on CI with nothing running to wake it, are blocked.
+# that says it waits on CI with nothing running to wake it, are blocked; so is
+# a closeout written without the closeout skill, and an auto-merge that landed
+# without its closeout.
 set -eu
 dir=$(dirname "$0")
 hook="$dir/check-attention.py"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
-# A transcript: my message, then an assistant turn calling TOOL (none if empty).
+# A transcript: the closeout skill loaded, my message, then an assistant turn
+# calling TOOL (none if empty).
+skill='{"type":"assistant","message":{"content":[{"type":"tool_use","id":"sk","name":"Skill","input":{"skill":"agent-practices:closeout"}}]}}'
 transcript() {
-  printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","name":"AskUserQuestion"}]}}' \
+  printf '%s\n' "$skill" '{"type":"assistant","message":{"content":[{"type":"tool_use","name":"AskUserQuestion"}]}}' \
     '{"type":"user","message":{"content":"next task"}}' \
     '{"type":"user","message":{"content":[{"type":"tool_result"}]}}' >"$tmp/t.jsonl"
   [ -z "$1" ] || printf '{"type":"assistant","message":{"content":[{"type":"tool_use","name":"%s"}]}}\n' "$1" >>"$tmp/t.jsonl"
@@ -65,7 +69,7 @@ printf '%s\n' '{"type":"user","message":{"content":"build it"}}' \
   '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"b1","name":"Bash"}]}}' >"$tmp/t.jsonl"
 blocks "$closeout" '' 'PushNotification'
 # Another tool result after the signal keeps it; a notification wakes nothing.
-printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"go"}]}}' \
+printf '%s\n' "$skill" '{"type":"user","message":{"content":[{"type":"text","text":"go"}]}}' \
   '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"p1","name":"PushNotification"}]}}' \
   '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"p1"}]}}' \
   '{"type":"user","isMeta":true,"message":{"content":"meta"}}' \
@@ -82,7 +86,7 @@ blocks "$closeout" '' 'ToolSearch'
 printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"p1","name":"PushNotification"}]}}' \
   '{"type":"user","origin":{"kind":"human"},"message":{"content":"<system-reminder>x</system-reminder> next"}}' >"$tmp/t.jsonl"
 blocks "$closeout" '' 'PushNotification'
-printf '%s\n' '{"type":"user","message":{"content":"go"}}' \
+printf '%s\n' "$skill" '{"type":"user","message":{"content":"go"}}' \
   '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"p1","name":"PushNotification"}]}}' \
   '{"type":"user","origin":{"kind":"task-notification"},"message":{"content":"done"}}' >"$tmp/t.jsonl"
 passes "$closeout"
@@ -112,10 +116,10 @@ passes "$chat"
 transcript ''; blocks "$chat" '' 'PushNotification'
 
 # A turn that merged a PR: bash CMD... as tool calls m1, m2... after my message; TEXT
-# is an earlier assistant message.
+# is an earlier assistant message. The closeout skill was loaded earlier.
 merge_turn() {
   text=$1; shift
-  printf '%s\n' '{"type":"user","message":{"content":"merge it"}}' >"$tmp/t.jsonl"
+  printf '%s\n' "$skill" '{"type":"user","message":{"content":"merge it"}}' >"$tmp/t.jsonl"
   python3 -c 'import json,sys; print(json.dumps({"type":"assistant","message":{"content":[{"type":"text","text":sys.argv[1]}]}}))' "$text" >>"$tmp/t.jsonl"
   k=0
   for c in "$@"; do
@@ -161,9 +165,10 @@ blocks 'Merged as abc.' '' 'gh pr edit --body-file'
 merge_turn "$closeout" "gh pr merge 5 \\
   --disable-auto"
 passes 'Paused.'
-# A session's entries: u:TYPED, a:ASSISTANT_TEXT, b:BASH_COMMAND, q (AskUserQuestion),
-# p (PushNotification), r[:OUTPUT] (answer to the last tool call), e (the last tool
-# call failed). A session's entry N is stamped at time 10*N.
+# A session's entries: u:TYPED, a:ASSISTANT_TEXT, b:BASH_COMMAND, w:BASH_COMMAND (in
+# the background), q (AskUserQuestion), p (PushNotification), s (the closeout skill),
+# r[:OUTPUT] (answer to the last tool call), e (the last tool call failed),
+# n:EXIT (the last background call ended with EXIT). Entry N is stamped at time 10*N.
 entries() {
   python3 -c '
 import json, sys
@@ -172,11 +177,18 @@ for n, arg in enumerate(sys.argv[3:]):
     kind, _, v = arg.partition(":")
     if kind == "u": e = {"type": "user", "message": {"content": v}}
     elif kind == "a": e = {"type": "assistant", "message": {"content": [{"type": "text", "text": v}]}}
-    elif kind in ("b", "q", "p"):
+    elif kind in ("b", "w", "q", "p", "s"):
         k += 1
         tool = {"type": "tool_use", "id": "s%d" % k, "name": "Bash", "input": {"command": v}}
-        if kind != "b": tool.update(name={"q": "AskUserQuestion", "p": "PushNotification"}[kind], input={})
+        if kind == "w": tool["input"]["run_in_background"] = True
+        if kind in "qp": tool.update(name={"q": "AskUserQuestion", "p": "PushNotification"}[kind], input={})
+        if kind == "s": tool.update(name="Skill", input={"skill": "agent-practices:closeout"})
         e = {"type": "assistant", "message": {"content": [tool]}}
+    elif kind == "n":
+        e = {"type": "user", "origin": {"kind": "task-notification"}, "message": {"content":
+             "<task-notification>\n<tool-use-id>s%d</tool-use-id>\n<status>%s</status>\n<summary>Background "
+             "command \"Wait\" %s with exit code %s</summary>\n</task-notification>"
+             % (k, "completed" if v == "0" else "failed", "completed (exit code 0)" if v == "0" else "failed", v)}}
     else: e = {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "s%d" % k, "content": v, "is_error": kind == "e"}]}}
     e["timestamp"] = "2026-01-01T%04d" % (start + step * n)
     print(json.dumps(e))' "$@"
@@ -193,6 +205,68 @@ blocks "$card" '' 'PushNotification'
 # A dismissal does not excuse a merge without its closeout.
 session u:go 'b:ls' r q "$dismissed" 'b:gh pr merge 5 --squash' r
 blocks 'Merged.' '' 'Closeout incomplete'
+# A closeout needs the closeout skill loaded this session; a slash command counts.
+session u:go p r
+blocks "$closeout" '' 'Skill `agent-practices:closeout`'
+session u:go s r p r
+passes "$closeout"
+session u:go s e p r
+blocks "$closeout" '' 'Skill `agent-practices:closeout`'
+session 'u:<command-name>/agent-practices:closeout</command-name>' p r
+passes "$closeout"
+
+# An auto-merge that lands in a later wake of the same turn is a merge: by the
+# background wait's exit 0, wait-for's final line, or gh's MERGED state.
+auto='b:gh pr merge 5 --auto --squash --match-head-commit abc'
+waitci='w:/p/bin/wait-for pr-ci 5'
+edit='b:gh pr edit 5 --body-file b.md'
+session u:go "$auto" r "$waitci" r n:0 p r
+blocks 'Merged as abc.' '' 'Skill `agent-practices:closeout`'
+session u:go s r a:"$closeout" "$auto" r "$waitci" r n:0 p r "$edit" r
+passes 'Merged as abc.'
+session u:go s r "$auto" r "$waitci" r n:0 p r "$edit" r
+blocks 'Merged as abc.' '' 'send the closeout summary in chat'
+session u:go s r a:"$closeout" "$auto" r "$waitci" r n:0 p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+session u:go s r a:"$closeout" "$auto" r "$edit" r "$waitci" r n:0 p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+session u:go s r a:"$closeout" "$auto" r "$waitci; echo \$?" r n:0 'b:cat out' 'r:merged: PR 5 at abc' p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+session u:go s r a:"$closeout" "$auto" r 'b:gh pr view 5 --json state' 'r:{"state":"MERGED"}' p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+session u:go s r a:"$closeout" "$auto" r 'b:cat out' 'r:passed: CI on PR 5 at abc (runs 1)' p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+session u:go "$auto" r "$waitci" r n:0 p r
+blocks "$closeout" '' 'Skill `agent-practices:closeout`'
+# A redirection after the wait keeps its exit code; a PR named by URL, or none
+# (the branch's own), is the same PR.
+session u:go s r a:"$closeout" "$auto" r "$waitci 2>&1" r n:0 p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+session u:go s r a:"$closeout" 'b:gh pr merge https://github.com/o/r/pull/5 --auto --squash' r "$waitci" r n:0 p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+session u:go s r a:"$closeout" 'b:gh pr merge --auto --squash' r 'b:gh pr view --json state' 'r:{"state":"MERGED"}' p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+# Another PR merging, or a file that mentions the state, is not this landing and
+# does not hide it.
+session u:go s r a:"$closeout" "$auto" r 'b:gh pr view 9 --json state' 'r:{"state":"MERGED"}' 'b:cat README.md' 'r:"state":"MERGED"' 'w:wait-for pr-merged 9' r n:0 p r
+passes 'PR 9 merged; PR 5 still waits.'
+session u:go s r a:"$closeout" "$auto" r 'b:gh pr view 9 --json state' 'r:{"state":"MERGED"}' "$waitci" r n:0 p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+# Not landings: a failed wait, a wrapped exit code alone, no auto-merge of this
+# session's, auto-merge refused or turned off, a landing in an earlier turn.
+session u:go "$auto" r "$waitci" r n:1 p r
+passes 'CI failed on PR 5.'
+session u:go "$auto" r "$waitci; echo \$?" r n:0 p r
+passes 'The wait ended.'
+session u:go 'w:wait-for pr-merged 9' r n:0 'b:gh pr view 9 --json state' 'r:{"state":"MERGED"}' p r
+passes 'PR 9 merged; continuing.'
+session u:go "$auto" e "$waitci" r n:0 'b:gh pr view 5' 'r:{"state":"MERGED"}' p r
+passes 'Auto-merge was refused.'
+session u:go "$auto" r 'b:gh pr merge 5 --disable-auto' r "$waitci" r n:0 p r
+passes 'CI passed; auto-merge is off.'
+session u:go s r a:"$closeout" "$auto" r "$waitci" r n:0 "$edit" r u:status 'b:gh pr view 5' 'r:{"state":"MERGED"}'
+passes 'It is merged.'
+
 # A question a hook denied was not an answer from me: the turn did not restart.
 session u:go 'b:ls' r q 'r:PreToolUse:AskUserQuestion hook error: write it first'
 blocks "$card" '' 'PushNotification'

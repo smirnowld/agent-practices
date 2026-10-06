@@ -1,6 +1,6 @@
 ---
 name: merge
-description: Merge your own pull request once P6 allows it. Picks the merge method, enables auto-merge pinned to the reviewed commit, waits for CI with one background wait-for call that wakes the session on every outcome, confirms the merge and cleans up.
+description: Merge your own pull request once P6 allows it. Picks the merge method, enables auto-merge pinned to the reviewed commit, waits for CI with one background wait-for call that wakes the session on every outcome, confirms the merge, cleans up and runs the closeout skill.
 ---
 
 # Merge
@@ -122,3 +122,11 @@ author pushed or turned auto-merge off, so start it again (each run ends at
 its deadline). Leave no wait of your
 own running. Then clean up per P16: delete your local branch and worktree,
 release your resources (P7).
+
+## 6. Close out
+
+Once `state` is `MERGED`, run the `closeout` skill now, in the same turn,
+whether the merge was direct or auto-merge landed while you waited: it
+rewrites the PR description with the post-merge record and writes the chat
+summary. A closeout written without the skill, or a PR comment in place of
+the description, is not one.

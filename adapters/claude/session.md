@@ -35,7 +35,9 @@ when ToolSearch cannot find it either, and the report says so.
 - **Wait on CI or a merge** (P6b, `merge` step 4): run `wait-for` (the
   plugin's `bin/` is on the Bash PATH) with Bash `run_in_background` and a
   `timeout` above its deadline: 4200000 ms covers the defaults (45 and 60
-  min); the tool's maximum is 7200000. Its exit wakes the session on every
+  min); the tool's maximum is 7200000. Run it bare, without `; echo $?`:
+  the task notification reports its exit code, and the Stop hook reads a
+  landed auto-merge from it. Its exit wakes the session on every
   outcome; read the exit code and the last line of its output. Before a push
   or `gh pr merge --disable-auto` that makes your own wait stale, stop it
   with `TaskStop`; at closeout none of your own waits is still running. The
