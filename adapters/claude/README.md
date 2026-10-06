@@ -216,10 +216,14 @@ unverified against vendor docs.
     as `; echo $?` hides the code, so it is not counted, while a redirection
     is), or a tool result holding wait-for's final `merged:` or `passed:`
     line or `"state":"MERGED"` from `gh pr view`, each for the PR that
-    auto-merge was turned on for (by number or URL; none means the branch's
-    own, which matches any). A landing counts once, in the turn that sees it
-    first. `passed:` means CI passed, so an auto-merge that then stalls is
-    blocked once.
+    auto-merge was turned on for (by number or URL, never a redirection's
+    fd or the `--match-head-commit` SHA; none means the branch's own, which
+    matches any, and a numbered `--disable-auto` turns that off too). A
+    landing counts once, in the turn that sees it first. `passed:` means CI
+    passed, so an auto-merge that then stalls is blocked once; a later
+    `gh pr view` of that PR showing `"state":"OPEN"` with a non-null
+    `autoMergeRequest` (merge skill step 5) re-arms it, so its real landing,
+    in that turn or a later one, is blocked again.
   It reads only the session's own transcript, so a merge run by a subagent
   is not seen. A question denied by some other `PreToolUse` hook counts as
   neither asked nor answered. If the plugin is enabled for headless (`-p`) or SDK
