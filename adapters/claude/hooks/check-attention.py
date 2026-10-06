@@ -177,7 +177,7 @@ def turn_tools(path):
     followed it, the text I answered (None otherwise)."""
     names, asks, failed, closeout, dismissed = [], set(), set(), False, False
     skills, auto_ids, disable_ids, waits, views = set(), {}, {}, {}, {}
-    auto, armed, landed, command = set(), set(), None, False
+    auto, armed, seen, landed, command = set(), set(), set(), None, False
     last, asked = "", None
 
     def lands(pr):
@@ -186,6 +186,7 @@ def turn_tools(path):
         hit = auto if pr is None else auto & {pr, None}
         if hit:
             auto, landed = auto - hit, len(names) if landed is None else landed
+            seen.add(pr)
     for entry, content, parts in entries(path):
         if entry.get("type") == "user":
             results = [c for c in parts if c.get("type") == "tool_result"]
@@ -209,7 +210,7 @@ def turn_tools(path):
                     armed.add(auto_ids[k])
                 if k in disable_ids:
                     # A numbered disable also covers the branch's own (None).
-                    off = {disable_ids[k], None} if disable_ids[k] else set(armed)
+                    off = {disable_ids[k], None} if disable_ids[k] else armed | auto
                     auto, armed = auto - off, armed - off
                 out = result_text(c.get("content"))
                 for m in LANDED.finditer(out):
@@ -217,9 +218,11 @@ def turn_tools(path):
                 if k in views and MERGED_STATE.search(out):
                     lands(views[k])
                 elif k in views and OPEN_STATE.search(out) and AUTO_PENDING.search(out):
-                    # Passed but stalled: the merge that follows lands again.
+                    # Passed but stalled: the merge that follows lands again,
+                    # only for a PR whose landing this session saw.
                     pr = views[k]
-                    auto |= (armed if pr is None else {pr} if armed & {pr, None} else set())
+                    if armed and (pr in seen or pr is None and seen):
+                        auto.add(pr)
             notice = NOTICE_ID.search(text)
             if notice and notice.group(1) in waits and EXITED_0.search(text):
                 lands(waits[notice.group(1)])

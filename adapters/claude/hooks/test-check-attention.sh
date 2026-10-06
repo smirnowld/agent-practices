@@ -299,6 +299,14 @@ session u:go s r a:"$closeout" "$auto" r "$waitci" r n:0 'b:gh pr view 5 --json 
 passes 'It is merged.'
 session u:go s r a:"$closeout" 'b:gh pr view 9 --json state,autoMergeRequest' "$pending" u:next 'b:gh pr view 9' 'r:{"state":"MERGED"}'
 passes 'PR 9 merged.'
+# A number-less arming re-arms only the PR whose landing was seen, and a
+# number-less disable turns a re-armed one off too.
+session u:go s r a:"$closeout" 'b:gh pr merge --auto --squash' r "$waitci" r n:0 "$edit" r \
+  u:next 'b:gh pr view 9 --json state,autoMergeRequest' "$pending" 'b:gh pr view 9' 'r:{"state":"MERGED"}'
+passes 'PR 9 merged.'
+session u:go 'b:gh pr merge --auto --squash' r "$waitci" r n:0 'b:gh pr view 5 --json state,autoMergeRequest' "$pending" \
+  'b:gh pr merge --disable-auto' r u:next 'b:gh pr view 5' 'r:{"state":"MERGED"}'
+passes 'PR 5 merged.'
 
 # A question a hook denied was not an answer from me: the turn did not restart.
 session u:go 'b:ls' r q 'r:PreToolUse:AskUserQuestion hook error: write it first'
