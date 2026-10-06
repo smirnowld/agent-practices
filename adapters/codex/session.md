@@ -53,7 +53,8 @@ unverified (2026-09-30).
   dedicated inventory, and listings may be incomplete; say what could not
   be checked. Discover deferred tools before falling back.
 - **Delegate a role** (P2): spawn the custom agent by name (`explorer`,
-  `implementer`, `reviewer`, `critical-reviewer`), installed as copies in
+  `implementer`, `light-reviewer`, `reviewer`, `critical-reviewer`,
+  `critical-reviewer-strongest`), installed as copies in
   `~/.codex/agents/` or the project's `.codex/agents/`.
 - **Model check** (P2d): no tool to switch a running session is checked; on
   a mismatch, ask me to switch the model and effort and stop.

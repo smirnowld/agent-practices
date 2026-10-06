@@ -102,7 +102,7 @@ no data for several shipped features.
 
 Dependabot PRs follow P4 like any change, scaled to risk:
 
-- Patch and minor updates with green CI: a fast-tier reviewer checks the
+- Patch and minor updates with green CI: the light reviewer checks the
   changelog for breaking notes, then auto-merge.
 - Major updates, runtime or framework updates, and anything touching auth,
   crypto or data access: normal review, and the critical reviewer where P4

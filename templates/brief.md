@@ -4,7 +4,7 @@
 not reasoning. The receiver must not need the sender's transcript. -->
 
 **Model:** <tier> (<model>) at <effort> (exploration <none | bounded | open>, reasoning <specified | judgement | open>; work briefs only)  <!-- practices/model-sizing.md, "Tier for a brief"; <model> is the adapter tiers.json name for the tier; P2d check -->
-**Risk:** <low | normal | critical: category>  <!-- sets the reviewer, P4 -->
+**Risk:** <low | normal | critical: what a mistake can do | critical, irreversible: what a revert cannot undo>  <!-- sets the reviewer, P4; irreversible only for harm reaching production data, backups, secrets, money or real people's data -->
 **Size:** <S | M>  <!-- response budget: practices/model-sizing.md, "Size in responses" -->
 **Repo / branch / worktree:** <path>, <branch from base>
 
@@ -60,7 +60,7 @@ work, or why it needs none (practices/project-baseline.md, O5). -->
 ## Delegation
 
 <!-- What the receiver delegates and to which role; review is always delegated. -->
-- Review: <reviewer | critical reviewer>, focus <...>
+- Review: <light reviewer | reviewer | critical reviewer | strongest critical reviewer>, focus <...>
 - Other: <none | role and slice>
 
 ## Handoff

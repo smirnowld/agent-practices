@@ -18,8 +18,10 @@ report without its P6a line clears nothing: get the line from the reviewer
 or hand the merge to me. New
 commits follow P4b: classify the commit's own risk; one I approved after
 seeing its diff needs no new review if neither it nor the PR needs the
-critical reviewer; any other gets a delta-only confirmation from the resumed
+critical reviewer; a fix of a finding is confirmed by the reviewer given the
+finding (P4a); any other gets a delta-only confirmation from the resumed
 reviewer of the change's tier, the critical reviewer for a critical delta.
+"The critical reviewer" here is either critical level (P4).
 My OK carries over to a confirmed commit only if its own diff is off the
 P6a list.
 

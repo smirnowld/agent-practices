@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Generate vendor agent definitions from roles/ and each adapter's tiers.json.
 
-Run after changing a role or a tier mapping; commit the output.
+Run after changing a role or a tier mapping; commit the output. A role whose
+frontmatter has `extends: OTHER` gets OTHER's instructions, then its own.
   python3 scripts/build-adapters.py          # write
   python3 scripts/build-adapters.py --check  # fail if output is stale (CI)
 """
@@ -12,10 +13,13 @@ HEADER = "Generated from roles/{name}.md by scripts/build-adapters.py; do not ed
 
 
 def roles():
+    parsed = {}
     for path in sorted((ROOT / "roles").glob("*.md")):
         _, fm, body = path.read_text().split("---", 2)
-        meta = dict(re.findall(r"^(\w+): (.*)$", fm, re.M))
-        yield meta, body.strip()
+        parsed[path.stem] = dict(re.findall(r"^(\w+): (.*)$", fm, re.M)), body.strip()
+    for meta, body in parsed.values():
+        base = parsed[meta["extends"]][1] if "extends" in meta else ""
+        yield meta, "\n\n".join(part for part in (base, body) if part)
 
 
 def claude(meta, body, t):

@@ -74,10 +74,12 @@ commit's own risk first (P4), not only the PR's:
 
 - A commit I approved after seeing its diff, needing no critical reviewer,
   is reviewed by me (P4 allows a review "by me"); no reviewer rerun.
+- A commit that fixes only what a finding names is confirmed by the
+  reviewer given the finding, even in a critical PR (P4a).
 - Any other commit gets the resumed reviewer of the change's tier in
   delta-confirmation mode (`roles/reviewer.md`, `roles/critical-reviewer.md`):
   only the new commits, not the whole PR again. A delta that is critical in
-  a non-critical PR gets the critical reviewer.
+  a non-critical PR gets the critical reviewer of its level (P4).
 - A critical change or delta keeps P6a: my OK carries over only to a
   confirmed commit whose own diff is off the P6a list.
 

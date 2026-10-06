@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: "Independent read-only review of a change with fresh context. Finds correctness, design and test-coverage problems; never fixes them."
+description: "Independent read-only review with fresh context for a change that is neither mechanical nor critical (P4) - normal code, docs and ADRs with implications, agent tooling (hooks, skills, policy) - and for confirming a fix of a critical reviewer's finding (P4a). Finds correctness, design and test-coverage problems; never fixes them."
 tools: Read, Grep, Glob, Bash
 model: opus
 effort: high
@@ -41,5 +41,5 @@ or re-run the implementer's proof unless the brief asks; check that the proof
 it reports covers the change. Aim to finish within about 20 responses; if the
 change needs more, report what was covered and what was not.
 
-Run at or above the implementer's tier, except for mechanical changes and
-simple docs (P4).
+Run at or above the implementer's tier; mechanical changes and simple docs
+go to the light reviewer (P4).

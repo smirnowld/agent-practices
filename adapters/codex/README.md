@@ -187,10 +187,14 @@ https://learn.chatgpt.com/docs/config-file/config-reference (checked
 
 Codex documents an explicit per-spawn model and effort choice, but a custom
 agent file's `model` and `model_reasoning_effort` take precedence over those
-choices. The generated role files set both, so per the docs an explicit spawn
-override cannot lower a pinned critical-reviewer role to the standard tier described
-in `practices/model-sizing.md`; use the pinned tier until the role-generation
-design changes. https://learn.chatgpt.com/docs/agent-configuration/subagents
+choices. The generated role files set both, so per the docs a spawn override
+cannot move a role off its pinned tier; each review level is its own role
+instead (`light-reviewer` on `gpt-6-luna`, `reviewer` and
+`critical-reviewer` on `gpt-6.1-sol`, `critical-reviewer-strongest` on
+`gpt-6-astra`). Keeping a reviewer at the implementer's tier (P4) needs no
+override for strong-tier work, since standard and strong map to the same
+model; a critical change implemented at the strongest tier goes to
+`critical-reviewer-strongest`, since a spawn cannot raise a pinned role. https://learn.chatgpt.com/docs/agent-configuration/subagents
 (checked 2026-09-30). Live per-spawn override behavior for a custom role is
 unverified.
 

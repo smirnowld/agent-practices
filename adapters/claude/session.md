@@ -16,7 +16,9 @@ when ToolSearch cannot find it either, and the report says so.
   plus this session's own `spawn_task` calls. Chips not yet started from other
   sessions or routines are invisible; say so.
 - **Delegate a role** (P2): the Agent tool with `subagent_type`
-  `agent-practices:ROLE` (explorer, implementer, reviewer, critical-reviewer).
+  `agent-practices:ROLE` (explorer, implementer, light-reviewer, reviewer,
+  critical-reviewer, critical-reviewer-strongest); pass `model` only to
+  raise a reviewer to the implementer's tier (`tiers.json`), never to lower one.
 - **Model check** (P2d): on a mismatch, send the parent "Switch me to MODEL at
   EFFORT: SESSION_ID" with `mcp__ccd_session_mgmt__send_message` and wait.
   The parent switches it with `mcp__ccd_session_mgmt__set_session_model` and
