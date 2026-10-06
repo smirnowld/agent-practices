@@ -53,7 +53,8 @@ as already fixed with the evidence link; or "none">
 **Deferred:** <unfinished assigned work, review findings as issue links, or
 advisory links for security findings (P4), and other follow-ups with where
 they are tracked; only work that failed the fix-on-the-go test, each with
-the reason; or "none">
+its `Not fixed: PART — why` line (practices/scope-and-batching.md); or
+"none">
 
 **Blocked on:** <each blocker or decision and who resolves it, decisions in
 the question register (P11), other blockers where tracked; or "none">

@@ -34,6 +34,22 @@ whether to do them now or later. So does anything else that fails the test.
 
 Fail the test only on the item, not the session: the brief still stands.
 
+## Deferring a finding
+
+A review finding that fails the test becomes a `deferred-review` issue (P4)
+with a priority label (baseline R6), the file it came from, and one line:
+
+`Not fixed: PART — why`
+
+PART is the test item it failed (Related, Reversible, Small, Same risk, Free
+to touch) or "Behaviour" for a user-visible change no one asked for. An issue
+that groups several findings gives each its own line. The closeout's
+**Deferred** repeats the issue link and that line, nothing more.
+
+A deferred finding about behaviour this PR introduced also goes on the
+acceptance card under **Known gaps**, so I judge the work with it in view,
+not after merge.
+
 ## Session order
 
 1. Build what the brief asks.
@@ -89,4 +105,7 @@ of answered questions were the agent asking leave for small fixes or
 closures it could rule on, sessions stopped over one-line fixes outside
 their owned files, one feature took seven PRs and as many reviews, a third
 of review runs followed a tweak I had already seen, and nearly all open
-issues were deferred review findings.
+issues were deferred review findings. In one app PR, three of four findings
+filed together as one deferred issue passed the test, no issue said which
+part of the test it failed, and a dead end the PR itself introduced reached
+me only as an issue link after merge.

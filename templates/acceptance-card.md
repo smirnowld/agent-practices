@@ -16,4 +16,7 @@ click through>
 
 **Not covered:** <what the evidence does not show, e.g. dark mode, Android>
 
+**Known gaps:** <only when a deferred finding is about behaviour this work
+introduced: one line each, in the user's words, with the issue link>
+
 **Decision needed:** accept / change <...> / reject
