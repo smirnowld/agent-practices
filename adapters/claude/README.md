@@ -247,7 +247,7 @@ unverified against vendor docs.
   passes, as does one tied to "you" or "your" ("once your CI passes"); a
   claim to wait on a background test run or subagent, which does notify
   the session, is blocked once (the reason says to end the turn again); a
-  wait started in a form it does not parse (inside `if`, say) is not seen;
+  wait started in a form it does not parse (as an `if` or `while` condition, say) is not seen;
   a wait that ended without a notification in the transcript, such as one
   lost to a crash, still counts as running, and a sentence that mentions
   both waiting and CI for another reason is blocked once (the reason says

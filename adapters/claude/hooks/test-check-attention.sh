@@ -247,6 +247,11 @@ for start in 'b:wait-for pr-ci 5' 'b:/p/bin/wait-for -R o/r pr-merged 5' 'b:cd x
   blocks "Merged as abc. I'll clean up the worktree now." '' "$open"
   passes "$claim"
   passes 'wait-for runs in the background; I will report when it ends.'
+  passes "I'm waiting for it to finish."
+  blocks '' '' "$open"
+  blocks '```
+fenced only
+```' '' "$open"
 done
 # A foreground wait moved to the background on timeout is still running.
 session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$moved"

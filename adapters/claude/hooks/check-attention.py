@@ -102,7 +102,7 @@ PREFIX = (r"(?:[({]\s*|(?:do|then|else|env|time|nohup|exec|command|sh|bash)\s+"
 WAIT_FOR = re.compile(PREFIX + r"(?:\S*/)?wait-for(?:\s|$)")
 GH_WAIT = re.compile(PREFIX + r"gh(?:\s+(?:-R|--repo)\s+\S+)?\s+(?:run watch\b|pr checks\b.*\s--watch\b)")
 # What a sentence says it waits on, for the session's own open wait.
-WAIT_NOUN = re.compile(CI_NOUN.pattern + r"|\bwait(?:s|-for)?\b", re.I)
+WAIT_NOUN = re.compile(CI_NOUN.pattern + r"|\bwait(?:s|ing|-for)?\b", re.I)
 LOAD = " (if it is not in your tools, load it with ToolSearch 'select:{0}' first)"
 
 
@@ -273,7 +273,8 @@ def main():
     calls, earlier, dismissed, asked = turn_tools(data["transcript_path"])
     final = data.get("last_assistant_message") or ""
     # The final message is the one I answered (#45): it was checked when shown.
-    text = "" if asked is not None and asked.strip() == final.strip() else FENCE.sub("", final)
+    stale = asked is not None and asked.strip() == final.strip()
+    text = "" if stale else FENCE.sub("", final)
     found = lambda rules: [what for pattern, what in rules if re.search(pattern, text, re.M)]
     ask, notify = found(ASK), found(NOTIFY)
     gaps = merge_gaps(calls, earlier or bool(notify))
@@ -288,7 +289,7 @@ def main():
     if waits_unwatched(text) and not waits:
         reasons.append(WAIT_REASON)
     own = [cmd for is_own, cmd in waits if is_own]
-    if own and text and not waiting(text, WAIT_NOUN):
+    if own and not stale and not waiting(text, WAIT_NOUN):
         reasons.append(OPEN_REASON.format("; ".join("`" + c + "`" for c in own), LOAD.format("TaskStop")))
     if reasons:
         json.dump({"decision": "block", "reason": " ".join(reasons)}, sys.stdout)
