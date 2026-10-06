@@ -13,7 +13,9 @@ override such as `gh pr merge --admin`, no relaxing the ruleset; only I do,
 for a case I name), and a critical change that the critical reviewer's
 report puts on the P6a list is handed to me unless I OK it as P6a says (the
 closeout asks). A critical change the report puts off the list merges once
-the critical reviewer passes it, and the closeout says why it was safe. New
+the critical reviewer passes it, and the closeout says why it was safe. A
+report without its P6a line clears nothing: get the line from the reviewer
+or hand the merge to me. New
 commits follow P4b: classify the commit's own risk; one I approved after
 seeing its diff needs no new review if neither it nor the PR needs the
 critical reviewer; any other gets a delta-only confirmation from the resumed

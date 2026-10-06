@@ -226,7 +226,7 @@ unverified against vendor docs.
   while one runs, and otherwise blocks a final message whose sentence pairs
   a waiting phrase with CI, a run, a check or a merge, unless the wait is on
   me ("once you accept"). Known limits: a waiting claim in other words
-  passes; any running background task, even an unrelated dev server, lets a
+  passes, as does one tied to "you" or "your" ("once your CI passes"); any running background task, even an unrelated dev server, lets a
   waiting claim through; and a sentence that mentions both waiting and CI
   for another reason is blocked once (the reason says to end the turn again
   if nothing is awaited).
