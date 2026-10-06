@@ -38,7 +38,7 @@ The base branch must require a status check pinned to GitHub Actions
 gh api 'repos/{owner}/{repo}/rules/branches/BRANCH' --jq '.[] | select(.type=="required_status_checks") | .parameters.required_status_checks[] | select(.integration_id==15368) | .context'
 ```
 
-Keep the printed check name for step 4. Empty output (including a branch
+`wait-for` (step 4) reads the same checks. Empty output (including a branch
 protected only by classic branch protection, which this endpoint does not
 show): do not merge; tell me the PR is ready and that I merge (baseline R4).
 
@@ -76,14 +76,16 @@ the new SHA. Batch late fixes into one push so CI runs once.
 
 ## 4. Wait once, in the background
 
-Wait with `wait-for` from this plugin's `bin/` as a background task, so its
+Wait with `wait-for` from this repository's `bin/` as a background task, so its
 exit wakes the session (adapter):
 
 ```sh
 wait-for pr-ci PR
 ```
 
-It finds the run behind each required check from step 1 on the PR's head and
+Start it right after step 3, so the PR's head is REVIEWED_SHA; its final line
+names the commit it waited on, and a different one means start again from
+step 3. It finds the run behind each required check from step 1 on that head and
 waits on it with `gh run watch RUN_ID --exit-status`, and it ends on every
 state: 0 CI passed (or the PR already merged), 1 a check failed, 2 PR closed,
 3 head moved or auto-merge turned off, 4 merge conflict, 5 a state it cannot
@@ -114,6 +116,8 @@ pending required status, a conflict, auto-merge switched off). On exit 3
 from your own push, go back to step 3; on 4, resolve the conflict on the
 branch and go back to step 3; on 5 or 6, look once at the PR and its run and
 report what you found; neither ever counts as passed. When the merge is someone else's (another session's PR you
-depend on), wait for it with `wait-for pr-merged PR`. Leave no wait of your
+depend on), wait for it with `wait-for pr-merged PR`; its exit 3 means the
+author pushed or turned auto-merge off, so start it again (each run ends at
+its deadline). Leave no wait of your
 own running. Then clean up per P16: delete your local branch and worktree,
 release your resources (P7).

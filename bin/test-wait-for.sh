@@ -94,6 +94,14 @@ expect 3 'moved: PR 5 head is now ccc' pr-merged 5
 reset; queue pr "$(pr OPEN aaa MERGEABLE null)" "$(pr OPEN aaa MERGEABLE null)" "$(pr MERGED aaa UNKNOWN null)"
 expect 0 'merged:' pr-merged 5
 
+# pr-ci: merged at another head than the one waited on; a short answer.
+reset; queue pr "$open" "$(pr MERGED zzz UNKNOWN null)"; queue checkruns '{"check_runs":[]}'
+expect 3 'moved: PR 5 merged at zzz' pr-ci 5
+reset; queue pr '{"state":"OPEN","headRefOid":"","mergeable":"","autoMergeRequest":null}'
+expect 5 'unknown: PR 5 answered' pr-merged 5
+reset; queue watch '0 0'; queue runview '{"status":"","conclusion":""}'
+expect 5 'unknown:' run 77
+
 # 4: a conflict while no run starts, and while waiting on the merge.
 reset; queue pr "$open" "$(pr OPEN aaa CONFLICTING '{"mergeMethod":"SQUASH"}')"; queue checkruns '{"check_runs":[]}'
 expect 4 'conflict:' pr-ci 5

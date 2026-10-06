@@ -80,6 +80,7 @@ pr_state() {
   read_gh pr gh pr view "$target" --json state,headRefOid,mergeable,autoMergeRequest \
     --jq '[.state, .headRefOid, .mergeable, (.autoMergeRequest != null)] | map(tostring) | join(" ")'
   set -- $pr
+  [ $# -eq 4 ] || finish 5 "unknown: PR $target answered '$pr'"
   state=$1 head=$2 mergeable=$3 auto=$4
 }
 
@@ -88,7 +89,10 @@ pr_state() {
 check_pr() {
   pr_state
   case $state in
-    MERGED) finish 0 "merged: PR $target at $head" ;;
+    MERGED)
+      [ "$mode" != pr-ci ] || [ "$head" = "$sha" ] \
+        || finish 3 "moved: PR $target merged at $head, not at $sha"
+      finish 0 "merged: PR $target at $head" ;;
     CLOSED) finish 2 "closed: PR $target was closed without merging" ;;
     OPEN) ;;
     *) finish 5 "unknown: PR $target is in state $state" ;;
@@ -104,7 +108,7 @@ check_pr() {
 run_result() {
   read_gh res gh run view "$1" --json status,conclusion --jq '.status + " " + .conclusion'
   set -- $res
-  [ "$1" = completed ] || return 2
+  [ "${1:-}" = completed ] || return 2
   [ "${2:-}" = success ] || { conclusion=${2:-none}; return 1; }
   return 0
 }
@@ -164,8 +168,8 @@ pr-ci)
   while IFS= read -r check <&3; do
     # Find the check's run on the head; until it starts, keep checking the PR.
     while :; do
-      if url=$(gh api "repos/{owner}/{repo}/commits/$sha/check-runs" --jq \
-          "[.check_runs[] | select(.name==\"$check\") | .details_url] | first // \"\"" 2>/dev/null); then
+      if url=$(gh api -X GET "repos/{owner}/{repo}/commits/$sha/check-runs" \
+          -f check_name="$check" --jq '.check_runs[0].details_url // ""' 2>/dev/null); then
         misses=0
       else
         url=
