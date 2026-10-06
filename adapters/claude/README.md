@@ -198,10 +198,21 @@ unverified against vendor docs.
   - it says it is waiting on CI, a run or a merge while no background task
     is running (below);
   - a chat closeout misses a required summary field of
-    `templates/closeout.md` (Status, TL;DR);
-  - a `gh pr merge` call succeeded (not `--auto`, `--disable-auto` or
-    `--help`) without a later body rewrite (`gh pr edit` with a body flag,
-    or `gh api` with `body=`) or with no closeout sent in chat this session.
+    `templates/closeout.md` (Status, TL;DR), or was written without the
+    `agent-practices:closeout` skill loaded this session (a `Skill` call or
+    the `/closeout` command);
+  - a PR merged this turn without a later body rewrite (`gh pr edit` with a
+    body flag, or `gh api` with `body=`), without the closeout skill, or
+    with no closeout sent in chat this session. A merge is a successful
+    `gh pr merge` (not `--auto`, `--disable-auto` or `--help`) or, once the
+    session turned auto-merge on and did not turn it off, its landing: a
+    background `wait-for pr-ci` or `pr-merged` whose task notification
+    reports exit code 0 (the notification carries no output; a wrapper such
+    as `; echo $?` hides the code, so it is not counted), or a tool result
+    holding wait-for's final `merged:` or `passed:` line or
+    `"state":"MERGED"` from `gh pr view`. A landing counts once, in the
+    turn that sees it first. A `pr-merged` wait on another session's PR
+    counts when this session also has auto-merge on, so it may block once.
   It reads only the session's own transcript, so a merge run by a subagent
   is not seen. A question denied by some other `PreToolUse` hook counts as
   neither asked nor answered. If the plugin is enabled for headless (`-p`) or SDK

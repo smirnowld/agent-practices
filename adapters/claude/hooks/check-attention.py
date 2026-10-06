@@ -13,8 +13,12 @@ is waiting on me and the rule does not fire for a question or card.
 
 It also holds the closeout to its template (P15): a chat closeout missing a
 required summary field of templates/closeout.md (Status, TL;DR) is blocked,
-and so is a turn that merged a PR without rewriting the PR description
-afterwards or without any closeout in chat this session.
+and so is one written without the closeout skill loaded this session. A turn
+that merged a PR is blocked without the PR description rewritten afterwards,
+a closeout in chat this session and the closeout skill. A merge is a direct
+`gh pr merge`, or, once this session turned auto-merge on, its landing: a
+background `wait-for pr-ci|pr-merged` that exits 0, or a tool result holding
+wait-for's final line for a merge or a pass, or `"state":"MERGED"`.
 
 A turn that says it waits on CI, a run or a merge while no background task is
 running is blocked: nothing will wake the session, since the app's monitor
@@ -50,6 +54,17 @@ HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1([^\n]*)\n.*?^\s*\2\s*$", re.M | re
 QUOTED = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"|(?<![^\s;&|()])#[^\n]*")
 QUOTED_VAR = re.compile(r'"\$(?:\w+|\{\w+\})"')
 ECHO = re.compile(r"(^|[\s(`=])(echo|printf)\s(?:[^)`$]|\$(?!\())*")
+AUTO = re.compile(r"\s--auto\b")
+DISABLE = re.compile(r"\s--disable-auto\b")
+# A background wait whose exit 0 means the PR merged or its auto-merge can land
+# (bin/wait-for); a wrapper after it (`; echo $?`) hides the exit code.
+WAIT_FOR = re.compile(r"(?:\S*/)?wait-for\b.*\s(?:pr-ci|pr-merged)\s+\d+\s*$")
+EXITED_0 = re.compile(r"<status>completed</status>.*\(exit code 0\)", re.S)
+NOTICE_ID = re.compile(r"<tool-use-id>([^<]+)</tool-use-id>")
+# wait-for's final line for a merged PR or passed CI, or gh's JSON for a merged PR.
+LANDED = re.compile(r'^(?:merged: PR \d+ at|passed: CI on PR \d+ at) \S|"state":\s*"MERGED"', re.M)
+CLOSEOUT_SKILL = re.compile(r"^(?:[\w-]+:)?closeout$")
+CLOSEOUT_COMMAND = re.compile(r"<command-name>/(?:[\w-]+:)?closeout</command-name>")
 EDIT = re.compile(r"gh pr edit\b.*\s(--body|--body-file|-b|-F)\b|gh api\b.*\sbody=")
 # The tool result of a question I dismissed (observed 2026-10-05, not documented).
 DISMISSED = "User dismissed"
@@ -106,32 +121,73 @@ def entries(path):
                 yield entry, content, parts
 
 
+def result_text(content):
+    """A tool result's or notice's text, however its content is shaped."""
+    if isinstance(content, str):
+        return content
+    return "\n".join(c.get("text") or "" for c in content or [] if isinstance(c, dict))
+
+
 def turn_tools(path):
     """Tool calls since I last spoke (typed, or answered AskUserQuestion), in
-    order as (name, input), whether any earlier message held a closeout, and
-    whether I dismissed the question that started the turn."""
+    order as (name, input); whether any earlier message held a closeout;
+    whether the closeout skill was loaded this session; the index into those
+    calls at which an auto-merge this session turned on landed this turn
+    (None if none did); and whether I dismissed the question that started
+    the turn."""
     names, asks, failed, closeout, dismissed = [], set(), set(), False, False
+    skills, auto_ids, disable_ids, waits = set(), set(), set(), set()
+    auto, landed, command = False, None, False
     for entry, content, parts in entries(path):
         if entry.get("type") == "user":
-            failed |= {c.get("tool_use_id") for c in parts
-                       if c.get("type") == "tool_result"
-                       and (c.get("is_error") or (c.get("tool_use_id") in asks
-                                                  and DENIED in json.dumps(c.get("content"))))}
-            answers = [c for c in parts if c.get("type") == "tool_result" and c.get("tool_use_id") in asks
+            results = [c for c in parts if c.get("type") == "tool_result"]
+            failed |= {c.get("tool_use_id") for c in results
+                       if c.get("is_error") or (c.get("tool_use_id") in asks
+                                                and DENIED in json.dumps(c.get("content")))}
+            answers = [c for c in results if c.get("tool_use_id") in asks
                        and DENIED not in json.dumps(c.get("content"))]
             if typed(entry, content) or answers:
-                names = []
+                names, landed = [], None
                 dismissed = any(DISMISSED in json.dumps(c.get("content")) for c in answers)
+            text = result_text(content)
+            command |= bool(CLOSEOUT_COMMAND.search(text))
+            for c in results:
+                k = c.get("tool_use_id")
+                if k in failed:
+                    continue
+                auto = (auto or k in auto_ids) and k not in disable_ids
+                if auto and LANDED.search(result_text(c.get("content"))):
+                    auto, landed = False, len(names) if landed is None else landed
+            notice = NOTICE_ID.search(text)
+            if auto and notice and notice.group(1) in waits and EXITED_0.search(text):
+                auto, landed = False, len(names) if landed is None else landed
         elif entry.get("type") == "assistant":
             for c in parts:
                 if c.get("type") == "text" and re.search(
                         NOTIFY[0][0], FENCE.sub("", c.get("text") or ""), re.M):
                     closeout = True
-                if c.get("type") == "tool_use":
-                    names.append((c.get("name"), c.get("input") or {}, c.get("id")))
-                    if c.get("name") == "AskUserQuestion":
-                        asks.add(c.get("id"))
-    return [(n, i) for n, i, k in names if k not in failed], closeout, dismissed
+                if c.get("type") != "tool_use":
+                    continue
+                name, args, k = c.get("name"), c.get("input") or {}, c.get("id")
+                names.append((name, args, k))
+                if name == "AskUserQuestion":
+                    asks.add(k)
+                elif name == "Skill" and CLOSEOUT_SKILL.match(str(args.get("skill", ""))):
+                    skills.add(k)
+                elif name == "Bash":
+                    steps = steps_of([str(args.get("command", ""))])
+                    merges = [s for s in steps if MERGE.match(s)]
+                    if any(AUTO.search(s) for s in merges):
+                        auto_ids.add(k)
+                    if any(DISABLE.search(s) for s in merges):
+                        disable_ids.add(k)
+                    if args.get("run_in_background") and steps and WAIT_FOR.match(steps[-1]):
+                        waits.add(k)
+    kept = [(n, i, k) for n, i, k in names if k not in failed]
+    if landed is not None:
+        landed = sum(1 for _, _, k in names[:landed] if k not in failed)
+    skill = command or bool(skills - failed)
+    return [(n, i) for n, i, _ in kept], closeout, skill, landed, dismissed
 
 
 def unheredoc(command):
@@ -176,15 +232,26 @@ def _missing_fields(text):
     return [e.partition("missing: ")[2] for e in mod.missing_fields(text)]
 
 
-def merge_gaps(calls, closeout):
+def merge_gaps(calls, closeout, skill, landed=None):
     """What a turn that merged a PR still owes: the PR description rewritten
-    after the merge, and a closeout in chat (P15, closeout skill step 5)."""
-    steps = steps_of(str(i.get("command", "")) for n, i in calls if n == "Bash")
+    after the merge, a closeout in chat and the closeout skill (P15, closeout
+    skill step 5). A merge is a direct `gh pr merge`, or an auto-merge that
+    landed before call LANDED."""
+    steps, first = [], {}
+    for k, (n, i) in enumerate(calls):
+        first[k] = len(steps)
+        if n == "Bash":
+            steps += steps_of([str(i.get("command", ""))])
     merged = [k for k, c in enumerate(steps) if MERGE.match(c) and not NOT_MERGE.search(c)]
+    if landed is not None:
+        merged.append(first.get(landed, len(steps)) - 1)
     if not merged:
         return []
     gaps = []
-    if not any(EDIT.match(c) for c in steps[merged[-1] + 1:]):
+    if not skill:
+        gaps.append("load the closeout skill (Skill `agent-practices:closeout`) and write the "
+                    "PR description and the chat summary with it")
+    if not any(EDIT.match(c) for c in steps[max(merged) + 1:]):
         gaps.append("rewrite the closeout in the PR description with `gh pr edit --body-file` "
                     "(Status, Needs you, Proof with the post-merge run, Blocked on, Cleanup, "
                     "Continuation); a comment does not replace it")
@@ -201,8 +268,11 @@ def main():
     text = FENCE.sub("", data.get("last_assistant_message") or "")
     found = lambda rules: [what for pattern, what in rules if re.search(pattern, text, re.M)]
     ask, notify = found(ASK), found(NOTIFY)
-    calls, earlier, dismissed = turn_tools(data["transcript_path"])
-    gaps = merge_gaps(calls, earlier or bool(notify))
+    calls, earlier, skill, landed, dismissed = turn_tools(data["transcript_path"])
+    gaps = merge_gaps(calls, earlier or bool(notify), skill, landed)
+    if notify and not skill and not gaps:
+        gaps.append("load the closeout skill (Skill `agent-practices:closeout`) and write the "
+                    "closeout with it; a closeout written without it misses its template")
     missing = missing_fields(text) if notify else []
     if missing:
         gaps.append("add the summary fields the closeout lacks, in plain words "

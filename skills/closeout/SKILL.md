@@ -1,6 +1,6 @@
 ---
 name: closeout
-description: Write the end-of-session closeout (P15) from templates/closeout.md - a short plain-language summary in chat, the full record with agents and models in the PR - with every link opening on my phone after the session ends (P18). Use before the final message of any session that changed something, and for the closeout part of a PR description.
+description: Write the end-of-session closeout (P15) from templates/closeout.md - a short plain-language summary in chat, the full record with agents and models in the PR - with every link opening on my phone after the session ends (P18). Use right after a PR of this session merges (directly or by auto-merge) or is abandoned, before the final message of any session that changed something, and for the closeout part of a PR description.
 ---
 
 # Closeout
