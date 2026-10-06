@@ -65,6 +65,8 @@ work, or why it needs none (practices/project-baseline.md, O5). -->
 
 ## Handoff
 
+<!-- A prerequisite is named by PR number or URL, never by session or branch
+name; the receiver waits for it with `wait-for pr-merged PR` (merge skill). -->
 <Where the result goes (PR URL, message to parent), what to report, when to stop
 and ask. At the budget, or on a fast-tier brief at a signal to go up
 (practices/model-sizing.md), progress update, then stop.>

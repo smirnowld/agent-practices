@@ -14,6 +14,8 @@ check:
 	sh -n adapters/claude/hooks/session-start.sh
 	sh -n bin/with-secrets
 	sh -n bin/push-secrets
+	sh -n bin/wait-for
+	sh -n bin/test-wait-for.sh
 	sh -n bin/test-with-secrets.sh
 	sh -n bin/test-push-secrets.sh
 	sh -n adapters/claude/hooks/test-check-chip-brief.sh
@@ -29,8 +31,9 @@ check:
 	sh adapters/claude/hooks/test-check-attention.sh
 	sh bin/test-with-secrets.sh
 	sh bin/test-push-secrets.sh
+	sh bin/test-wait-for.sh
 
 # Link the helpers in bin/ (not their tests) into ~/.local/bin.
 install-bin:
 	mkdir -p $(HOME)/.local/bin
-	for f in with-secrets push-secrets; do ln -sf "$(CURDIR)/bin/$$f" "$(HOME)/.local/bin/$$f"; done
+	for f in with-secrets push-secrets wait-for; do ln -sf "$(CURDIR)/bin/$$f" "$(HOME)/.local/bin/$$f"; done

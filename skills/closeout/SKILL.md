@@ -23,7 +23,8 @@ PR (P17), never in the repository.
 - The agents and models used: role, model, effort, and what each did. Name
   any fallback when a role's agent was unavailable.
 - Anything not verified, deferred review findings, records updated, cleanup
-  done.
+  done. Cleanup includes your own background waits: none may still be
+  running; stop any left (the adapter names the tool) and say so.
 - What was fixed on the go and which issues the PR closed (P6). Work left
   over that would have passed the fix-on-the-go test is a miss: say so under
   **Deferred** and why it was not done.
