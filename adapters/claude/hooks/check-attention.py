@@ -17,8 +17,9 @@ and so is one written without the closeout skill loaded this session. A turn
 that merged a PR is blocked without the PR description rewritten afterwards,
 a closeout in chat this session and the closeout skill. A merge is a direct
 `gh pr merge`, or, once this session turned auto-merge on, its landing: a
-background `wait-for pr-ci|pr-merged` that exits 0, or a tool result holding
-wait-for's final line for a merge or a pass, or `"state":"MERGED"`.
+background `wait-for pr-ci|pr-merged` that exits 0, a tool result holding
+wait-for's final line for a merge or a pass, or `"state":"MERGED"` from a
+`gh pr view`, each for the PR auto-merge was turned on for.
 
 A turn that says it waits on CI, a run or a merge while no background task is
 running is blocked: nothing will wake the session, since the app's monitor
@@ -56,13 +57,18 @@ QUOTED_VAR = re.compile(r'"\$(?:\w+|\{\w+\})"')
 ECHO = re.compile(r"(^|[\s(`=])(echo|printf)\s(?:[^)`$]|\$(?!\())*")
 AUTO = re.compile(r"\s--auto\b")
 DISABLE = re.compile(r"\s--disable-auto\b")
+# The PR a gh pr command names, by number or URL; none means the branch's own.
+PR_ARG = re.compile(r"\s(?:\S*/pull/)?(\d+)\b")
 # A background wait whose exit 0 means the PR merged or its auto-merge can land
 # (bin/wait-for); a wrapper after it (`; echo $?`) hides the exit code.
-WAIT_FOR = re.compile(r"(?:\S*/)?wait-for\b.*\s(?:pr-ci|pr-merged)\s+\d+\s*$")
+WAIT_FOR = re.compile(r"(?:\S*/)?wait-for\b.*\s(?:pr-ci|pr-merged)\s+(\d+)(?:\s+\d?>&?\s*\S+)*\s*$")
 EXITED_0 = re.compile(r"<status>completed</status>.*\(exit code 0\)", re.S)
 NOTICE_ID = re.compile(r"<tool-use-id>([^<]+)</tool-use-id>")
-# wait-for's final line for a merged PR or passed CI, or gh's JSON for a merged PR.
-LANDED = re.compile(r'^(?:merged: PR \d+ at|passed: CI on PR \d+ at) \S|"state":\s*"MERGED"', re.M)
+# wait-for's final line for a merged PR or passed CI; gh's JSON for a merged PR
+# counts only as the result of a `gh pr view` of that PR.
+LANDED = re.compile(r"^(?:merged: PR|passed: CI on PR) (\d+) at \S", re.M)
+VIEW = re.compile(r"gh pr view\b")
+MERGED_STATE = re.compile(r'"state":\s*"MERGED"')
 CLOSEOUT_SKILL = re.compile(r"^(?:[\w-]+:)?closeout$")
 CLOSEOUT_COMMAND = re.compile(r"<command-name>/(?:[\w-]+:)?closeout</command-name>")
 EDIT = re.compile(r"gh pr edit\b.*\s(--body|--body-file|-b|-F)\b|gh api\b.*\sbody=")
@@ -136,8 +142,15 @@ def turn_tools(path):
     (None if none did); and whether I dismissed the question that started
     the turn."""
     names, asks, failed, closeout, dismissed = [], set(), set(), False, False
-    skills, auto_ids, disable_ids, waits = set(), set(), set(), set()
-    auto, landed, command = False, None, False
+    skills, auto_ids, disable_ids, waits, views = set(), {}, {}, {}, {}
+    auto, landed, command = set(), None, False
+
+    def lands(pr):
+        """Whether PR is one this session's auto-merge is on for; it lands once."""
+        nonlocal auto, landed
+        hit = auto if pr is None else auto & {pr, None}
+        if hit:
+            auto, landed = auto - hit, len(names) if landed is None else landed
     for entry, content, parts in entries(path):
         if entry.get("type") == "user":
             results = [c for c in parts if c.get("type") == "tool_result"]
@@ -155,12 +168,18 @@ def turn_tools(path):
                 k = c.get("tool_use_id")
                 if k in failed:
                     continue
-                auto = (auto or k in auto_ids) and k not in disable_ids
-                if auto and LANDED.search(result_text(c.get("content"))):
-                    auto, landed = False, len(names) if landed is None else landed
+                if k in auto_ids:
+                    auto.add(auto_ids[k])
+                if k in disable_ids:
+                    auto -= {disable_ids[k]} if disable_ids[k] else set(auto)
+                out = result_text(c.get("content"))
+                for m in LANDED.finditer(out):
+                    lands(m.group(1))
+                if k in views and MERGED_STATE.search(out):
+                    lands(views[k])
             notice = NOTICE_ID.search(text)
-            if auto and notice and notice.group(1) in waits and EXITED_0.search(text):
-                auto, landed = False, len(names) if landed is None else landed
+            if notice and notice.group(1) in waits and EXITED_0.search(text):
+                lands(waits[notice.group(1)])
         elif entry.get("type") == "assistant":
             for c in parts:
                 if c.get("type") == "text" and re.search(
@@ -175,14 +194,19 @@ def turn_tools(path):
                 elif name == "Skill" and CLOSEOUT_SKILL.match(str(args.get("skill", ""))):
                     skills.add(k)
                 elif name == "Bash":
-                    steps = steps_of([str(args.get("command", ""))])
-                    merges = [s for s in steps if MERGE.match(s)]
-                    if any(AUTO.search(s) for s in merges):
-                        auto_ids.add(k)
-                    if any(DISABLE.search(s) for s in merges):
-                        disable_ids.add(k)
-                    if args.get("run_in_background") and steps and WAIT_FOR.match(steps[-1]):
-                        waits.add(k)
+                    for step in steps_of([str(args.get("command", ""))]):
+                        pr = PR_ARG.search(step)
+                        pr = pr and pr.group(1)
+                        if MERGE.match(step) and AUTO.search(step):
+                            auto_ids[k] = pr
+                        elif MERGE.match(step) and DISABLE.search(step):
+                            disable_ids[k] = pr
+                        elif VIEW.match(step):
+                            views[k] = pr
+                        waits.pop(k, None)
+                        wait = WAIT_FOR.match(step)
+                        if wait and args.get("run_in_background"):
+                            waits[k] = wait.group(1)
     kept = [(n, i, k) for n, i, k in names if k not in failed]
     if landed is not None:
         landed = sum(1 for _, _, k in names[:landed] if k not in failed)

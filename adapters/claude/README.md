@@ -208,11 +208,13 @@ unverified against vendor docs.
     session turned auto-merge on and did not turn it off, its landing: a
     background `wait-for pr-ci` or `pr-merged` whose task notification
     reports exit code 0 (the notification carries no output; a wrapper such
-    as `; echo $?` hides the code, so it is not counted), or a tool result
-    holding wait-for's final `merged:` or `passed:` line or
-    `"state":"MERGED"` from `gh pr view`. A landing counts once, in the
-    turn that sees it first. A `pr-merged` wait on another session's PR
-    counts when this session also has auto-merge on, so it may block once.
+    as `; echo $?` hides the code, so it is not counted, while a redirection
+    is), or a tool result holding wait-for's final `merged:` or `passed:`
+    line or `"state":"MERGED"` from `gh pr view`, each for the PR that
+    auto-merge was turned on for (by number or URL; none means the branch's
+    own, which matches any). A landing counts once, in the turn that sees it
+    first. `passed:` means CI passed, so an auto-merge that then stalls is
+    blocked once.
   It reads only the session's own transcript, so a merge run by a subagent
   is not seen. A question denied by some other `PreToolUse` hook counts as
   neither asked nor answered. If the plugin is enabled for headless (`-p`) or SDK

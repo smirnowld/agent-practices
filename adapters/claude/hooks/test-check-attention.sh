@@ -238,6 +238,20 @@ session u:go s r a:"$closeout" "$auto" r 'b:cat out' 'r:passed: CI on PR 5 at ab
 blocks 'Merged as abc.' '' 'gh pr edit --body-file'
 session u:go "$auto" r "$waitci" r n:0 p r
 blocks "$closeout" '' 'Skill `agent-practices:closeout`'
+# A redirection after the wait keeps its exit code; a PR named by URL, or none
+# (the branch's own), is the same PR.
+session u:go s r a:"$closeout" "$auto" r "$waitci 2>&1" r n:0 p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+session u:go s r a:"$closeout" 'b:gh pr merge https://github.com/o/r/pull/5 --auto --squash' r "$waitci" r n:0 p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+session u:go s r a:"$closeout" 'b:gh pr merge --auto --squash' r 'b:gh pr view --json state' 'r:{"state":"MERGED"}' p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+# Another PR merging, or a file that mentions the state, is not this landing and
+# does not hide it.
+session u:go s r a:"$closeout" "$auto" r 'b:gh pr view 9 --json state' 'r:{"state":"MERGED"}' 'b:cat README.md' 'r:"state":"MERGED"' 'w:wait-for pr-merged 9' r n:0 p r
+passes 'PR 9 merged; PR 5 still waits.'
+session u:go s r a:"$closeout" "$auto" r 'b:gh pr view 9 --json state' 'r:{"state":"MERGED"}' "$waitci" r n:0 p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
 # Not landings: a failed wait, a wrapped exit code alone, no auto-merge of this
 # session's, auto-merge refused or turned off, a landing in an earlier turn.
 session u:go "$auto" r "$waitci" r n:1 p r
