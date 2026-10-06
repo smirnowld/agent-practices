@@ -113,8 +113,8 @@ in one batch (`templates/question.md`), so one reply answers all:
   and which P6a item makes it mine, in plain words; merging is proposed
   first. A yes is my explicit OK (P1), and counts only if I also accepted
   and left no decision open. Merge by the project's procedure or the `merge`
-  skill, whose other checks still apply. Later commits need the question
-  again only if they add a P6a item or are not confirmed under P4b.
+  skill, whose other checks still apply. A later commit needs the question
+  again if its own diff is on the P6a list or it is not confirmed under P4b.
 - **Follow-ups**, only for real ones: the next plan step this session
   unblocked, work deferred because it failed the fix-on-the-go test
   (bigger or riskier changes above all), and anything under **Not

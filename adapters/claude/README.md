@@ -202,10 +202,9 @@ unverified against vendor docs.
   - a `gh pr merge` call succeeded (not `--auto`, `--disable-auto` or
     `--help`) without a later body rewrite (`gh pr edit` with a body flag,
     or `gh api` with `body=`) or with no closeout sent in chat this session.
-  Commands run by subagents count: their transcripts sit in a nested
-  `subagents/` folder (hooks.md, "SubagentStop", `agent_transcript_path`,
-  checked 2026-09-30), observed beside the session's transcript and merged
-  by entry timestamp. If the plugin is enabled for headless (`-p`) or SDK
+  It reads only the session's own transcript, so a merge run by a subagent
+  is not seen. A question denied by some other `PreToolUse` hook counts as
+  neither asked nor answered. If the plugin is enabled for headless (`-p`) or SDK
   runs, the one forced extra turn there is unverified. Whether the app's
   finished-session notification reaches me, and whether phone pushes are on,
   are my app settings (settings-reference.md, `preferredNotifChannel`;
@@ -219,14 +218,18 @@ unverified against vendor docs.
   session on CI failures, merge conflicts and review comments, never on
   success (its tool description, observed 2026-10-06, unverified against
   vendor docs). A Bash call with `run_in_background` re-invokes the session
-  when it exits, and did so in all 344 background waits checked; a
+  when it exits (its tool description, unverified against vendor docs), and
+  did so in all 344 background waits checked; a
   foreground call stops at 10 minutes, and 36 foreground CI waits timed out
   that way. The `Stop` hook input lists running background tasks
   (`background_tasks`, observed, not documented); the hook skips every rule
   while one runs, and otherwise blocks a final message whose sentence pairs
-  a waiting phrase with CI, a run, a check or a merge and does not address
-  me. Known limits: a waiting claim in other words passes, and a sentence
-  that mentions both waiting and CI for another reason is blocked once.
+  a waiting phrase with CI, a run, a check or a merge, unless the wait is on
+  me ("once you accept"). Known limits: a waiting claim in other words
+  passes; any running background task, even an unrelated dev server, lets a
+  waiting claim through; and a sentence that mentions both waiting and CI
+  for another reason is blocked once (the reason says to end the turn again
+  if nothing is awaited).
 - Questions as a form (trial, P6b): the desktop app can render an HTML form
   in the conversation (`show_widget`, elicitation mode) whose answer returns
   as my next message. Unverified: whether it renders on the phone, and the

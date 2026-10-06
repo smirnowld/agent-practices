@@ -18,8 +18,8 @@ afterwards or without any closeout in chat this session.
 
 A turn that says it waits on CI, a run or a merge while no background task is
 running is blocked: nothing will wake the session, since the app's monitor
-wakes it only on failures, conflicts and review comments. Sentences that
-address me ("you", "your") are left alone. Any running background task lets
+wakes it only on failures, conflicts and review comments. A sentence whose
+wait is on me ("once you accept") is left alone. Any running background task lets
 the turn end, as does a repeat stop. Any error lets the turn end with a note
 on stderr; a broken check must not trap a session.
 """
@@ -57,7 +57,8 @@ DISMISSED = "User dismissed"
 DENIED = "PreToolUse:AskUserQuestion hook error"
 # Waiting on CI with nothing running: a waiting phrase and a CI noun in one sentence.
 SENTENCE = re.compile(r"[.!?]+(?=\s|$)|\n")
-YOU = re.compile(r"\byour?\b", re.I)
+# A wait that is on me ("once you accept", "waiting for your answer") is not on CI.
+ON_ME = re.compile(r"\b(?:waiting (?:for|on)|wait for|once|when|after|until) (?:you|your)\b", re.I)
 WAITING = re.compile(
     r"\bwaiting (?:for|on)\b|\bwait for\b"
     r"|['\u2019]ll (?:wait|report|be notified|be woken|confirm|merge|clean up|check)\b"
@@ -74,7 +75,8 @@ WAIT_REASON = (
     "failures, merge conflicts and review comments, never on success. Start the wait as a "
     "background task (merge skill step 4: `gh run watch RUN_ID --exit-status` with "
     "run_in_background and a long timeout) and end the turn; or, if what remains is mine, "
-    "say so and send PushNotification.")
+    "say so and send PushNotification. If you are not waiting on anything, end the turn "
+    "again as is.")
 LOAD = " (if it is not in your tools, load it with ToolSearch 'select:{0}' first)"
 
 
@@ -226,9 +228,9 @@ def signal_reason(ask):
 
 
 def waits_unwatched(text):
-    """Whether a sentence not addressed to me says it waits on CI, a run or a merge."""
+    """Whether a sentence says it waits on CI, a run or a merge, and not on me."""
     for sentence in SENTENCE.split(text):
-        if YOU.search(sentence):
+        if ON_ME.search(sentence):
             continue
         if WAITING.search(sentence) and CI_NOUN.search(sentence):
             return True

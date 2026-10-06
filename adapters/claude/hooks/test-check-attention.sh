@@ -213,6 +213,10 @@ $msg
 \`\`\`"
 done
 passes "I'll merge it once you accept the card."
+passes 'Waiting for your answer before I merge.'
+# Mentioning me elsewhere in the sentence does not hide a wait on CI.
+blocks "CI is running; I'll report back when it finishes so you can review." '' "$wait"
+blocks 'Waiting for CI on #70; let me know if you want anything else.' '' "$wait"
 passes 'Merged as abc123; CI passed and the branch is deleted.'
 # Combined with a missing signal in one block.
 blocks "$card

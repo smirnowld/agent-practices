@@ -138,11 +138,15 @@ run) is not blocked: ask for that run instead of merging untested.
   - has an effect outside the repository that a revert does not undo: a
     production release or store submission, DNS, billing, access granted to
     people;
-  - weakens a required check, a ruleset or the review gate.
+  - weakens a required check, a ruleset, or a policy, skill or hook that
+    enforces review or merge rules.
 
-  Those I merge, or OK in the conversation. My OK covers later commits the
-  reviewer confirms (P4b) that add none of these. The closeout lists each
-  critical change merged without me, one line on why it was safe.
+  The critical reviewer's report says which of these apply, or none. Those
+  I merge, or OK in the conversation after being told which item applies;
+  an OK given earlier (in a brief, before the review) does not count. My OK
+  covers a later commit the reviewer confirms (P4b) only if that commit's
+  own diff falls under none of these. The closeout lists each critical
+  change merged without me, one line on why it was safe.
 - **Merge.** The project's merge procedure applies. Otherwise merge your own
   PR (auto-merge preferred) once work is verified or marked untested under
   P5, review passed, every proof status is green on the head commit (a status
