@@ -1,9 +1,10 @@
 #!/bin/sh
 # Offline self-test for the attention hook: a card, question or closeout that
 # ends a turn without a signal is blocked once; a turn that already signalled,
-# a repeat stop, pending background work and plain answers pass silently; bad
-# input passes with a note on stderr. A merge without its closeout, and a turn
-# that says it waits on CI with nothing running to wake it, are blocked.
+# a repeat stop and plain answers pass silently; bad input passes with a note
+# on stderr. A merge without its closeout, a turn that says it waits on CI with
+# none of its own GitHub waits running, and a turn that ends with its own
+# wait-for running and no word of waiting, are blocked.
 set -eu
 dir=$(dirname "$0")
 hook="$dir/check-attention.py"
@@ -52,7 +53,8 @@ passes '**Waiting on me:** "Nothing"'
 passes '**Waiting on the maintainer:** nothing'
 passes 'Here is the answer: 42.'
 passes "$card" '{"stop_hook_active":true}'
-passes "$card" '{"background_tasks":[{"id":"t1","type":"subagent"}]}'
+# Running background tasks in the hook input excuse nothing.
+blocks "$card" '{"background_tasks":[{"id":"t1","type":"subagent"}]}' 'PushNotification'
 transcript AskUserQuestion; passes "$card"
 transcript PushNotification; passes "$closeout"
 # A signal from an earlier turn does not count for this one.
@@ -162,8 +164,8 @@ merge_turn "$closeout" "gh pr merge 5 \\
   --disable-auto"
 passes 'Paused.'
 # A session's entries: u:TYPED, a:ASSISTANT_TEXT, b:BASH_COMMAND, q (AskUserQuestion),
-# p (PushNotification), r[:OUTPUT] (answer to the last tool call), e (the last tool
-# call failed). A session's entry N is stamped at time 10*N.
+# p (PushNotification), k:TASK_ID (TaskStop), r[:OUTPUT] (answer to the last tool
+# call), e (the last tool call failed). A session's entry N is stamped at time 10*N.
 entries() {
   python3 -c '
 import json, sys
@@ -172,10 +174,11 @@ for n, arg in enumerate(sys.argv[3:]):
     kind, _, v = arg.partition(":")
     if kind == "u": e = {"type": "user", "message": {"content": v}}
     elif kind == "a": e = {"type": "assistant", "message": {"content": [{"type": "text", "text": v}]}}
-    elif kind in ("b", "q", "p"):
+    elif kind in ("b", "q", "p", "k"):
         k += 1
         tool = {"type": "tool_use", "id": "s%d" % k, "name": "Bash", "input": {"command": v}}
-        if kind != "b": tool.update(name={"q": "AskUserQuestion", "p": "PushNotification"}[kind], input={})
+        if kind == "k": tool.update(name="TaskStop", input={"task_id": v})
+        elif kind != "b": tool.update(name={"q": "AskUserQuestion", "p": "PushNotification"}[kind], input={})
         e = {"type": "assistant", "message": {"content": [tool]}}
     else: e = {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "s%d" % k, "content": v, "is_error": kind == "e"}]}}
     e["timestamp"] = "2026-01-01T%04d" % (start + step * n)
@@ -206,8 +209,7 @@ for msg in "I'm waiting for CI and the auto-merge on [#70](https://github.com/o/
   'Auto-merge is on for #630, and CI is running. The app will notify me when the checks finish.' \
   "CI is running on all three heads, and I'll report when it finishes."; do
   blocks "$msg" '' "$wait"
-  blocks "$msg" '{"background_tasks":[]}' "$wait"
-  passes "$msg" '{"background_tasks":[{"id":"t1","type":"bash"}]}'
+  blocks "$msg" '{"background_tasks":[{"id":"t1","type":"bash"}]}' "$wait"
   passes "\`\`\`
 $msg
 \`\`\`"
@@ -223,6 +225,77 @@ blocks "$card
 CI is running, and I'll report when it finishes." '' 'PushNotification'
 blocks "$card
 CI is running, and I'll report when it finishes." '' "$wait"
+
+# The session's own waits, read from the transcript. A background result names
+# the task; a notification or TaskStop ends it.
+bg='r:Command running in background with ID: bg1. Output is being written to: /tmp/bg1.output'
+moved='r:Command did not complete within its 600s timeout and was moved to the background (ID: bg1). Output'
+note='<task-notification>
+<task-id>bg1</task-id>
+<tool-use-id>s2</tool-use-id>
+<status>completed</status>
+</task-notification>'
+open='This session'"'"'s own wait still runs'
+claim="CI is running, and I'll report when it finishes."
+for start in 'b:wait-for pr-ci 5' 'b:/p/bin/wait-for -R o/r pr-merged 5' 'b:cd x && wait-for run 9'; do
+  session u:go 'b:ls' r "$start" "$bg"
+  blocks "$closeout" '' "$open"
+  blocks "$closeout" '' 'TaskStop'
+  blocks 'Done.' '' "$open"
+  passes "$claim"
+done
+# A foreground wait moved to the background on timeout is still running.
+session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$moved"
+blocks 'Done.' '' "$open"
+# It ended: notified by task id or tool-use id, or stopped.
+session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$bg" u:"$note"
+passes 'Merged as abc.'
+session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$bg" u:"<task-notification><tool-use-id>s2</tool-use-id></task-notification>"
+passes 'Merged as abc.'
+session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$bg" k:bg1 r
+passes 'Merged as abc.'
+# Mid-turn, the notification is a queued-command attachment or a queue operation.
+for shape in '{"type":"attachment","attachment":{"type":"queued_command","prompt":NOTE}}' \
+  '{"type":"queue-operation","operation":"enqueue","content":NOTE}'; do
+  session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$bg"
+  python3 -c 'import json,sys; print(sys.argv[1].replace("NOTE", json.dumps(sys.argv[2])))' "$shape" "$note" >>"$tmp/t.jsonl"
+  passes 'Merged as abc.'
+done
+# A notification only quoted in a tool result ends nothing.
+session u:go 'b:wait-for pr-ci 5' "$bg" 'b:cat log' r:"$note"
+blocks 'Done.' '' "$open"
+# A failed call or one without its background result is not a running wait.
+session u:go 'b:wait-for pr-ci 5' e:"$bg"
+passes 'Done.'
+session u:go 'b:wait-for pr-ci 5'
+passes 'Done.'
+# Not waits: a script with the name in it, a quoted mention, a dev server.
+session u:go 'b:sh bin/test-wait-for.sh' "$bg" 'b:grep "wait-for pr-ci" README.md' "$bg"
+passes 'Done.'
+session u:go 'b:npm run dev' "$bg"
+blocks "$claim" '' "$wait"
+blocks "$claim" '{"background_tasks":[{"id":"bg1","type":"bash"}]}' "$wait"
+# GitHub watches excuse a waiting claim but are not the closeout's to stop.
+for watch in 'b:gh run watch 9 --exit-status' 'b:gh pr checks 5 --watch'; do
+  session u:go "$watch" "$bg"
+  passes "$claim"
+  passes 'Done.'
+done
+# A sentence that describes waits, not a wait, passes.
+transcript Bash
+passes 'A wait on CI or a merge now always ends and wakes the session: when CI passes or fails, on a conflict or a new push, and at a time limit.'
+blocks "I'll merge it when CI passes." '' "$wait"
+blocks 'Merging once the checks pass is next; I will report when CI is green.' '' "$wait"
+
+# My answer to a question with no text after it leaves the final message the
+# one I answered (#45): it is not checked again.
+session u:go a:"$card" q 'r:The user answered: accept'
+passes "$card"
+session u:go a:"$card" q 'r:The user answered: accept' a:'Thanks, merging.'
+blocks "$card" '' 'PushNotification'
+# A final message the transcript does not hold yet is still checked.
+session u:go a:"$card" q 'r:The user answered: accept'
+blocks "$closeout" '' 'PushNotification'
 
 # Missing fields and a missing signal are reported together.
 transcript Bash

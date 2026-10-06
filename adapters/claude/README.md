@@ -34,8 +34,10 @@ marketplace (`.claude-plugin/marketplace.json`, plugin source `"."`), so
   `python3`; without it the hook fails and chips go through unchecked.
   `Stop` runs `check-attention.py` (see Waiting on me below); it blocks with
   top-level `decision: "block"` and a `reason`, reads the final text from
-  `last_assistant_message` and skips when `stop_hook_active` is true or
-  `background_tasks` is not empty (hooks.md, "Stop", checked 2026-09-29).
+  `last_assistant_message` and skips when `stop_hook_active` is true
+  (hooks.md, "Stop", checked 2026-09-29). It ignores `background_tasks`
+  and reads the session's waits from the transcript instead (Waiting on CI
+  below).
 
 ## Install
 
@@ -194,9 +196,12 @@ unverified against vendor docs.
     `PushNotification` nor `AskUserQuestion` was called since my last
     message. It finds that boundary in the transcript by entry shape
     (observed, not documented). A turn that starts with my dismissing a
-    question is waiting on me and is not blocked for this;
-  - it says it is waiting on CI, a run or a merge while no background task
-    is running (below);
+    question is waiting on me and is not blocked for this. When my answer
+    to a question is the turn's last entry and no text follows it, a final
+    message equal to the text I answered is not checked again;
+  - it says it is waiting on CI, a run or a merge while none of the
+    session's own GitHub waits is running, or it ends while one of its own
+    `wait-for` waits runs without saying it is waiting (below);
   - a chat closeout misses a required summary field of
     `templates/closeout.md` (Status, TL;DR);
   - a `gh pr merge` call succeeded (not `--auto`, `--disable-auto` or
@@ -221,15 +226,29 @@ unverified against vendor docs.
   when it exits (its tool description, unverified against vendor docs), and
   did so in all 344 background waits checked; a
   foreground call stops at 10 minutes, and 36 foreground CI waits timed out
-  that way. The `Stop` hook input lists running background tasks
-  (`background_tasks`, observed, not documented); the hook skips every rule
-  while one runs, and otherwise blocks a final message whose sentence pairs
-  a waiting phrase with CI, a run, a check or a merge, unless the wait is on
-  me ("once you accept"). Known limits: a waiting claim in other words
-  passes, as does one tied to "you" or "your" ("once your CI passes"); any running background task, even an unrelated dev server, lets a
-  waiting claim through; and a sentence that mentions both waiting and CI
-  for another reason is blocked once (the reason says to end the turn again
-  if nothing is awaited).
+  that way. The hook finds the session's waits in its transcript (all
+  observed 2026-10-06, not documented): a Bash call running `wait-for`,
+  `gh run watch` or `gh pr checks --watch` whose result reads "running in
+  background with ID: ID" or, after a foreground timeout, "moved to the
+  background (ID: ID)"; it ends with a `<task-notification>` naming the task
+  or tool-use id, found in a user message or, mid-turn, in a
+  `queued_command` attachment and queue operations, or with a `TaskStop` of
+  the task. Run over 150 recent sessions, it reported no wait still open.
+  It blocks a final message whose sentence pairs a waiting phrase with CI,
+  a run, a check or a merge while no such wait runs, unless the wait is on
+  me ("once you accept"); a "when CI passes" clause counts only with "I",
+  "we" or "me" in the sentence, so a sentence describing waits passes. It
+  also blocks a turn that ends while a `wait-for` of its own runs and no
+  sentence says it is waiting, asking it to say so or `TaskStop` the wait;
+  a closeout leaves none running. It ignores `background_tasks` in the hook
+  input: its entries' shape is unverified, and an unrelated dev server must
+  not excuse a waiting claim. Known limits: a waiting claim in other words
+  passes, as does one tied to "you" or "your" ("once your CI passes"); a
+  wait that ended without a notification in the transcript, such as one
+  lost to a crash, still counts as running, and a sentence that mentions
+  both waiting and CI for another reason is blocked once (the reason says
+  to end the turn again if nothing is awaited). A repeat stop always ends
+  the turn, so no rule can block twice in a row.
 - Waits that never end (`bin/wait-for`, `merge` steps 4 and 5): in the
   transcripts of sessions on a product repo from 2026-09-30 to 2026-10-06,
   191 of 515 background tasks were waits on GitHub (observed). Waits built
@@ -246,15 +265,12 @@ unverified against vendor docs.
   attention, and a wake-up after more than an hour idle rewrites the cache:
   in one stuck session of about 23.6M cache reads, the turn woken by the
   killed 2-hour wait used 0.68M cache reads and 83k cache writes, about 7%
-  of the session's cost (observed 2026-10-06). A dead watcher also switches
-  off the `Stop` hook's waiting guard above, since any running task passes
-  it. `wait-for` therefore ends on every state, and an unreadable one ends
+  of the session's cost (observed 2026-10-06). `wait-for` therefore ends on every state, and an unreadable one ends
   the wait. The plugin's `bin/` is on the Bash tool's PATH (observed
   2026-10-06, unverified against vendor docs). Whether `background_tasks`
   entries name their command or description is unverified: a `Stop` hook
-  added to a running session's project settings did not fire, so the hook
-  cannot yet tell the session's own waits from other tasks, and the
-  closeout check that none is still running is the `closeout` skill's.
+  added to a running session's project settings did not fire, so the
+  `Stop` hook reads the session's own waits from the transcript (above).
 - Decision card (tried 2026-10-06, dropped the same day, P6b): one page
   per wait with the proposed option preselected for each item, one-tap
   choices and a single answer line ("#78 accept, Q1 B, briefs: 1"), shown
