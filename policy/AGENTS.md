@@ -69,8 +69,8 @@ with fresh context or by me. Reviewers never fix their own findings; blocking
 findings are fixed and the reviewer confirms the fix. Non-blocking findings
 that pass the fix-on-the-go test (P6) are fixed in the PR before merge. Each
 one not fixed gets a GitHub issue labelled `deferred-review` and a priority,
-saying which part of the test it failed, linked from the PR; a security finding in a public repository gets a private security
-advisory instead.
+saying which part of the test it failed, linked from the PR; a security
+finding in a public repository gets a private security advisory instead.
 
 - The reviewer's tier is at least the implementer's. It may be lower only for
   mechanical changes with objective checks (renames, copy, formatting) or

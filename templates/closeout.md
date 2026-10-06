@@ -14,7 +14,8 @@ apply go in chat between the heading and the summary. -->
 
 **Watch out:** <only when there is a real risk or gap I should know about:
 something untested that could hurt users, data or money, an irreversible
-effect, a surprise. One line each>
+effect, a surprise, a deferred flaw this PR introduced found after
+acceptance. One line each>
 
 **Next:** <only when there is a recommended next task: what and why, in one
 line>
@@ -53,8 +54,8 @@ as already fixed with the evidence link; or "none">
 **Deferred:** <unfinished assigned work, review findings as issue links, or
 advisory links for security findings (P4), and other follow-ups with where
 they are tracked; only work that failed the fix-on-the-go test, each with
-its `Not fixed: PART — why` line (practices/scope-and-batching.md); or
-"none">
+the reason, for a review finding its `Not fixed: PART — why` line
+(practices/scope-and-batching.md), never for an advisory; or "none">
 
 **Blocked on:** <each blocker or decision and who resolves it, decisions in
 the question register (P11), other blockers where tracked; or "none">
