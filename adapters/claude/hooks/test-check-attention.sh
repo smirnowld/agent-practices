@@ -270,6 +270,50 @@ session u:go "$auto" r 'b:gh pr merge 5 --disable-auto' r "$waitci" r n:0 p r
 passes 'CI passed; auto-merge is off.'
 session u:go s r a:"$closeout" "$auto" r "$waitci" r n:0 "$edit" r u:status 'b:gh pr view 5' 'r:{"state":"MERGED"}'
 passes 'It is merged.'
+# A redirection's fd or a pinned head SHA is not the PR a command names.
+session u:go s r a:"$closeout" 'b:gh pr merge --auto --squash --match-head-commit abc 2>&1' r "$waitci" r n:0 p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+session u:go s r a:"$closeout" 'b:gh pr merge --auto --squash --match-head-commit 1234567' r "$waitci" r n:0 p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+session u:go s r a:"$closeout" 'b:gh pr merge --auto --squash --match-head-commit=1234567' r "$waitci" r n:0 p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+session u:go s r a:"$closeout" "$auto" r 'b:gh pr view --json state 2>&1' 'r:{"state":"MERGED"}' p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+# Turning auto-merge off for a PR also turns off the branch's own.
+session u:go 'b:gh pr merge --auto --squash' r 'b:gh pr merge 5 --disable-auto' r "$waitci" r n:0 p r
+passes 'CI passed; auto-merge is off.'
+# Passed CI with auto-merge still pending re-arms it: the later merge is a landing,
+# in the same turn or a later one. A closed-out merge seen again is not.
+pending='r:{"autoMergeRequest":{"enabledAt":"2026-01-01T00:00:00Z"},"state":"OPEN"}'
+session u:go s r a:"$closeout" "$auto" r "$waitci" r n:0 'b:gh pr view 5 --json state,autoMergeRequest' "$pending" \
+  "$edit" r u:'approved it' 'b:gh pr view 5 --json state' 'r:{"state":"MERGED"}'
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
+session u:go s r a:"$closeout" "$auto" r "$waitci" r n:0 'b:gh pr view 5 --json state,autoMergeRequest' "$pending" \
+  u:'approved it' 'b:gh pr view 5 --json state' 'r:{"state":"MERGED"}' "$edit" r
+passes 'Merged as abc.'
+session u:go s r a:"$closeout" "$auto" r "$waitci" r n:0 'b:gh pr view 5 --json state,autoMergeRequest' 'r:{"autoMergeRequest":null,"state":"OPEN"}' \
+  "$edit" r u:status 'b:gh pr view 5 --json state' 'r:{"state":"MERGED"}'
+passes 'It is merged.'
+session u:go s r a:"$closeout" "$auto" r "$waitci" r n:0 'b:gh pr view 5 --json state,autoMergeRequest' \
+  'r:{"autoMergeRequest":{"enabledAt":"x"},"state":"MERGED"}' "$edit" r u:status 'b:gh pr view 5 --json state' 'r:{"state":"MERGED"}'
+passes 'It is merged.'
+session u:go s r a:"$closeout" 'b:gh pr view 9 --json state,autoMergeRequest' "$pending" u:next 'b:gh pr view 9' 'r:{"state":"MERGED"}'
+passes 'PR 9 merged.'
+# A number-less arming re-arms only the PR whose landing was seen, and a
+# number-less disable turns a re-armed one off too.
+session u:go s r a:"$closeout" 'b:gh pr merge --auto --squash' r "$waitci" r n:0 "$edit" r \
+  u:next 'b:gh pr view 9 --json state,autoMergeRequest' "$pending" 'b:gh pr view 9' 'r:{"state":"MERGED"}'
+passes 'PR 9 merged.'
+session u:go 'b:gh pr merge --auto --squash' r "$waitci" r n:0 'b:gh pr view 5 --json state,autoMergeRequest' "$pending" \
+  'b:gh pr merge --disable-auto' r u:next 'b:gh pr view 5' 'r:{"state":"MERGED"}'
+passes 'PR 5 merged.'
+# A number-less view re-arms what was armed, not any PR.
+session u:go s r a:"$closeout" "$auto" r "$waitci" r n:0 "$edit" r u:status 'b:gh pr view --json state,autoMergeRequest' "$pending" \
+  u:next 'w:wait-for pr-merged 9' r n:0 p r
+passes 'PR 9 merged; 5 still waits on review.'
+session u:go s r a:"$closeout" "$auto" r "$waitci" r n:0 "$edit" r u:status 'b:gh pr view --json state,autoMergeRequest' "$pending" \
+  u:next "$waitci" r n:0 p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
 
 # A question a hook denied was not an answer from me: the turn did not restart.
 session u:go 'b:ls' r q 'r:PreToolUse:AskUserQuestion hook error: write it first'

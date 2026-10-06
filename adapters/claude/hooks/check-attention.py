@@ -19,7 +19,9 @@ a closeout in chat this session and the closeout skill. A merge is a direct
 `gh pr merge`, or, once this session turned auto-merge on, its landing: a
 background `wait-for pr-ci|pr-merged` that exits 0, a tool result holding
 wait-for's final line for a merge or a pass, or `"state":"MERGED"` from a
-`gh pr view`, each for the PR auto-merge was turned on for.
+`gh pr view`, each for the PR auto-merge was turned on for. A pass is a
+landing too; a later view of that PR still open with auto-merge on re-arms
+it, so a stalled auto-merge that lands later is caught again.
 
 A turn that says it waits on CI, a run or a merge while none of the
 session's own GitHub waits is running is blocked: nothing will wake the
@@ -63,7 +65,9 @@ ECHO = re.compile(r"(^|[\s(`=])(echo|printf)\s(?:[^)`$]|\$(?!\())*")
 AUTO = re.compile(r"\s--auto\b")
 DISABLE = re.compile(r"\s--disable-auto\b")
 # The PR a gh pr command names, by number or URL; none means the branch's own.
-PR_ARG = re.compile(r"\s(?:\S*/pull/)?(\d+)\b")
+# A redirection's fd (`2>&1`) and a pinned head SHA are not PRs.
+PR_ARG = re.compile(r"\s(?:\S*/pull/)?(\d+)\b(?![>&<])")
+HEAD_SHA = re.compile(r"\s--match-head-commit(?:=|\s+)\S+")
 # A background wait whose exit 0 means the PR merged or its auto-merge can land
 # (bin/wait-for); a wrapper after it (`; echo $?`) hides the exit code.
 WAIT_FOR = re.compile(r"(?:\S*/)?wait-for\b.*\s(?:pr-ci|pr-merged)\s+(\d+)(?:\s+\d?>&?\s*\S+)*\s*$")
@@ -74,6 +78,9 @@ NOTICE_ID = re.compile(r"<tool-use-id>([^<]+)</tool-use-id>")
 LANDED = re.compile(r"^(?:merged: PR|passed: CI on PR) (\d+) at \S", re.M)
 VIEW = re.compile(r"gh pr view\b")
 MERGED_STATE = re.compile(r'"state":\s*"MERGED"')
+# A view of a PR still open with auto-merge on: a pass that has not landed yet.
+OPEN_STATE = re.compile(r'"state":\s*"OPEN"')
+AUTO_PENDING = re.compile(r'"autoMergeRequest":\s*\{')
 CLOSEOUT_SKILL = re.compile(r"^(?:[\w-]+:)?closeout$")
 CLOSEOUT_COMMAND = re.compile(r"<command-name>/(?:[\w-]+:)?closeout</command-name>")
 EDIT = re.compile(r"gh pr edit\b.*\s(--body|--body-file|-b|-F)\b|gh api\b.*\sbody=")
@@ -170,7 +177,7 @@ def turn_tools(path):
     followed it, the text I answered (None otherwise)."""
     names, asks, failed, closeout, dismissed = [], set(), set(), False, False
     skills, auto_ids, disable_ids, waits, views = set(), {}, {}, {}, {}
-    auto, landed, command = set(), None, False
+    auto, armed, seen, landed, command = set(), set(), set(), None, False
     last, asked = "", None
 
     def lands(pr):
@@ -179,6 +186,7 @@ def turn_tools(path):
         hit = auto if pr is None else auto & {pr, None}
         if hit:
             auto, landed = auto - hit, len(names) if landed is None else landed
+            seen.add(pr)
     for entry, content, parts in entries(path):
         if entry.get("type") == "user":
             results = [c for c in parts if c.get("type") == "tool_result"]
@@ -199,13 +207,25 @@ def turn_tools(path):
                     continue
                 if k in auto_ids:
                     auto.add(auto_ids[k])
+                    armed.add(auto_ids[k])
                 if k in disable_ids:
-                    auto -= {disable_ids[k]} if disable_ids[k] else set(auto)
+                    # A numbered disable also covers the branch's own (None).
+                    off = {disable_ids[k], None} if disable_ids[k] else armed | auto
+                    auto, armed = auto - off, armed - off
                 out = result_text(c.get("content"))
                 for m in LANDED.finditer(out):
                     lands(m.group(1))
                 if k in views and MERGED_STATE.search(out):
                     lands(views[k])
+                elif k in views and OPEN_STATE.search(out) and AUTO_PENDING.search(out):
+                    # Passed but stalled: the merge that follows lands again,
+                    # only for a PR whose landing this session saw; the
+                    # branch's own is whatever was armed.
+                    pr = views[k]
+                    if pr is None and seen:
+                        auto |= armed
+                    elif pr in seen and armed & {pr, None}:
+                        auto.add(pr)
             notice = NOTICE_ID.search(text)
             if notice and notice.group(1) in waits and EXITED_0.search(text):
                 lands(waits[notice.group(1)])
@@ -226,7 +246,7 @@ def turn_tools(path):
                     skills.add(k)
                 elif name == "Bash":
                     for step in steps_of([str(args.get("command", ""))]):
-                        pr = PR_ARG.search(step)
+                        pr = PR_ARG.search(HEAD_SHA.sub("", step))
                         pr = pr and pr.group(1)
                         if MERGE.match(step) and AUTO.search(step):
                             auto_ids[k] = pr
