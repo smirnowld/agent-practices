@@ -17,3 +17,5 @@ click through>
 **Not covered:** <what the evidence does not show, e.g. dark mode, Android>
 
 **Decision needed:** accept / change <...> / reject
+
+Reply: accept
