@@ -237,12 +237,16 @@ note='<task-notification>
 </task-notification>'
 open='This session'"'"'s own wait still runs'
 claim="CI is running, and I'll report when it finishes."
-for start in 'b:wait-for pr-ci 5' 'b:/p/bin/wait-for -R o/r pr-merged 5' 'b:cd x && wait-for run 9'; do
+for start in 'b:wait-for pr-ci 5' 'b:/p/bin/wait-for -R o/r pr-merged 5' 'b:cd x && wait-for run 9' \
+  'b:(wait-for pr-ci 5)' 'b:env X=1 time wait-for pr-ci 5' 'b:for p in 5 6; do wait-for pr-ci $p; done' \
+  'b:sh bin/wait-for pr-ci 5'; do
   session u:go 'b:ls' r "$start" "$bg"
   blocks "$closeout" '' "$open"
   blocks "$closeout" '' 'TaskStop'
   blocks 'Done.' '' "$open"
+  blocks "Merged as abc. I'll clean up the worktree now." '' "$open"
   passes "$claim"
+  passes 'wait-for runs in the background; I will report when it ends.'
 done
 # A foreground wait moved to the background on timeout is still running.
 session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$moved"
@@ -253,6 +257,12 @@ passes 'Merged as abc.'
 session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$bg" u:"<task-notification><tool-use-id>s2</tool-use-id></task-notification>"
 passes 'Merged as abc.'
 session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$bg" k:bg1 r
+passes 'Merged as abc.'
+session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$bg"
+printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"x1","name":"KillShell","input":{"shell_id":"bg1"}}]}}' >>"$tmp/t.jsonl"
+passes 'Merged as abc.'
+session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$bg"
+python3 -c 'import json,sys; print(json.dumps({"type":"user","message":{"content":[{"type":"text","text":sys.argv[1]}]}}))' "$note" >>"$tmp/t.jsonl"
 passes 'Merged as abc.'
 # Mid-turn, the notification is a queued-command attachment or a queue operation.
 for shape in '{"type":"attachment","attachment":{"type":"queued_command","prompt":NOTE}}' \
@@ -276,7 +286,8 @@ session u:go 'b:npm run dev' "$bg"
 blocks "$claim" '' "$wait"
 blocks "$claim" '{"background_tasks":[{"id":"bg1","type":"bash"}]}' "$wait"
 # GitHub watches excuse a waiting claim but are not the closeout's to stop.
-for watch in 'b:gh run watch 9 --exit-status' 'b:gh pr checks 5 --watch'; do
+for watch in 'b:gh run watch 9 --exit-status' 'b:gh pr checks 5 --watch' \
+  'b:timeout 1500 gh pr checks 5 --watch' 'b:GH_REPO=o/r gh run watch 9' 'b:gh -R o/r run watch 9'; do
   session u:go "$watch" "$bg"
   passes "$claim"
   passes 'Done.'
@@ -284,6 +295,10 @@ done
 # A sentence that describes waits, not a wait, passes.
 transcript Bash
 passes 'A wait on CI or a merge now always ends and wakes the session: when CI passes or fails, on a conflict or a new push, and at a time limit.'
+for msg in 'Auto-merge is on; the PR will merge once CI passes.' 'The PR auto-merges when CI passes.' \
+  'The branch merges once the build finishes.'; do
+  blocks "$msg" '' "$wait"
+done
 blocks "I'll merge it when CI passes." '' "$wait"
 blocks 'Merging once the checks pass is next; I will report when CI is green.' '' "$wait"
 
@@ -296,6 +311,8 @@ blocks "$card" '' 'PushNotification'
 # A final message the transcript does not hold yet is still checked.
 session u:go a:"$card" q 'r:The user answered: accept'
 blocks "$closeout" '' 'PushNotification'
+session u:go 'b:wait-for pr-ci 5' "$bg" a:"$card" q 'r:The user answered: accept'
+passes "$card"
 
 # Missing fields and a missing signal are reported together.
 transcript Bash

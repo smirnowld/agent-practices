@@ -70,9 +70,8 @@ WAITING = re.compile(
     r"|\bwill (?:wait|report|notify|wake)\b|\bnotif(?:y|ies) me\b"
     r"|\bwakes? (?:me|this session)\b"
     r"|\b(?:when|once) (?:it|ci|the run|the checks?|the build|everything) "
-    r"(?:finishes|passes|completes|is green|goes green)\b(?=.*\b(?:I|I['\u2019]m|we|me)\b)"
-    r"|\b(?:I|I['\u2019]m|we|me)\b.*\b(?:when|once) (?:it|ci|the run|the checks?|the build"
-    r"|everything) (?:finishes|passes|completes|is green|goes green)\b", re.I)
+    r"(?:finishes|passes|completes|is green|goes green)\b(?!\s+or\b)", re.I)
+# "when CI passes or fails" lists outcomes: it describes waits, it is not one.
 CI_NOUN = re.compile(
     r"\b(?:ci|checks?|runs?|builds?|tests?|lanes?|workflow|pipeline|deploy\w*|release"
     r"|auto-merge|merges?|verifier)\b", re.I)
@@ -80,10 +79,11 @@ WAIT_REASON = (
     "You say you are waiting on CI, a run or a merge, but none of this session's GitHub "
     "waits is running, so nothing will wake this session. The app's Auto-fix monitor wakes "
     "it only on CI failures, merge conflicts and review comments, never on success, and "
-    "another background task (a dev server, a subagent) is not a wait. Start the wait as a "
-    "background task (merge skill step 4: `wait-for pr-ci PR` with run_in_background and a "
-    "long timeout) and end the turn; or, if what remains is mine, say so and send "
-    "PushNotification. If you are not waiting on anything, end the turn again as is.")
+    "a running dev server is not a wait. Start the wait as a background task (merge skill "
+    "step 4: `wait-for pr-ci PR` with run_in_background and a long timeout) and end the "
+    "turn; or, if what remains is mine, say so and send PushNotification. If you are not "
+    "waiting on GitHub, or wait on a background test run or subagent that notifies you "
+    "when it ends, end the turn again as is.")
 OPEN_REASON = (
     "This session's own wait still runs ({0}), and your message does not say you are "
     "waiting on it. If you are, say so in one line and end the turn; it wakes you when it "
@@ -94,10 +94,15 @@ OPEN_REASON = (
 BG_ID = re.compile(r"running in background with ID: (\w+)|moved to the background \(ID: (\w+)\)")
 NOTICE = re.compile(r"<task-notification>(.*?)</task-notification>", re.S)
 NOTICE_ID = re.compile(r"<(task-id|tool-use-id)>\s*([^<\s]+)\s*</\1>")
-STOPS = {"TaskStop": "task_id", "KillShell": "shell_id"}
+STOPS = {"TaskStop": "task_id", "KillShell": "shell_id"}  # KillShell: TaskStop's older name
 # Waits on GitHub: the session's own `wait-for`, and the watches it replaced.
-WAIT_FOR = re.compile(r"(?:\w+=\S*\s+|(?:nohup|exec|command)\s+|timeout\s+\S+\s+)*(?:\S*/)?wait-for(?:\s|$)")
-GH_WAIT = re.compile(r"gh run watch\b|gh pr checks\b.*\s--watch\b")
+# A simple command's prefix: a group or loop keyword, an assignment, a wrapper.
+PREFIX = (r"(?:[({]\s*|(?:do|then|else|env|time|nohup|exec|command|sh|bash)\s+"
+          r"|\w+=\S*\s+|timeout\s+\S+\s+)*")
+WAIT_FOR = re.compile(PREFIX + r"(?:\S*/)?wait-for(?:\s|$)")
+GH_WAIT = re.compile(PREFIX + r"gh(?:\s+(?:-R|--repo)\s+\S+)?\s+(?:run watch\b|pr checks\b.*\s--watch\b)")
+# What a sentence says it waits on, for the session's own open wait.
+WAIT_NOUN = re.compile(CI_NOUN.pattern + r"|\bwait(?:s|-for)?\b", re.I)
 LOAD = " (if it is not in your tools, load it with ToolSearch 'select:{0}' first)"
 
 
@@ -168,9 +173,8 @@ def open_waits(path):
     on timeout) that runs `wait-for`, `gh run watch` or `gh pr checks
     --watch`; a task notification naming its task or tool-use id, or a
     TaskStop of its task, ends it; a notification only quoted in a tool
-    result does not. Ids are matched as sets, so the order of
-    entries does not matter; a call without its background result is not
-    counted."""
+    result does not. An ending may come before or after the call's result;
+    a call without its background result is not counted."""
     waits, tasks, ended = {}, {}, set()
     for entry, content, parts in entries(path):
         if entry.get("type") == "assistant":
@@ -284,7 +288,7 @@ def main():
     if waits_unwatched(text) and not waits:
         reasons.append(WAIT_REASON)
     own = [cmd for is_own, cmd in waits if is_own]
-    if own and not waiting(text):
+    if own and text and not waiting(text, WAIT_NOUN):
         reasons.append(OPEN_REASON.format("; ".join("`" + c + "`" for c in own), LOAD.format("TaskStop")))
     if reasons:
         json.dump({"decision": "block", "reason": " ".join(reasons)}, sys.stdout)

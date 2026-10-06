@@ -233,18 +233,22 @@ unverified against vendor docs.
   background (ID: ID)"; it ends with a `<task-notification>` naming the task
   or tool-use id, found in a user message or, mid-turn, in a
   `queued_command` attachment and queue operations, or with a `TaskStop` of
-  the task. Run over 150 recent sessions, it reported no wait still open.
+  the task (or of its older name, `KillShell`). Run over 150 recent
+  sessions, it reported no wait still open.
   It blocks a final message whose sentence pairs a waiting phrase with CI,
   a run, a check or a merge while no such wait runs, unless the wait is on
-  me ("once you accept"); a "when CI passes" clause counts only with "I",
-  "we" or "me" in the sentence, so a sentence describing waits passes. It
-  also blocks a turn that ends while a `wait-for` of its own runs and no
-  sentence says it is waiting, asking it to say so or `TaskStop` the wait;
-  a closeout leaves none running. It ignores `background_tasks` in the hook
+  me ("once you accept"); a "when CI passes or fails" list of outcomes
+  describes waits and passes. It also blocks a turn that ends while a
+  `wait-for` of its own runs and no sentence pairs a waiting phrase with a
+  wait, CI, a run or a merge, asking it to say so or `TaskStop` the wait; a
+  closeout leaves none running. It ignores `background_tasks` in the hook
   input: its entries' shape is unverified, and an unrelated dev server must
   not excuse a waiting claim. Known limits: a waiting claim in other words
   passes, as does one tied to "you" or "your" ("once your CI passes"); a
-  wait that ended without a notification in the transcript, such as one
+  claim to wait on a background test run or subagent, which does notify
+  the session, is blocked once (the reason says to end the turn again); a
+  wait started in a form it does not parse (inside `if`, say) is not seen;
+  a wait that ended without a notification in the transcript, such as one
   lost to a crash, still counts as running, and a sentence that mentions
   both waiting and CI for another reason is blocked once (the reason says
   to end the turn again if nothing is awaited). A repeat stop always ends
