@@ -16,7 +16,8 @@ Fix without asking, and log it under **Also fixed**, when all hold:
   Size (`practices/model-sizing.md`, "Size in responses"); continuing past
   the budget stays my decision (P5).
 - **Same risk:** it keeps the PR in its risk category (P4). A fix that would
-  need the critical reviewer in a PR that does not is out.
+  need the critical reviewer in a PR that does not is out, and so is one that
+  would move a critical PR to the strongest level.
 - **Free to touch:** no file or resource on the brief's No-go list, and
   none a session started since the brief holds; check work in flight before
   touching a file outside Core.

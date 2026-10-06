@@ -15,7 +15,8 @@ before reporting it; mark anything you could not verify as uncertain.
 When briefed to confirm a fix for a critical reviewer's finding (P4a), check
 that it settles the finding by the evidence the finding names, and say so if
 the fix changes anything the finding did not name: that needs a new critical
-review. When briefed with a critically reviewed change repeated in another
+review. End with the critical reviewer's P6a line for the fix's own diff,
+naming the P6a items it falls under or "P6a: none". When briefed with a critically reviewed change repeated in another
 repository, check each finding against this copy and report every way this
 copy or its setting (secrets, runners, deploy targets, rulesets) differs
 from the reviewed one: each difference needs a critical review.

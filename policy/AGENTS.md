@@ -84,8 +84,8 @@ finding in a public repository gets a private security advisory instead.
   running what it guards; moving jobs between runners is not. Not critical:
   docs and ADRs (the code that implements them is reviewed on its own),
   agent tooling (hooks, skills, policy wording), renames, version bumps CI
-  proves, staging-only changes, and a change its brief rates low or normal
-  risk.
+  proves, staging-only changes, and a change its brief, rated by this test,
+  puts at low or normal risk.
 - A critical change gets the critical reviewer, never below the
   implementer's tier. The strongest critical reviewer takes its place only
   when a revert cannot undo the harm and it reaches production data,

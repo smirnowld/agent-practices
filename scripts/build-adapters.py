@@ -16,9 +16,15 @@ def roles():
     parsed = {}
     for path in sorted((ROOT / "roles").glob("*.md")):
         _, fm, body = path.read_text().split("---", 2)
-        parsed[path.stem] = dict(re.findall(r"^(\w+): (.*)$", fm, re.M)), body.strip()
-    for meta, body in parsed.values():
-        base = parsed[meta["extends"]][1] if "extends" in meta else ""
+        meta = {k: v.strip() for k, v in re.findall(r"^(\w+): (.*)$", fm, re.M)}
+        parsed[path.stem] = meta, body.strip()
+    for name, (meta, body) in parsed.items():
+        base = ""
+        if "extends" in meta:
+            parent = parsed.get(meta["extends"])
+            if parent is None or "extends" in parent[0]:
+                sys.exit(f"roles/{name}.md: extends must name a role without its own extends")
+            base = parent[1]
         yield meta, "\n\n".join(part for part in (base, body) if part)
 
 
