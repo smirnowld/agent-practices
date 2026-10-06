@@ -38,7 +38,9 @@ P4 sorts changes by what a mistake would do. Examples:
   that handles secrets.
 - **Critical reviewer**: everything else P4 calls critical, such as a
   migration with a backup or a way back, a release or deploy workflow, a
-  change to a required check, and auth on a product with no live users yet.
+  change to a required check, auth on a product with no live users yet, and
+  auth on a product with live users unless its brief shows a revert cannot
+  undo the harm (data already exposed).
 - **Reviewer or light reviewer**: docs and ADRs (the code that implements
   them is reviewed on its own), agent tooling (hooks, skills, policy
   wording), renames, version bumps CI proves, staging-only changes, moving
