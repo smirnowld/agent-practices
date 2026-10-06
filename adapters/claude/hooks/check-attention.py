@@ -219,9 +219,12 @@ def turn_tools(path):
                     lands(views[k])
                 elif k in views and OPEN_STATE.search(out) and AUTO_PENDING.search(out):
                     # Passed but stalled: the merge that follows lands again,
-                    # only for a PR whose landing this session saw.
+                    # only for a PR whose landing this session saw; the
+                    # branch's own is whatever was armed.
                     pr = views[k]
-                    if armed and (pr in seen or pr is None and seen):
+                    if pr is None and seen:
+                        auto |= armed
+                    elif pr in seen and armed & {pr, None}:
                         auto.add(pr)
             notice = NOTICE_ID.search(text)
             if notice and notice.group(1) in waits and EXITED_0.search(text):

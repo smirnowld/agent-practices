@@ -307,6 +307,13 @@ passes 'PR 9 merged.'
 session u:go 'b:gh pr merge --auto --squash' r "$waitci" r n:0 'b:gh pr view 5 --json state,autoMergeRequest' "$pending" \
   'b:gh pr merge --disable-auto' r u:next 'b:gh pr view 5' 'r:{"state":"MERGED"}'
 passes 'PR 5 merged.'
+# A number-less view re-arms what was armed, not any PR.
+session u:go s r a:"$closeout" "$auto" r "$waitci" r n:0 "$edit" r u:status 'b:gh pr view --json state,autoMergeRequest' "$pending" \
+  u:next 'w:wait-for pr-merged 9' r n:0 p r
+passes 'PR 9 merged; 5 still waits on review.'
+session u:go s r a:"$closeout" "$auto" r "$waitci" r n:0 "$edit" r u:status 'b:gh pr view --json state,autoMergeRequest' "$pending" \
+  u:next "$waitci" r n:0 p r
+blocks 'Merged as abc.' '' 'gh pr edit --body-file'
 
 # A question a hook denied was not an answer from me: the turn did not restart.
 session u:go 'b:ls' r q 'r:PreToolUse:AskUserQuestion hook error: write it first'
