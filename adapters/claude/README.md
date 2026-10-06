@@ -230,6 +230,31 @@ unverified against vendor docs.
   waiting claim through; and a sentence that mentions both waiting and CI
   for another reason is blocked once (the reason says to end the turn again
   if nothing is awaited).
+- Waits that never end (`bin/wait-for`, `merge` steps 4 and 5): in the
+  transcripts of sessions on a product repo from 2026-09-30 to 2026-10-06,
+  191 of 515 background tasks were waits on GitHub (observed). Waits built
+  on `gh run watch RUN_ID` always ended. Hand-written loops did not: a merge
+  wait that looked up a prerequisite PR by the other session's branch name
+  got `null null` (the PR was on another head branch), read it as pending
+  and ran into its 2-hour timeout, and a second session's copy ran 116 min
+  before failing; a CI wait pinned to a head commit exited only on merged,
+  closed or a failed check, so a merge conflict, which stopped CI from
+  starting, left the session silent for 37 min, and after the next push
+  the watcher outlived the merge; `until state != OPEN` merge loops ran 50
+  to 83 min, since a push turns auto-merge off and leaves the PR open with
+  nothing pending. Sleeping cost no tokens; the cost was lost time and
+  attention, and a wake-up after more than an hour idle rewrites the cache:
+  in one stuck session of about 23.6M cache reads, the turn woken by the
+  killed 2-hour wait used 0.68M cache reads and 83k cache writes, about 7%
+  of the session's cost (observed 2026-10-06). A dead watcher also switches
+  off the `Stop` hook's waiting guard above, since any running task passes
+  it. `wait-for` therefore ends on every state, and an unreadable one ends
+  the wait. The plugin's `bin/` is on the Bash tool's PATH (observed
+  2026-10-06, unverified against vendor docs). Whether `background_tasks`
+  entries name their command or description is unverified: a `Stop` hook
+  added to a running session's project settings did not fire, so the hook
+  cannot yet tell the session's own waits from other tasks, and the
+  closeout check that none is still running is the `closeout` skill's.
 - Decision card (tried 2026-10-06, dropped the same day, P6b): one page
   per wait with the proposed option preselected for each item, one-tap
   choices and a single answer line ("#78 accept, Q1 B, briefs: 1"), shown

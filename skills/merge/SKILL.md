@@ -1,6 +1,6 @@
 ---
 name: merge
-description: Merge your own pull request once P6 allows it. Picks the merge method, enables auto-merge pinned to the reviewed commit, waits for CI in one background call that wakes the session, confirms the merge and cleans up.
+description: Merge your own pull request once P6 allows it. Picks the merge method, enables auto-merge pinned to the reviewed commit, waits for CI with one background wait-for call that wakes the session on every outcome, confirms the merge and cleans up.
 ---
 
 # Merge
@@ -68,31 +68,36 @@ gh pr merge PR --auto --METHOD --match-head-commit REVIEWED_SHA
 `--match-head-commit` makes GitHub refuse the merge if the branch moved past
 the reviewed commit. A PR that is already mergeable (checks green, nothing
 pending) cannot get auto-merge; merge it directly with the same
-`--match-head-commit` and go to step 5. Before any later push:
+`--match-head-commit` and go to step 5. Before any later push: stop your own
+running wait (the adapter names the tool), then
 `gh pr merge PR --disable-auto`,
 get the new commits reviewed under P4b (delta only), then enable again with
 the new SHA. Batch late fixes into one push so CI runs once.
 
 ## 4. Wait once, in the background
 
-Find the run behind the required check from step 1 on the reviewed commit
-(the run id is in the details URL, `.../actions/runs/RUN_ID/job/...`) and
-wait on it as a background task, so its exit wakes the session (adapter):
+Wait with `wait-for` from this plugin's `bin/` as a background task, so its
+exit wakes the session (adapter):
 
 ```sh
-gh api 'repos/{owner}/{repo}/commits/REVIEWED_SHA/check-runs' --jq '.check_runs[] | select(.name=="CHECK") | .details_url'
-gh run watch RUN_ID --exit-status
+wait-for pr-ci PR
 ```
 
-Give the wait a timeout longer than the run takes. Never end a turn saying
-you are waiting on CI or a merge unless that wait is running; a CI monitor
-that reports only failures is not a wait. Just after a push the check can be
-missing; wait briefly and look once more. Do not poll. Do not rely on
-`gh pr checks --watch`: it exits at once when no check has reported yet, and
-exits green when the checks that have reported pass before the others
-appear. If no run appears for the check while CI is running, take the id
-from `gh run list --branch BRANCH --commit REVIEWED_SHA` and wait on that. A
-failed run: fix forward on the same PR (P6), then return to step 3.
+It finds the run behind each required check from step 1 on the PR's head and
+waits on it with `gh run watch RUN_ID --exit-status`, and it ends on every
+state: 0 CI passed (or the PR already merged), 1 a check failed, 2 PR closed,
+3 head moved or auto-merge turned off, 4 merge conflict, 5 a state it cannot
+read, 6 deadline (45 min; `--deadline MINUTES`). An unknown state ends the
+wait; never restart it unchanged hoping it settles. Give the background task
+a timeout above the deadline. Never end a turn saying you are waiting on CI
+or a merge unless that wait is running; a CI monitor that reports only
+failures is not a wait. Do not write your own polling loop, and do not rely
+on `gh pr checks --watch`: it exits at once when no check has reported yet,
+and exits green when the checks that have reported pass before the others
+appear. If it exits 5 because no run appeared while CI is running, take the
+id from `gh run list --branch BRANCH --commit REVIEWED_SHA` and wait with
+`wait-for run RUN_ID`. A failed run: fix forward on the
+same PR (P6), then return to step 3.
 
 ## 5. Confirm and clean up
 
@@ -103,7 +108,12 @@ after a short wait if needed:
 gh pr view PR --json state,autoMergeRequest,mergeStateStatus
 ```
 
-`state` must be `MERGED`. Otherwise report the cause from `mergeStateStatus`
-and `autoMergeRequest` (a pending required status, a conflict, auto-merge
-switched off). Then clean up per P16: delete your local branch and worktree,
+`state` must be `MERGED`. Otherwise report the cause from `wait-for`'s exit
+code and final line, with `mergeStateStatus` and `autoMergeRequest` (a
+pending required status, a conflict, auto-merge switched off). On exit 3
+from your own push, go back to step 3; on 4, resolve the conflict on the
+branch and go back to step 3; on 5 or 6, look once at the PR and its run and
+report what you found; neither ever counts as passed. When the merge is someone else's (another session's PR you
+depend on), wait for it with `wait-for pr-merged PR`. Leave no wait of your
+own running. Then clean up per P16: delete your local branch and worktree,
 release your resources (P7).

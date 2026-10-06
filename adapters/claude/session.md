@@ -32,9 +32,14 @@ when ToolSearch cannot find it either, and the report says so.
   `PushNotification`: one line under 200 characters naming what waits on me. Everything a
   question depends on (commands, steps, a card) is in the chat text, never
   only in thinking or a tool result. Never re-ask an unchanged question.
-- **Wait on CI or a merge** (P6b, `merge` step 4): run the wait with Bash
-  `run_in_background` and a timeout longer than the run; its exit wakes the
-  session. The app's Auto-fix monitor (`mcp__ccd_pr__set_monitor`) wakes it
-  only on failures, conflicts and review comments, never on success, so it is
-  not a wait. Never end a turn saying you are waiting with no background task
+- **Wait on CI or a merge** (P6b, `merge` step 4): run `wait-for` (the
+  plugin's `bin/` is on the Bash PATH) with Bash `run_in_background` and a
+  `timeout` above its deadline: 4200000 ms covers the defaults (45 and 60
+  min); the tool's maximum is 7200000. Its exit wakes the session on every
+  outcome; read the exit code and the last line of its output. Before a push
+  or `gh pr merge --disable-auto` that makes your own wait stale, stop it
+  with `TaskStop`; at closeout none of your own waits is still running. The
+  app's Auto-fix monitor (`mcp__ccd_pr__set_monitor`) wakes it only on
+  failures, conflicts and review comments, never on success, so it is not a
+  wait. Never end a turn saying you are waiting with no background task
   running.
