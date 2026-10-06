@@ -58,6 +58,9 @@ the reason; or "none">
 **Blocked on:** <each blocker or decision and who resolves it, decisions in
 the question register (P11), other blockers where tracked; or "none">
 
+**Merged without me:** <each critical change (P6a) merged without my OK: PR
+link and one line on why no P6a item applied; or "none">
+
 **Agents and models:** <role — model at effort — what it did>
 
 **Cleanup:** <state of each: review, PR, CI, merge, local default branch

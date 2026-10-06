@@ -23,14 +23,16 @@ when ToolSearch cannot find it either, and the report says so.
   `set_session_effort`, replies
   "Switched; continue with the brief." and does nothing else that turn. With
   no parent, ask me to switch with `/model` and `/effort` and stop.
-- **Ask me, or wait on me** (P6b): a decision or acceptance goes through
-  `AskUserQuestion` after the card is shown; an acceptance card is offered as
-  accept / change / reject, proposed first. A closeout or hand-off to me sends
-  `PushNotification`, one line under 200 characters, then asks its questions
-  (acceptance, merge, follow-ups) in one `AskUserQuestion` call, one question
-  per topic. Thinking is never shown to me: every question has chat text
-  after the last tool result, and whatever it depends on (commands, steps, a
-  card) is in that text in full, commands in code blocks, never only in
-  thinking. A reply that asks for clarification or says I can't see something
-  is answered in chat text first; never re-ask an unchanged question. When I
-  dismiss a question, end the turn restating what waits on me; no closeout.
+- **Ask me, or wait on me** (P6b): questions and acceptance cards are chat
+  text, numbered Q1, Q2 with options and a proposed default, answered in one
+  reply ("Q1 A, Q2 B"); `AskUserQuestion` is not required. A turn that ends on
+  my decision, acceptance, a closeout or a hand-off sends `PushNotification`:
+  one line under 200 characters naming what waits on me. Everything a
+  question depends on (commands, steps, a card) is in the chat text, never
+  only in thinking or a tool result. Never re-ask an unchanged question.
+- **Wait on CI or a merge** (P6b, `merge` step 4): run the wait with Bash
+  `run_in_background` and a timeout longer than the run; its exit wakes the
+  session. The app's Auto-fix monitor (`mcp__ccd_pr__set_monitor`) wakes it
+  only on failures, conflicts and review comments, never on success, so it is
+  not a wait. Never end a turn saying you are waiting with no background task
+  running.

@@ -167,91 +167,74 @@ unverified against vendor docs.
 - Waiting on me (P6b): the desktop app shows a session as needing input
   only while a permission prompt, `AskUserQuestion` or another input prompt
   is open (agent-view.md, checked 2026-09-29); a turn ending in prose counts
-  as finished. Hence the `AskUserQuestion` and `PushNotification` rule in
-  [session.md](session.md). `PushNotification` skips while I am at the
-  session (both from the tool's own description, observed 2026-09-29,
-  unverified against vendor docs). `AskUserQuestion` takes at most four
-  questions of two to four options each (its schema, observed 2026-09-30,
-  unverified against vendor docs). Both
-  can be deferred tools, loaded with ToolSearch `select:NAME` first. The
-  `Stop` hook ([`hooks/check-attention.py`](hooks/check-attention.py))
-  blocks a turn once when its final message, outside code fences, holds an
-  acceptance card, question, "Decision needed", a "Waiting on me" or
-  "Waiting on the maintainer" line other than "nothing", "none" or "n/a",
-  or a closeout heading, and neither tool was called since my last message
-  or my last answer to `AskUserQuestion`. It
-  finds that boundary in the transcript by entry shape (observed, not
-  documented). It also blocks a chat closeout missing a required summary field of
-  `templates/closeout.md` (Status, TL;DR), and a turn whose `gh pr merge` call succeeded
-  (not `--auto`, `--disable-auto` or `--help`) without a later body rewrite
-  (`gh pr edit` with a body flag, or `gh api` with `body=`) or with no
-  closeout sent in chat this session. It blocks a turn that ends while a PR
-  created this session with a successful `gh pr create` has no later
-  `gh pr merge` (`--auto` counts; a later `--disable-auto` undoes it unless
-  the PR was already merged or closed) or `gh pr close`, unless a closeout was
-  sent this session or the turn called `AskUserQuestion` that is not yet
-  answered. A turn that starts with my dismissing a question is waiting on me,
-  so neither this rule nor the ask-signal rule fires; the merge and closeout
-  checks still do. In a home-server repo (2026-10-05) the open-PR
-  rule turned a dismissal into a premature closeout. A question a hook denied
-  counts as neither asked nor answered. A dismissal's tool
-  result reads "User dismissed" (observed, not documented). Each PR is tracked by the one PR URL its create printed, else by
-  the first number or URL a merge or close names for it as its first
-  argument that is not a flag or a flag's value. One naming no PR settles
-  the latest still open, else the latest on auto-merge; one naming it by a
-  variable bound by a `for` over literal PR numbers or URLs (until a
-  `name=` assigns it again) settles those, and any other variable settles all
-  it would change; a lone quoted `"$n"` counts as the variable. A create run alone in its
-  call that printed output but no PR URL is taken as failed, since an error
-  piped through `tail` does not fail the call. Commands run by subagents
-  count: their transcripts sit in a nested `subagents/` folder (hooks.md,
-  "SubagentStop", `agent_transcript_path`, checked 2026-09-30), which is
-  observed to be beside the session's transcript, with workflow agents one
-  level deeper, and they are merged by entry timestamp (observed, not
-  documented). Quoted strings, heredoc bodies, comments and `echo` or
-  `printf` arguments are not read as commands. All reasons go in one block.
-  Known limits: a PR created or merged inside a script, an alias or `gh api`
-  is not seen, nor one whose URL went elsewhere while other output was
-  printed; a create whose output holds several PR URLs is known by none of
-  them; a merge or close of another PR can settle one of the session's whose
-  create printed no URL (as in `url=$(gh pr create)`); a merge or close in a
-  call that failed for another reason is not counted; and PR numbers are not
-  told apart by repository. If the plugin is enabled for headless (`-p`) or SDK runs,
-  where `AskUserQuestion` may be unavailable, the one forced extra turn
-  there is unverified. Whether the app's
+  as finished. `PushNotification` reaches me instead; it skips while I am at
+  the session (its own description, observed 2026-09-29, unverified against
+  vendor docs). Questions were first required to go through
+  `AskUserQuestion`, enforced by a `PreToolUse` hook and the `Stop` hook. Over
+  about two weeks of sessions (counted 2026-10-06) the question hook denied
+  47 questions before I saw them, I dismissed 19, and the `Stop` hook forced
+  139 extra turns (59 in one day), each re-reading the whole context. So
+  questions moved to chat, numbered with a default (`templates/question.md`),
+  plus one `PushNotification`; the question hook was removed, and so was the
+  `Stop` hook's open-PR rule, which blocked 30 turns in ten days and in a
+  home-server repo (2026-10-05) turned a dismissed question into a premature
+  closeout. The trade-off: the session no longer shows "needs input" for a
+  chat question; the notification carries that. Thinking is not shown to me
+  (the app shows a one-line summary that reads as if the content was sent),
+  and sessions in a product repo (2026-10-04) and a home-server repo
+  (2026-10-05) wrote the commands I was to run only in thinking; the session
+  rule therefore puts everything a question depends on in chat text, but no
+  hook checks it now.
+  The `Stop` hook ([`hooks/check-attention.py`](hooks/check-attention.py))
+  now blocks a turn once, all reasons in one block, when:
+  - its final message, outside code fences, holds an acceptance card, a
+    question (heading, "Decision needed", or a numbered Q1 line), a
+    "Waiting on me" or "Waiting on the maintainer" line other than
+    "nothing", "none" or "n/a", or a closeout heading, and neither
+    `PushNotification` nor `AskUserQuestion` was called since my last
+    message. It finds that boundary in the transcript by entry shape
+    (observed, not documented). A turn that starts with my dismissing a
+    question is waiting on me and is not blocked for this;
+  - it says it is waiting on CI, a run or a merge while no background task
+    is running (below);
+  - a chat closeout misses a required summary field of
+    `templates/closeout.md` (Status, TL;DR);
+  - a `gh pr merge` call succeeded (not `--auto`, `--disable-auto` or
+    `--help`) without a later body rewrite (`gh pr edit` with a body flag,
+    or `gh api` with `body=`) or with no closeout sent in chat this session.
+  It reads only the session's own transcript, so a merge run by a subagent
+  is not seen. A question denied by some other `PreToolUse` hook counts as
+  neither asked nor answered. If the plugin is enabled for headless (`-p`) or SDK
+  runs, the one forced extra turn there is unverified. Whether the app's
   finished-session notification reaches me, and whether phone pushes are on,
   are my app settings (settings-reference.md, `preferredNotifChannel`;
   remote-control.md, "Mobile push notifications"; not checked on this
   machine).
-- Questions that point at unseen content (P6b): thinking is not shown to me;
-  the desktop app shows a one-line summary of it, which reads as if the
-  content was sent. Sessions in a product repo (2026-10-04) and a home-server
-  repo (2026-10-05) wrote the commands I was to run only in thinking, then
-  asked "tell me when you've run them". Both later told me the app had
-  collapsed a sent message, but their transcripts held no text block; that
-  explanation was wrong. The `PreToolUse` hook
-  [`hooks/check-question.py`](hooks/check-question.py) denies an
-  `AskUserQuestion` call when no chat text came after the last tool result (a
-  `PushNotification` or `ToolSearch` result does not count, so a closeout's
-  question passes, and so does this hook's own denial); the reason says the
-  user has not seen anything planned in thinking. Its first version (2026-10-05) checked only questions under 100
-  characters and let an unchanged retry through if the question was
-  self-contained. Within hours agents took that retry almost every time, three
-  seconds after the denial, still believing their thinking had been sent, and
-  questions over 100 characters pointed at commands only in thinking too
-  (a product repo, a home-server repo). So now every question needs text
-  before it, and a retry passes only if that text is in the transcript. Replayed on 486 questions from ten
-  days of sessions (2026-10-05), 350 had no text right before them; each
-  costs one denial until the agent writes some, which the session rule says
-  to do first. The hook cannot judge whether that text holds what the
-  question depends on: thinking is mostly stored empty, so it cannot be
-  compared. Text written in the same message as the question is sometimes
-  not yet in the transcript when the hook runs: of 13 questions with text
-  before them on 2026-10-05, 3 were denied, the text 3 to 5 seconds before the
-  call. The denial's own result
-  therefore does not count as a step, so the unchanged retry finds that text
-  and passes. Text before parallel tool calls whose results land first would
-  still cause a needless denial (not observed).
+- Waiting on CI (P6b, `merge` step 4): in 5 of the 7 sessions over about two
+  weeks where I had to nudge an agent about CI (counted 2026-10-06), it had
+  written that it was waiting and would report, then ended its turn with
+  nothing running that could wake it; one more expected the app's Auto-fix
+  monitor to wake it. That monitor (`mcp__ccd_pr__set_monitor`) wakes a
+  session on CI failures, merge conflicts and review comments, never on
+  success (its tool description, observed 2026-10-06, unverified against
+  vendor docs). A Bash call with `run_in_background` re-invokes the session
+  when it exits (its tool description, unverified against vendor docs), and
+  did so in all 344 background waits checked; a
+  foreground call stops at 10 minutes, and 36 foreground CI waits timed out
+  that way. The `Stop` hook input lists running background tasks
+  (`background_tasks`, observed, not documented); the hook skips every rule
+  while one runs, and otherwise blocks a final message whose sentence pairs
+  a waiting phrase with CI, a run, a check or a merge, unless the wait is on
+  me ("once you accept"). Known limits: a waiting claim in other words
+  passes, as does one tied to "you" or "your" ("once your CI passes"); any running background task, even an unrelated dev server, lets a
+  waiting claim through; and a sentence that mentions both waiting and CI
+  for another reason is blocked once (the reason says to end the turn again
+  if nothing is awaited).
+- Questions as a form (trial, P6b): the desktop app can render an HTML form
+  in the conversation (`show_widget`, elicitation mode) whose answer returns
+  as my next message. Unverified: whether it renders on the phone, and the
+  session does not show "needs input" while it is open. Not part of the
+  rule until a trial shows it saves me reading.
 - Scheduled routines (`docs-drift-check`, `triage`, `issue-review`,
   `project-setup` audit) run as local desktop-app scheduled tasks, one per
   project; a proposed session appears as a chip. Local tasks fire only while the app is open and the

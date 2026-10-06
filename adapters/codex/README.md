@@ -240,7 +240,7 @@ https://developers.openai.com/plugins/build/plugins (checked 2026-09-30).
   mode) describe recurring routines. Codex scheduled tasks can run these
   workflows, but setup of their schedule, project list, and notification behavior remains a
   manual task unless one is explicitly created.
-- P6b question-tool selection and delivery limits are recorded under
+- Limits of the optional structured question tools (P6b) are recorded under
   [Structured questions](#structured-questions).
 - `policy/AGENTS.md` says in P15 that closeouts name agents and models. Codex
   can provide those names; this is an instruction convention, not a Codex
@@ -255,7 +255,7 @@ presence in the tool list. In a desktop session on 2026-10-03,
 work and returned immediately; replies were described as later user
 messages. The tools have different schemas and permitted uses. In
 particular, a tool restricted to clarification cannot be used for approval
-just because P6b asks for a structured prompt. These are observed tool
+just because a question needs an answer. These are observed tool
 contracts, unverified against official documentation for these desktop
 tools; do not assume they apply to every surface or build.
 

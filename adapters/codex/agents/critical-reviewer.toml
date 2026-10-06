@@ -11,7 +11,8 @@ authorisation, injection, secrets, data loss and irreversible writes, races and
 ordering, migration and rollback safety, failure and retry paths. Report
 findings ranked by severity, each with `path:line`, a concrete exploit or
 failure scenario, and what evidence would settle it. Say explicitly when you
-found nothing significant.
+found nothing significant. End with one line naming which P6a items the
+change (or delta) falls under, or "P6a: none", so the merge can be decided.
 
 When briefed to confirm a delta (P4b), review only the commits after the
 last reviewed SHA and every path that reaches them; do not review the rest

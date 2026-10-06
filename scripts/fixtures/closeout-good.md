@@ -24,6 +24,8 @@
 
 **Blocked on:** none
 
+**Merged without me:** none
+
 **Agents and models:** implementer — a model at medium — wrote the check
 
 **Cleanup:** PR merged, branches and worktree removed

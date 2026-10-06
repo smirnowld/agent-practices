@@ -2,8 +2,8 @@
 # Offline self-test for the attention hook: a card, question or closeout that
 # ends a turn without a signal is blocked once; a turn that already signalled,
 # a repeat stop, pending background work and plain answers pass silently; bad
-# input passes with a note on stderr. A merge without its closeout, and a PR
-# the session or a subagent left open with no closeout or question, are blocked.
+# input passes with a note on stderr. A merge without its closeout, and a turn
+# that says it waits on CI with nothing running to wake it, are blocked.
 set -eu
 dir=$(dirname "$0")
 hook="$dir/check-attention.py"
@@ -33,10 +33,17 @@ card='Done.
 
 **Decision needed:** accept / change / reject'
 transcript Bash
-blocks "$card" '' 'AskUserQuestion'
-blocks '# Question: Keep 30-day sign-in?' '' 'AskUserQuestion'
-blocks '**Waiting on me:** acceptance of phase 2' '' 'AskUserQuestion'
-blocks '**Waiting on the maintainer:** acceptance of phase 2' '' 'AskUserQuestion'
+blocks "$card" '' 'PushNotification'
+blocks '# Question: Keep 30-day sign-in?' '' 'PushNotification'
+for q in 'Q1. Keep it?' 'Q1: Keep it?' '**Q1.** Keep it?' '**Q1:** Keep it?' 'Q1) Keep it?'; do
+  blocks "Two questions.
+
+$q
+Q2. Ship today?" '' 'numbered Q1, Q2'
+done
+passes 'The Q1 numbers are in. Q4 looks slower.'
+blocks '**Waiting on me:** acceptance of phase 2' '' 'PushNotification'
+blocks '**Waiting on the maintainer:** acceptance of phase 2' '' 'PushNotification'
 blocks "$closeout" '' 'PushNotification'
 blocks "$card" '{"background_tasks":[]}' '"decision": "block"'
 
@@ -93,7 +100,7 @@ passes 'The template:
 blocks '```
 x
 ```
-# Acceptance: Real card' '' 'AskUserQuestion'
+# Acceptance: Real card' '' 'PushNotification'
 
 # A closeout missing template fields is blocked, naming each.
 transcript PushNotification
@@ -156,8 +163,7 @@ merge_turn "$closeout" "gh pr merge 5 \\
 passes 'Paused.'
 # A session's entries: u:TYPED, a:ASSISTANT_TEXT, b:BASH_COMMAND, q (AskUserQuestion),
 # p (PushNotification), r[:OUTPUT] (answer to the last tool call), e (the last tool
-# call failed). A session's entry N is stamped at time 10*N; subagent START PATH
-# writes one agent's transcript, stamped START, START+1 and on.
+# call failed). A session's entry N is stamped at time 10*N.
 entries() {
   python3 -c '
 import json, sys
@@ -175,231 +181,48 @@ for n, arg in enumerate(sys.argv[3:]):
     e["timestamp"] = "2026-01-01T%04d" % (start + step * n)
     print(json.dumps(e))' "$@"
 }
-session() { rm -rf "$tmp/t"; entries 0 10 "$@" >"$tmp/t.jsonl"; }
-subagent() {
-  mkdir -p "$(dirname "$tmp/t/subagents/$2")"
-  start=$1; name=$2; shift 2
-  entries "$start" 1 "$@" >"$tmp/t/subagents/$name.jsonl"
-}
-open='A PR this session created is still open'
-session u:go 'b:git push && gh pr create --fill' r
-blocks 'Opened the PR.' '' "$open"
-# The block reason names the whole path to done.
-blocks 'Opened the PR.' '' 'the `merge` skill or hand the merge to me'
-session u:go 'b:gh pr create --fill' r u:'merge it' 'b:gh pr merge 5 --squash' r \
-  'b:gh pr edit 5 --body-file b.md' r p r
-passes "$closeout"
-session u:go 'b:gh pr create --fill' r q
-passes 'Asked whether to merge.'
-session u:go 'b:gh pr create --fill' r a:"$closeout" u:'thanks'
-passes 'You are welcome.'
-# A dismissed question leaves the turn waiting on me: no closeout is forced,
-# even with a card or open PR. Another answer does not.
+session() { entries 0 10 "$@" >"$tmp/t.jsonl"; }
+# A dismissed question leaves the turn waiting on me: no repeat question is
+# forced, even with a card. Another answer does not.
 dismissed='r:The user answered: "Tell me when it is done."="[User dismissed — do not proceed, wait for next instruction]"'
-session u:go 'b:gh pr create --fill' r q "$dismissed"
+session u:go 'b:ls' r q "$dismissed"
 passes 'I will wait.'
 passes '**Waiting on me:** the commands above'
-session u:go 'b:gh pr create --fill' r q "$dismissed" u:'carry on' 'b:git status' r
-blocks 'Carried on.' '' "$open"
+session u:go 'b:ls' r q "$dismissed" u:'carry on' 'b:git status' r
+blocks "$card" '' 'PushNotification'
 # A dismissal does not excuse a merge without its closeout.
-session u:go 'b:gh pr create --fill' r q "$dismissed" 'b:gh pr merge 5 --squash' r
+session u:go 'b:ls' r q "$dismissed" 'b:gh pr merge 5 --squash' r
 blocks 'Merged.' '' 'Closeout incomplete'
-# A question a hook denied was not an answer from me: the open PR still counts.
-session u:go 'b:gh pr create --fill' r q 'r:PreToolUse:AskUserQuestion hook error: write it first'
-blocks 'Stopped.' '' "$open"
-# An answered question does not cover a stop after it.
-session u:go 'b:gh pr create --fill' r q r 'b:git status' r
-blocks 'Carried on.' '' "$open"
-# A pending auto-merge or a close settles it; a failed or help create opens nothing.
-session u:go 'b:gh pr create --fill' r 'b:gh pr merge 5 --auto --squash' r
-passes 'Auto-merge on.'
-session u:go 'b:gh pr create --fill' r 'b:gh pr close 5' r
-passes 'Closed.'
-session u:go 'b:gh pr create --fill' e
-passes 'Create failed.'
-session u:go 'b:gh pr create --help' r 'b:grep -rn "gh pr create" skills' r
-passes 'Read the help.'
-# A second PR created after the first merged is open again.
-session u:go 'b:gh pr create' r 'b:gh pr merge 5 --squash' r 'b:gh pr create' r
-blocks 'Second PR opened.' '' "$open"
-session u:go 'b:gh pr create' r 'b:gh pr merge 5 --disable-auto' r
-blocks 'Paused.' '' "$open"
-session u:go 'b:gh pr create' r 'b:gh pr merge 5 --auto --squash' r 'b:gh pr merge 5 --disable-auto' r
-blocks 'Paused before a push.' '' "$open"
-# Creates by substitution, prefix or loop count.
-for c in 'url=$(gh pr create --fill)' 'GH_REPO=o/r gh pr create --fill' 'for b in x; do gh pr create --fill; done'; do
-  session u:go "b:$c" r; blocks 'Opened.' '' "$open"
+# A question a hook denied was not an answer from me: the turn did not restart.
+session u:go 'b:ls' r q 'r:PreToolUse:AskUserQuestion hook error: write it first'
+blocks "$card" '' 'PushNotification'
+
+# Waiting on CI with no background task running is blocked; nothing wakes it.
+transcript Bash
+wait='nothing will wake this session'
+for msg in "I'm waiting for CI and the auto-merge on [#70](https://github.com/o/r/pull/70), then I'll write the closeout with the merge SHAs and clean up." \
+  'Cleanup is done: the worktree and branch are removed. Now waiting for the scheduled verifier run.' \
+  "The API tests passed (642). The ts lane is still on its remaining steps; I'll wait for it to finish." \
+  'Auto-merge is on for #630, and CI is running. The app will notify me when the checks finish.' \
+  "CI is running on all three heads, and I'll report when it finishes."; do
+  blocks "$msg" '' "$wait"
+  blocks "$msg" '{"background_tasks":[]}' "$wait"
+  passes "$msg" '{"background_tasks":[{"id":"t1","type":"bash"}]}'
+  passes "\`\`\`
+$msg
+\`\`\`"
 done
-# Mentions in quotes, heredocs or a PR body are not commands; a dry run opens nothing.
-session u:go "b:git commit -F - <<'EOF'
-gh pr create calls without a merge now block.
-EOF" r 'b:git commit -m "docs; gh pr create now blocks"' r 'b:grep -rnE "foo|gh pr create" .' r \
-  'b:gh pr create --dry-run --fill' r
-passes 'Committed.'
-session u:go "b:gh pr create --title 'Add -h flag' --body \"\$(cat <<'EOF'
-gh pr merge 5 --squash
-EOF
-)\"" r
-blocks 'Opened.' '' "$open"
-# A closeout shown inside a code fence earlier was not sent.
-session u:go 'b:gh pr create' r a:"\`\`\`
-$closeout
-\`\`\`" u:next
-blocks 'Next done.' '' "$open"
-# Comments and echo or printf arguments are text; a substitution inside echo runs.
-session u:go 'b:git push # next: gh pr create' r "b:git push # don't gh pr create yet" r \
-  'b:echo run gh pr create next' r "b:printf '%s' x gh pr create" r 'b:x=$(echo gh pr create) && ls' r \
-  'b:ls ;# gh pr create' r 'b:# gh pr merge 5 --squash' r
-passes 'Noted.'
-for c in 'echo $(gh pr create --fill)' "git push # it's pushed
-gh pr create --fill" 'n=${#x} && gh pr create'; do
-  session u:go "b:$c" r; blocks 'Opened.' '' "$open"
-done
-merge_turn "$closeout" 'gh pr merge 5 --squash # then the body'
-blocks 'Merged as abc.' '' 'gh pr edit --body-file'
-# Every heredoc opened on a line is emptied, and a command after the last runs.
-session u:go 'b:cat <<A <<B
-gh pr create
-A
-gh pr create
-B' r
-passes 'Printed.'
-session u:go 'b:cat <<A <<-B
-x
-A
-	y
-	B
-gh pr create' r
-blocks 'Opened.' '' "$open"
-# Disabling auto-merge does not reopen a PR already merged or closed.
-session u:go 'b:gh pr create' r 'b:gh pr merge 5 --squash' r u:next 'b:gh pr merge 5 --disable-auto' r
-passes 'Paused.'
-session u:go 'b:gh pr create' r 'b:gh pr close 5' r 'b:gh pr merge --disable-auto' r
-passes 'Paused.'
-# Each PR is tracked: by the URL its create printed, else by the first number a
-# settle names; a settle naming no PR acts on the latest one still open.
-url=https://github.com/o/r/pull
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" 'b:gh pr merge 1 --auto' r
-blocks 'One on auto-merge.' '' "$open"
-session u:go 'b:gh pr create' r 'b:gh pr create' r 'b:gh pr merge 7 --auto' r
-blocks 'One on auto-merge.' '' "$open"
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr merge 9 --auto' r
-blocks 'Merged another PR.' '' "$open"
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
-  "b:gh pr merge $url/2 --auto" r 'b:gh pr merge --auto 1' r
-passes 'Both on auto-merge.'
-session u:go 'b:gh pr create' r 'b:gh pr create' r 'b:gh pr merge 7 --auto' r 'b:gh pr merge --auto' r
-passes 'Both on auto-merge.'
-session u:go 'b:gh pr create' r 'b:gh pr merge 7 --auto' r 'b:gh pr merge 7 --disable-auto' r \
-  'b:gh pr merge 7 --auto' r
-passes 'Auto-merge back on.'
-# A settle naming its PR by variable, as in a loop, settles every PR it can.
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
-  'b:for n in 1 2; do gh pr merge $n --auto; done' r
-passes 'Both on auto-merge.'
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
-  'b:for n in 1 2; do gh pr merge $n --auto; done' r 'b:for n in 1 2; do gh pr merge $n --disable-auto; done' r
-blocks 'Both paused.' '' "$open"
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" 'b:gh pr merge 1 --auto' r \
-  'b:gh pr merge 2 --auto' r 'b:gh pr merge --disable-auto' r
-blocks 'One paused.' '' "$open"
-# A variable bound by a literal `for` list settles only those numbers; a list that
-# is not literal keeps settling all.
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" 'b:gh pr merge 1 --auto' r \
-  'b:gh pr merge 2 --auto' r 'b:for n in 1; do gh pr merge $n --disable-auto; done' r
-blocks 'Paused one.' '' "$open"
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" 'b:gh pr merge 1 --auto' r \
-  'b:gh pr merge 2 --auto' r 'b:for n in 1; do gh pr merge ${n} --disable-auto; done' r \
-  'b:gh pr merge 1 --auto' r
-passes 'Paused one, then back on.'
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" 'b:for n in 1 2; do gh pr merge $n --auto; done' r
-passes 'Both on auto-merge.'
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" 'b:gh pr merge 1 --auto' r \
-  'b:gh pr merge 2 --auto' r 'b:for n in $(gh pr list -q .[].number); do gh pr merge $n --disable-auto; done' r \
-  'b:gh pr merge 1 --auto' r
-blocks 'Paused all, one back on.' '' "$open"
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" 'b:gh pr merge 1 --auto' r \
-  'b:gh pr merge 2 --auto' r 'b:for n in 1; do gh pr merge $m --disable-auto; done' r \
-  'b:gh pr merge 1 --auto' r
-blocks 'Another variable paused all.' '' "$open"
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
-  "b:for n in $url/1 $url/2; do gh pr merge \$n --auto; done" r
-passes 'Both on auto-merge by URL.'
-session u:go 'b:gh pr create' r 'b:gh pr create' r 'b:for n in 7 8; do gh pr merge $n --auto; done' r
-passes 'Both on auto-merge, numbers unseen.'
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
-  'b:for n in 1; do gh pr merge $n --auto; done; n=2; gh pr merge $n --auto' r
-passes 'The variable was reassigned.'
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
-  'b:if true; then for n in 1; do gh pr merge $n --auto; done; fi' r
-blocks 'A loop after then.' '' "$open"
-# A quoted variable names its PR like an unquoted one.
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
-  'b:for n in 1 2; do gh pr merge "$n" --auto; done' r
-passes 'Both on auto-merge, quoted.'
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" 'b:gh pr merge 1 --auto' r \
-  'b:gh pr merge 2 --auto' r 'b:for n in 1; do gh pr merge "${n}" --disable-auto; done' r \
-  'b:gh pr merge 1 --auto' r
-passes 'Paused one, then back on, quoted.'
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
-  'b:for n in $(gh pr list -q .[].number); do gh pr merge "$n" --auto; done' r
-passes 'Both on auto-merge, quoted and not literal.'
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" \
-  'b:for n in 1; do n="$m"; gh pr merge "$n" --auto; done' r
-passes 'Reassigned after do.'
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr create' "r:$url/2" 'b:gh pr merge -t "$t" 1 --auto' r
-blocks 'A quoted flag value is not the PR.' '' "$open"
-# A flag's value is not the PR; the first other argument is.
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr merge --auto -t 2026 --match-head-commit 1234567' r
-passes 'Auto-merge on.'
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr merge --subject=2026 9 --auto 2>&1' r
-blocks 'Merged another PR.' '' "$open"
-session u:go 'b:gh pr create' "r:$url/1" 'b:gh pr merge --match-head-commit $(git rev-parse HEAD) 9 --auto' r
-blocks 'Merged another PR.' '' "$open"
-# A push's /pull/new/ link is not a PR; output with several PR URLs names none.
-session u:go 'b:git push -u origin x && gh pr create --fill' \
-  "r:remote: Create a pull request for 'x' on GitHub by visiting: $url/new/x
-$url/4" 'b:gh pr merge 4 --auto' r
-passes 'Auto-merge on.'
-session u:go 'b:gh pr create --fill && gh pr view 2 --json url' "r:$url/4
-$url/2" 'b:gh pr merge 4 --auto' r
-passes 'Auto-merge on.'
-# A create that printed output but no PR URL failed; one that printed nothing counts.
-session u:go 'b:gh pr create --fill 2>&1 | tail -3' 'r:pull request create failed: GraphQL: No commits between main and x'
-passes 'Nothing to open.'
-session u:go 'b:url=$(gh pr create --fill)' 'r:   '
-blocks 'Opened.' '' "$open"
-# A create that printed an existing PR's URL is that PR.
-session u:go 'b:gh pr create --fill' "r:$url/1" 'b:gh pr create --fill || true' "r:already exists: $url/1" \
-  'b:gh pr merge 1 --auto' r
-passes 'Auto-merge on.'
-# A subagent's creates count, in time order with the session's own commands.
-session u:go 'b:ls' r u:next 'b:git status' r
-subagent 5 agent-impl 'u:brief' 'b:gh pr create --fill' "r:$url/3"
-blocks 'The implementer opened it.' '' "$open"
-session u:go 'b:ls' r u:next 'b:gh pr merge 3 --auto' r
-subagent 5 agent-impl 'u:brief' 'b:gh pr create --fill' "r:$url/3"
-passes 'Auto-merge on.'
-session u:go 'b:gh pr merge 3 --auto' r u:next 'b:git status' r
-subagent 25 agent-impl 'u:brief' 'b:gh pr create --fill' "r:$url/3"
-blocks 'The implementer opened it.' '' "$open"
-session u:go 'b:ls' r u:next 'b:git status' r
-subagent 5 agent-impl 'u:brief' 'b:gh pr create --fill' e
-subagent 6 agent-other 'u:brief' 'b:echo gh pr create' r
-passes 'Nothing opened.'
-# Workflow agents sit one level deeper; their journal is not a transcript.
-session u:go 'b:ls' r u:next 'b:git status' r
-subagent 5 workflows/wf_1/agent-x 'u:brief' 'b:gh pr create --fill' "r:$url/3"
-blocks 'The workflow opened it.' '' "$open"
-session u:go 'b:ls' r u:next 'b:git status' r
-subagent 5 workflows/wf_1/journal 'b:gh pr create --fill' "r:$url/3"
-passes 'Nothing opened.'
-# An unreadable subagent transcript skips the check with a note.
-session u:go 'b:gh pr create --fill' r
-mkdir -p "$tmp/t/subagents/agent-x.jsonl"
-out=$(input 'Opened.' | python3 "$hook" 2>&1)
-case $out in "check-attention: skipped"*) ;; *) echo "error: no skip note for a bad subagent: $out" >&2; exit 1 ;; esac
-rm -rf "$tmp/t"
+passes "I'll merge it once you accept the card."
+passes 'Waiting for your answer before I merge.'
+# Mentioning me elsewhere in the sentence does not hide a wait on CI.
+blocks "CI is running; I'll report back when it finishes so you can review." '' "$wait"
+blocks 'Waiting for CI on #70; let me know if you want anything else.' '' "$wait"
+passes 'Merged as abc123; CI passed and the branch is deleted.'
+# Combined with a missing signal in one block.
+blocks "$card
+CI is running, and I'll report when it finishes." '' 'PushNotification'
+blocks "$card
+CI is running, and I'll report when it finishes." '' "$wait"
 
 # Missing fields and a missing signal are reported together.
 transcript Bash
