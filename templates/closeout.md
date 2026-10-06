@@ -14,8 +14,7 @@ apply go in chat between the heading and the summary. -->
 
 **Watch out:** <only when there is a real risk or gap I should know about:
 something untested that could hurt users, data or money, an irreversible
-effect, a surprise, a deferred flaw this PR introduced found after
-acceptance. One line each>
+effect, a surprise. One line each>
 
 **Next:** <only when there is a recommended next task: what and why, in one
 line>

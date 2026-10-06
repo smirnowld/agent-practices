@@ -51,7 +51,8 @@ the reason could disclose the flaw.
 A deferred finding about a flaw this PR introduced that users would notice
 goes on the acceptance card under **Known gaps**, so I judge the work with
 it in view. Found after I accepted, usually by the final review, it goes
-under the closeout's **Watch out** instead, before merge.
+back to me for acceptance like a commit that changes accepted behaviour:
+one line and the issue link, and the merge waits.
 
 ## Session order
 
