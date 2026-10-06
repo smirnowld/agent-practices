@@ -43,5 +43,5 @@ pick the lower and say what it does not show.
 
 Fill the acceptance card: what changed in user terms, the "try it" link,
 evidence list, assumptions with how to undo, what the evidence does not
-cover. Then wait for accept / change / reject; do not merge user-facing work
-before it.
+cover, and known gaps from this PR's deferred findings so far. Then wait
+for accept / change / reject; do not merge user-facing work before it.
