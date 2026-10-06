@@ -25,7 +25,7 @@ a colleague giving a quick spoken update, not like a log.
 - **No internal labels in the text**: policy numbers, commit hashes, file
   paths, test and check names, flags, schema versions. Name one only when I
   have to act on it: type or click it, or it identifies what I am approving
-  (the head commit in a merge question). Links still follow P18. An unavoidable
+  (the PR in a merge question). Links still follow P18. An unavoidable
   technical term gets a few words on what it means for me.
 - **Asks stand out**: what to do, in what order, the exact command or link,
   and what happens when I do it ("merging deploys").

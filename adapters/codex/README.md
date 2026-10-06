@@ -255,7 +255,7 @@ presence in the tool list. In a desktop session on 2026-10-03,
 work and returned immediately; replies were described as later user
 messages. The tools have different schemas and permitted uses. In
 particular, a tool restricted to clarification cannot be used for approval
-just because P6b asks for a structured prompt. These are observed tool
+just because a question needs an answer. These are observed tool
 contracts, unverified against official documentation for these desktop
 tools; do not assume they apply to every surface or build.
 

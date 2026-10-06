@@ -4,25 +4,25 @@
 The desktop app marks a session as needing input only while a structured
 prompt is open, and prose alone sends no notification. When the final
 message carries an acceptance card, a question, a decision or a closeout and
-neither AskUserQuestion nor PushNotification was called since I last spoke,
-block the stop once and say which to call. My last words are my last typed
-message or my last answer to AskUserQuestion, so an early clarifying
-question does not cover a card or closeout written an hour later.
+neither PushNotification nor AskUserQuestion was called since I last spoke,
+block the stop once and ask for a PushNotification; the questions stay in the
+chat message. My last words are my last typed message or my last answer to
+AskUserQuestion, so an early notification does not cover a card or closeout
+written an hour later. When the turn began with my dismissing a question, it
+is waiting on me and the rule does not fire for a question or card.
 
 It also holds the closeout to its template (P15): a chat closeout missing a
 required summary field of templates/closeout.md (Status, TL;DR) is blocked,
-and so is a turn that merged a PR without rewriting the PR description afterwards or without any closeout in
-chat this session. A PR this session or its subagents created with
-`gh pr create` and has not merged, set to auto-merge or closed since is not a
-stopping point (P5): the turn is blocked unless a closeout was sent this
-session or this turn asked me with AskUserQuestion. When the turn began with
-my dismissing a question, it is waiting on me: neither the open-PR rule nor
-the ask-signal rule fires, so a dismissal does not push the session into a
-closeout or a repeat question. Any error
-lets the turn end with a note on stderr; a broken check must not trap a
-session.
+and so is a turn that merged a PR without rewriting the PR description
+afterwards or without any closeout in chat this session.
+
+A turn that says it waits on CI, a run or a merge while no background task is
+running is blocked: nothing will wake the session, since the app's monitor
+wakes it only on failures, conflicts and review comments. Sentences that
+address me ("you", "your") are left alone. Any running background task lets
+the turn end, as does a repeat stop. Any error lets the turn end with a note
+on stderr; a broken check must not trap a session.
 """
-import glob
 import importlib.util
 import json
 import os
@@ -34,6 +34,7 @@ SIGNALS = {"AskUserQuestion", "PushNotification"}
 ASK = [
     (r"^\s*# Acceptance: \S", "an acceptance card"),
     (r"^\s*# Question: \S", "a question"),
+    (r"^\s*(?:\*\*)?Q\d+[.:)]", "a question"),
     (r"^\s*\*\*Decision needed:\*\* \S", "a decision"),
     (r"^\s*\*\*Waiting on (?:me|the maintainer):\*\* (?![\"'`*_]*(?i:nothing|none|n/a)(?![a-z]))\S", "a 'Waiting on me' line"),
 ]
@@ -49,23 +50,31 @@ HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1([^\n]*)\n.*?^\s*\2\s*$", re.M | re
 QUOTED = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"|(?<![^\s;&|()])#[^\n]*")
 QUOTED_VAR = re.compile(r'"\$(?:\w+|\{\w+\})"')
 ECHO = re.compile(r"(^|[\s(`=])(echo|printf)\s(?:[^)`$]|\$(?!\())*")
-# A create or settle may follow `$(`, a backtick, `do` or `VAR=`.
-CREATE = re.compile(r"(^|[\s(`=])gh pr create\b")
-SETTLE = re.compile(r"(^|[\s(`=])gh pr (merge|close)\b")
-# A settle names its PR by number or URL as its first argument that is not a
-# flag or a flag's value; gh pr create prints the new PR's URL.
-NUMBER = re.compile(r"(?:\S*/pull/)?(\d+)(?:/\S*)?")
-VALUED = {"-t", "--subject", "-b", "--body", "-F", "--body-file", "--match-head-commit",
-          "-A", "--author-email", "-R", "--repo", "-c", "--comment"}
-FOR = re.compile(r"(?:(?:then|do|else)\s+|\()*for (\w+) in (.*)")
-ASSIGN = re.compile(r"(?:(?:then|do|else)\s+|\()*(?:export\s+)?(\w+)=")
-PULL = re.compile(r"/pull/(\d+)\b")
-NOT_ACTION = re.compile(r"\s(--help|-h|--dry-run)\b")
 EDIT = re.compile(r"gh pr edit\b.*\s(--body|--body-file|-b|-F)\b|gh api\b.*\sbody=")
 # The tool result of a question I dismissed (observed 2026-10-05, not documented).
 DISMISSED = "User dismissed"
 # A question a hook denied was never shown to me (observed tool result prefix).
 DENIED = "PreToolUse:AskUserQuestion hook error"
+# Waiting on CI with nothing running: a waiting phrase and a CI noun in one sentence.
+SENTENCE = re.compile(r"[.!?]+(?=\s|$)|\n")
+YOU = re.compile(r"\byour?\b", re.I)
+WAITING = re.compile(
+    r"\bwaiting (?:for|on)\b|\bwait for\b"
+    r"|['\u2019]ll (?:wait|report|be notified|be woken|confirm|merge|clean up|check)\b"
+    r"|\bwill (?:wait|report|notify|wake)\b|\bnotif(?:y|ies) me\b"
+    r"|\bwakes? (?:me|this session)\b"
+    r"|\b(?:when|once) (?:it|ci|the run|the checks?|the build|everything) "
+    r"(?:finishes|passes|completes|is green|goes green)\b", re.I)
+CI_NOUN = re.compile(
+    r"\b(?:ci|checks?|runs?|builds?|tests?|lanes?|workflow|pipeline|deploy\w*|release"
+    r"|auto-merge|merges?|verifier)\b", re.I)
+WAIT_REASON = (
+    "You say you are waiting on CI, a run or a merge, but no background task is running, "
+    "so nothing will wake this session. The app's Auto-fix monitor wakes it only on CI "
+    "failures, merge conflicts and review comments, never on success. Start the wait as a "
+    "background task (merge skill step 4: `gh run watch RUN_ID --exit-status` with "
+    "run_in_background and a long timeout) and end the turn; or, if what remains is mine, "
+    "say so and send PushNotification.")
 LOAD = " (if it is not in your tools, load it with ToolSearch 'select:{0}' first)"
 
 
@@ -123,31 +132,6 @@ def turn_tools(path):
     return [(n, i) for n, i, k in names if k not in failed], closeout, dismissed
 
 
-def session_bash(path):
-    """The successful Bash calls of the session and its subagents as
-    (command, output), in time order. Subagent transcripts sit in a nested
-    subagents/ folder (hooks.md, "SubagentStop"); SESSION/subagents/ beside
-    SESSION.jsonl, workflow agents one level deeper (observed)."""
-    calls, out, failed = [], {}, set()
-    subagents = glob.glob(os.path.join(os.path.splitext(path)[0], "subagents", "**", "agent-*.jsonl"),
-                          recursive=True)
-    for p in [path] + sorted(subagents):
-        for entry, _, parts in entries(p):
-            for c in parts:
-                key = (p, c.get("id") or c.get("tool_use_id"))
-                if c.get("type") == "tool_use" and c.get("name") == "Bash":
-                    calls.append((str(entry.get("timestamp") or ""), key,
-                                  str((c.get("input") or {}).get("command"))))
-                elif c.get("type") == "tool_result":
-                    body = c.get("content")
-                    out[key] = body if isinstance(body, str) else " ".join(
-                        str(b.get("text", "")) for b in body or [] if isinstance(b, dict))
-                    if c.get("is_error"):
-                        failed.add(key)
-    calls.sort(key=lambda call: call[0])  # stable: each transcript keeps its order
-    return [(cmd, out.get(key, "")) for _, key, cmd in calls if key not in failed]
-
-
 def unheredoc(command):
     """The command without its heredoc bodies, however many open on one line."""
     while True:
@@ -169,81 +153,6 @@ def steps_of(commands):
     bodies, quoted strings, comments and echo or printf arguments emptied."""
     bare = (QUOTED.sub(emptied, unheredoc(c.replace("\\\n", " "))) for c in commands)
     return [ECHO.sub(r"\1\2", seg).strip() for c in bare for seg in SPLIT.split(c)]
-
-
-def pr_left_open(commands):
-    """Whether a PR created with `gh pr create` has no later merge, auto-merge
-    enable or close (P5); commands are (command, output). A PR is known by the
-    one URL its create printed, else by the first number a settle names for
-    it. A lone create that printed output but no PR URL failed (an error piped
-    through `tail` is not a failed call). Disabling auto-merge reopens only a
-    PR not merged or closed."""
-    prs = []  # [number or None, "open" | "auto" | "done"]
-    for command, output in commands:
-        steps = [c for c in steps_of([command]) if not NOT_ACTION.search(c)]
-        lone = sum(bool(CREATE.search(c)) for c in steps) == 1
-        printed = PULL.findall(output) if lone else []
-        loops = {}  # loop variable -> PR numbers of a literal `for` list
-        for c in steps:
-            bound, assigned = FOR.match(c), ASSIGN.match(c)
-            if assigned:
-                loops.pop(assigned.group(1), None)  # rebound: no longer the loop's list
-            if bound:
-                words = bound.group(2).split()
-                loops[bound.group(1)] = (
-                    [int(NUMBER.fullmatch(w).group(1)) for w in words]
-                    if words and all(NUMBER.fullmatch(w) for w in words) else None)
-            if CREATE.search(c):
-                if lone and not printed and output.strip():
-                    continue
-                n = int(printed[0]) if len(set(printed)) == 1 else None
-                if n is None or all(pr[0] != n for pr in prs):
-                    prs.append([n, "open"])
-            elif SETTLE.search(c):
-                for pr in settled(prs, c, loops):
-                    if pr[1] == "done":
-                        continue
-                    if "--disable-auto" in c:
-                        pr[1] = "open"
-                    else:
-                        pr[1] = "auto" if "--auto" in c else "done"
-    return any(state == "open" for _, state in prs)
-
-
-def settled(prs, step, loops=None):
-    """The PRs a settle step acts on; none for a PR not created here. One
-    naming no PR takes the latest it would change, open before auto-merge;
-    one naming it by variable takes each number a literal `for` list in loops
-    bound to it, else all it would change."""
-    rest = re.sub(r"\$\([^()]*\)|`[^`]*`", "$_", SETTLE.split(step, 1)[-1])  # one word
-    words, arg = iter(rest.split()), ""
-    for word in words:
-        if word in VALUED:
-            next(words, None)
-        elif not word.startswith("-"):
-            arg = word
-            break
-    arg = arg.strip('"') if QUOTED_VAR.fullmatch(arg) else arg
-    named, var = NUMBER.fullmatch(arg), re.fullmatch(r"\$(?:(\w+)|\{(\w+)\})", arg)
-    numbers = (loops or {}).get(var and (var.group(1) or var.group(2))) or (
-        [int(named.group(1))] if named else [])
-    if not numbers:
-        wanted = ["auto"] if "--disable-auto" in step else ["open", "auto"]
-        if arg.startswith("$"):
-            return [pr for pr in prs if pr[1] in wanted]
-        for state in wanted:
-            match = [pr for pr in prs if pr[1] == state]
-            if match:
-                return match[-1:]
-        return []
-    acted = []
-    for n in numbers:
-        live = [pr for pr in prs if pr[1] != "done"]
-        known = [pr for pr in prs if pr[0] == n] or [pr for pr in live if pr[0] is None][-1:]
-        if known:
-            known[0][0] = n
-            acted.append(known[0])
-    return acted
 
 
 def missing_fields(text):
@@ -297,38 +206,33 @@ def main():
         gaps.append("add the summary fields the closeout lacks, in plain words "
                     "(the full record goes in the PR): " + ", ".join(missing))
     reasons = ["Closeout incomplete (closeout skill): " + "; ".join(gaps) + "."] if gaps else []
-    if (not (earlier or notify or dismissed) and "AskUserQuestion" not in {n for n, _ in calls}
-            and pr_left_open(session_bash(data["transcript_path"]))):
-        reasons.append(
-            "A PR this session created is still open and no closeout was sent; an open PR "
-            "is not a stopping point (P5). Finish it: independent review (P4), then merge "
-            "with the `merge` skill or hand the merge to me, then write the closeout with "
-            "the `closeout` skill and its PushNotification. If I already merged it or "
-            "said I will, the closeout records that hand-off. If you are waiting on me, "
-            "ask with AskUserQuestion" + LOAD.format("AskUserQuestion") + ".")
     if ((ask and not dismissed) or notify) and not {n for n, _ in calls} & SIGNALS:
         reasons.append(signal_reason(ask))
+    if waits_unwatched(text):
+        reasons.append(WAIT_REASON)
     if reasons:
         json.dump({"decision": "block", "reason": " ".join(reasons)}, sys.stdout)
 
 
 def signal_reason(ask):
-    if ask:
-        reason = (
-            "Your message ends waiting on me (" + ", ".join(ask) + "), but prose does not "
-            "mark the session as needing input (P6b). Call AskUserQuestion" + LOAD.format("AskUserQuestion")
-            + ": an acceptance as accept / change / reject, a question with its options, "
-            "proposed first. Do not repeat the message."
-        )
-    else:
-        reason = (
-            "You wrote a closeout; I may have walked away (P6b). Call PushNotification"
-            + LOAD.format("PushNotification") + " with the status and what, if anything, "
-            "waits on me, in one line under 200 characters; it is skipped if I am at the "
-            "session. Then ask any closeout questions (acceptance, merge, "
-            "follow-ups) with AskUserQuestion. Do not repeat the message."
-        )
-    return reason
+    what = ", ".join(ask) if ask else "a closeout"
+    return (
+        "Your message ends waiting on me or closes the session (" + what + "), but prose "
+        "sends no notification and I may have walked away (P6b). Call PushNotification"
+        + LOAD.format("PushNotification") + " with one line under 200 characters naming "
+        "what waits on me; it is skipped if I am at the session. Do not repeat the "
+        "message: the questions stay in the chat message, numbered Q1, Q2."
+    )
+
+
+def waits_unwatched(text):
+    """Whether a sentence not addressed to me says it waits on CI, a run or a merge."""
+    for sentence in SENTENCE.split(text):
+        if YOU.search(sentence):
+            continue
+        if WAITING.search(sentence) and CI_NOUN.search(sentence):
+            return True
+    return False
 
 
 try:

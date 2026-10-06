@@ -57,8 +57,9 @@ unverified (2026-09-30).
   `~/.codex/agents/` or the project's `.codex/agents/`.
 - **Model check** (P2d): no tool to switch a running session is checked; on
   a mismatch, ask me to switch the model and effort and stop.
-- **Ask me, or wait on me** (P6b): check the active mode and exposed tool
-  contract. Use `request_user_input` only where the mode permits it (the
+- **Ask me, or wait on me** (P6b): questions are chat text, numbered with
+  options and a proposed default; a structured tool may also carry them.
+  Before using one, check the active mode and exposed tool contract. Use `request_user_input` only where the mode permits it (the
   observed desktop contract restricts it to Plan mode); use
   `request_user_input_async` for clarification during normal work when
   exposed and permitted. Follow the tool's allowed scope: a clarification

@@ -103,18 +103,18 @@ send it unchanged; drop the flag only for a PR body that holds no closeout.
 
 ## 5. Signal and ask
 
-Send the closeout, then the notification with the status (P6b). Then ask
-whichever of these apply, together in one structured question prompt:
+Send the closeout with its questions in the same message, then the
+notification with the status (P6b). Ask whichever of these apply, numbered
+in one batch (`templates/question.md`), so one reply answers all:
 
 - **Acceptance or decision** the closeout waits on (P6).
 - **Merge**: a PR that is verified, reviewed and green but left to me to
-  merge (P6a or the project's procedure). The question names the PR link,
-  why it is mine and its head commit; merging is proposed first. A yes is my
-  explicit OK (P1) for that commit only, and counts only if I also accepted
+  merge (P6a or the project's procedure). The question names the PR link
+  and which P6a item makes it mine, in plain words; merging is proposed
+  first. A yes is my explicit OK (P1), and counts only if I also accepted
   and left no decision open. Merge by the project's procedure or the `merge`
-  skill, whose other checks still apply. A new commit needs the question
-  again, unless I approved it after seeing its diff and neither the PR nor
-  the new commit needs the critical reviewer (P4b).
+  skill, whose other checks still apply. Later commits need the question
+  again only if they add a P6a item or are not confirmed under P4b.
 - **Follow-ups**, only for real ones: the next plan step this session
   unblocked, work deferred because it failed the fix-on-the-go test
   (bigger or riskier changes above all), and anything under **Not

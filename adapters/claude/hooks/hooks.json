@@ -30,15 +30,6 @@
             "command": "\"${CLAUDE_PLUGIN_ROOT}/adapters/claude/hooks/check-chip-brief.py\""
           }
         ]
-      },
-      {
-        "matcher": "AskUserQuestion",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/adapters/claude/hooks/check-question.py\""
-          }
-        ]
       }
     ]
   }

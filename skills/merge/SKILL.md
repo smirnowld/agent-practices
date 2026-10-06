@@ -1,6 +1,6 @@
 ---
 name: merge
-description: Merge your own pull request once P6 allows it. Picks the merge method, enables auto-merge pinned to the reviewed commit, waits for CI in one blocking call, confirms the merge and cleans up.
+description: Merge your own pull request once P6 allows it. Picks the merge method, enables auto-merge pinned to the reviewed commit, waits for CI in one background call that wakes the session, confirms the merge and cleans up.
 ---
 
 # Merge
@@ -10,13 +10,17 @@ unreviewed commit slipping in and without polling. The project's own merge
 procedure, if it has one, replaces this skill, except for the P6a
 safeguards, which always hold: never bypass branch protection (no admin
 override such as `gh pr merge --admin`, no relaxing the ruleset; only I do,
-for a case I name), and a change that needs the critical reviewer under P4
-is handed to me to merge unless I OK its head commit in the conversation
-(the closeout asks); after any new commit, ask again. Other new commits
-follow P4b: classify the commit's own risk; one I approved after seeing its
-diff needs no new review if neither it nor the PR needs the critical
-reviewer; any other gets a delta-only confirmation from the resumed reviewer
-of the change's tier, the critical reviewer for a critical delta.
+for a case I name), and a critical change on the P6a list (breaking
+contract or client, data at risk, unaccepted user-visible change, an effect
+a revert does not undo, a weakened gate) is handed to me unless I OK it in
+the conversation (the closeout asks). A critical change off that list merges
+once the critical reviewer passes it, and the closeout says why it was
+safe. New commits follow P4b: classify the commit's own risk; one I approved
+after seeing its diff needs no new review if neither it nor the PR needs the
+critical reviewer; any other gets a delta-only confirmation from the resumed
+reviewer of the change's tier, the critical reviewer for a critical delta.
+My OK carries over to such confirmed commits unless they add an item on the
+list.
 
 ## 1. Check that merging is allowed
 
@@ -68,24 +72,26 @@ pending) cannot get auto-merge; merge it directly with the same
 get the new commits reviewed under P4b (delta only), then enable again with
 the new SHA. Batch late fixes into one push so CI runs once.
 
-## 4. Wait once
+## 4. Wait once, in the background
 
 Find the run behind the required check from step 1 on the reviewed commit
 (the run id is in the details URL, `.../actions/runs/RUN_ID/job/...`) and
-block on it:
+wait on it as a background task, so its exit wakes the session (adapter):
 
 ```sh
 gh api 'repos/{owner}/{repo}/commits/REVIEWED_SHA/check-runs' --jq '.check_runs[] | select(.name=="CHECK") | .details_url'
 gh run watch RUN_ID --exit-status
 ```
 
-Just after a push the check can be missing; wait briefly and look once
-more. Do not poll. Do not rely on `gh pr checks --watch`: it exits at once when no
-check has reported yet, and exits green when the checks that have reported
-pass before the others appear. If no run appears for the check while CI is
-running, take the id from `gh run list --branch BRANCH --commit REVIEWED_SHA`
-and block on that. A failed run: fix forward on the same PR (P6),
-then return to step 3.
+Give the wait a timeout longer than the run takes. Never end a turn saying
+you are waiting on CI or a merge unless that wait is running; a CI monitor
+that reports only failures is not a wait. Just after a push the check can be
+missing; wait briefly and look once more. Do not poll. Do not rely on
+`gh pr checks --watch`: it exits at once when no check has reported yet, and
+exits green when the checks that have reported pass before the others
+appear. If no run appears for the check while CI is running, take the id
+from `gh run list --branch BRANCH --commit REVIEWED_SHA` and wait on that. A
+failed run: fix forward on the same PR (P6), then return to step 3.
 
 ## 5. Confirm and clean up
 

@@ -58,7 +58,8 @@ commit's own risk first (P4), not only the PR's:
   delta-confirmation mode (`roles/reviewer.md`, `roles/critical-reviewer.md`):
   only the new commits, not the whole PR again. A delta that is critical in
   a non-critical PR gets the critical reviewer.
-- A critical change or delta keeps P6a: my OK names the head commit.
+- A critical change or delta keeps P6a: if it is on the P6a list, my OK
+  carries over only to confirmed commits that add no item on that list.
 
 Safe because the delta is small and seen: the reviewer already covered the
 rest, and a delta that goes wider goes back to a full review.
