@@ -135,5 +135,6 @@ summary. A closeout written without the skill, or a PR comment in place of
 the description, is not one.
 
 The session ends with the merge, cleanup and closeout. It does not wait for
-or check a deploy (staging or otherwise) unless its brief names that step;
-health after a deploy is the project's smoke tests and triage.
+or check a deploy (staging or otherwise) unless its brief's Work, or I, name
+that step; health after a deploy is the project's own post-deploy checks and
+the daily `triage`.

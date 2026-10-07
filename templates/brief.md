@@ -57,7 +57,8 @@ that passes the fix-on-the-go test in this PR (Fixes #N); report the rest. -->
 <!-- Commands and statuses that must be green; evidence for acceptance. All
 of it must be shown by merge: a check on staging or any later deploy is not
 proof, and the session does not wait for one unless Work names it (`merge`
-skill). In a project with a staging or demo seed, what the seed must hold to
+skill). A check only a deploy can show goes in Work, and the PR marks it
+untested (P5). In a project with a staging or demo seed, what the seed must hold to
 show the work, or why it needs none (practices/project-baseline.md, O5). -->
 - <command or check>
 

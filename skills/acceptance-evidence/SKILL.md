@@ -30,7 +30,8 @@ pick the lower and say what it does not show.
 
 Acceptance comes before merge, so the evidence must show unmerged work. A
 shared deploy of the default branch (staging) shows only merged work: it is
-not evidence unless the project deploys a preview per PR.
+not evidence unless the project deploys a preview per PR. Without one, the
+card's "Not covered" says I cannot try the flow myself, or I get a phone build.
 
 ## Produce it
 
