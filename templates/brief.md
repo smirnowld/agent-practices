@@ -1,11 +1,13 @@
 # Brief: <title>
 
 <!-- A work package for another session or agent (policy P2c). Conclusions,
-not reasoning. The receiver must not need the sender's transcript. -->
+not reasoning. The receiver must not need the sender's transcript. The title
+follows templates/session-title.md and is the proposed session's title. -->
 
 **Model:** <tier> (<model>) at <effort> (exploration <none | bounded | open>, reasoning <specified | judgement | open>; work briefs only)  <!-- the coordinator's tier; slices are sized under Delegation. practices/model-sizing.md, "Tier for a brief"; <model> is the adapter tiers.json name for the tier; P2d check -->
 **Risk:** <low | normal | critical: what a mistake can do | critical, irreversible: what a revert cannot undo>  <!-- sets the reviewer, P4; irreversible only for harm reaching production data, backups, secrets, money or real people's data -->
-**Size:** <S | M>  <!-- response budget: practices/model-sizing.md, "Size in responses" -->
+**Size:** <XS | S | M>  <!-- response budget: practices/model-sizing.md, "Size in responses" -->
+**Autonomy:** <Auto | Sign-off | Ask | With me>  <!-- what the session needs from me: templates/session-title.md -->
 **Repo / branch / worktree:** <path>, <branch from base>
 
 ## Goal

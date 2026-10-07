@@ -77,7 +77,7 @@ The first row that matches wins:
 |---|---|
 | Exploration or reasoning open | standard / high, or strong / medium for hard design |
 | Mechanical: formulaic output, objective proof (rename, fixtures, copy, screen to approved design), any size | fast / medium |
-| Exploration none or bounded, reasoning specified, size S | fast / high |
+| Exploration none or bounded, reasoning specified, size XS or S | fast / high |
 | Anything else (judgement, or size M) | standard / medium |
 
 Risk overrides the table: a brief whose Risk line is critical is never below
@@ -111,6 +111,7 @@ responses, drove their cost.
 
 | Size | Responses | How it runs |
 |---|---|---|
+| XS | up to 30 | one slice: a bump, a rename, landing one pull request |
 | S | up to 100 | one slice |
 | M | up to 200 | one session, planned as phases that each end in proof, each phase one or more implementer slices |
 | L | over 200 | never one slice: split into M steps before the session starts, each to a fresh implementer or a new session with its own brief |

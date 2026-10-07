@@ -166,6 +166,15 @@ unverified against vendor docs.
   2026-09-30), and returns the template so the retry is one call. The hook fires on the
   desktop app's `mcp__ccd_session__spawn_task` (observed 2026-09-29 with a
   test chip; unverified against vendor docs).
+- Session titles (P2a): the rule is in [session.md](session.md). Before it,
+  sessions I started were titled after my first message, and the session list
+  showed neither the work's kind nor whether it waited on me (2026-10-07).
+  `set_session_title` asks me to approve replacing a title I set myself and
+  declines in unattended sessions; `change_directory` asks me to approve the
+  folder, and the move applies when the turn ends (all from the tools' own
+  descriptions, 2026-10-07, unverified against vendor docs). Titles leave
+  out the project because the Code tab sidebar can group sessions by folder
+  (observed 2026-10-07).
 - Proposing sessions (`brief` skill): the rule is in
   [session.md](session.md); the model it names comes from `tiers.json`
   (Sonnet for fast, Opus for standard). Before session.md was
