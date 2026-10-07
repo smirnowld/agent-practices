@@ -237,7 +237,7 @@ https://developers.openai.com/plugins/build/plugins (checked 2026-09-30).
 
 ## Codex usability notes for the neutral source
 
-- Neutral roles and skills refer to `parent session`, `delegated agent`, and
+- Neutral roles and skills refer to the `coordinator` (the top-level session), `delegated agent`, and
   capability tiers. These map cleanly to Codex subagents and spawned-agent
   settings; terms such as “routine” and “routine entry” mean scheduled tasks
   and are not Codex configuration terms.

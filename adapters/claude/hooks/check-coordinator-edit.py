@@ -2,30 +2,45 @@
 """PreToolUse hook for Edit, Write, MultiEdit and NotebookEdit: the top-level
 session is the coordinator and does not edit source (P2b).
 
-Inside a subagent (the input carries agent_id) every edit passes. In the
-top-level session an edit inside the git repository that contains cwd, in any
-of its worktrees, passes only for docs, or for a config file that the session's
-first user message (the brief) names on a "Coordinator edits:" line; anything else is denied with a
-pointer to the implementer. Paths outside the repository pass, except Claude
-Code settings files and the session's own transcript, which stay out of the
-coordinator's reach so it cannot lift this check. The user opts out by setting
-AGENT_PRACTICES_COORDINATOR_EDITS=allow. Any error lets the edit through with
-a note on stderr; a broken check must not block every session.
+Decision order:
+1. Any caller, subagents included: deny an edit to the session's own
+   transcript, and an edit whose new content names the opt-out variable
+   AGENT_PRACTICES_COORDINATOR_EDITS, so no session can lift this check.
+2. Inside a subagent (the input carries agent_id) every other edit passes.
+3. The user opts out by setting AGENT_PRACTICES_COORDINATOR_EDITS=allow.
+4. The coordinator is denied Claude Code settings files and anything under
+   $CLAUDE_PLUGIN_ROOT or ~/.claude/plugins/, where this hook lives.
+5. Paths outside the git repository of $CLAUDE_PROJECT_DIR (else the input
+   cwd), in any of its worktrees, pass.
+6. Inside it, docs pass, and so does the one config file that the brief names
+   on a "Coordinator edits:" line. The brief is the first user message that is
+   not a slash command or its output; the line must start with that label
+   (after an optional bullet and bold), and only its first path counts.
+   Anything else is denied with a pointer to the implementer.
+
+Any error lets the edit through with a note on stderr; a broken check must not
+block every session.
 """
+import fnmatch
 import json
 import os
 import re
 import subprocess
 import sys
 
-DOCS = {".md", ".mdx", ".markdown", ".rst", ".txt", ".adoc"}
+DOCS = {".md", ".markdown", ".rst", ".txt", ".adoc"}
+# Files with a docs extension that are build or dependency inputs, by basename.
+SOURCE_NAMES = ("cmakelists.txt", "requirements*.txt", "constraints*.txt")
+OPT_OUT = "AGENT_PRACTICES_COORDINATOR_EDITS"
+EDITS_LINE = re.compile(r"^\s*(?:[-*]\s*)?(?:\*\*)?coordinator edits?:(?:\*\*)?(.*)$", re.I)
+COMMAND_PREFIXES = ("<command-name>", "<command-message>", "<local-command-", "/")
 CONFIG = {".json", ".jsonc", ".yaml", ".yml", ".toml", ".ini", ".cfg", ".conf", ".properties"}
 SETTINGS = {"settings.json", "settings.local.json"}
 REASON = (
     "The top-level session is the coordinator and does not edit source (P2b). "
     "Hand this change to an implementer with the Agent tool, subagent_type "
-    "agent-practices:implementer. Docs pass, and a config file passes only when "
-    "the brief lists it on a 'Coordinator edits:' line. Shell writes are not "
+    "agent-practices:implementer. Docs pass, and one config file passes when "
+    "the brief names it first on a 'Coordinator edits:' line. Shell writes are not "
     "covered by this hook, but the rule still applies to them."
 )
 
@@ -55,11 +70,29 @@ def nearest_dir(path):
     return directory
 
 
-def is_protected(path, transcript):
+def under(path, directory):
+    directory = os.path.realpath(directory)
+    return path == directory or path.startswith(directory.rstrip(os.sep) + os.sep)
+
+
+def new_content(tool_input):
+    parts = [tool_input.get("content"), tool_input.get("new_string"),
+             tool_input.get("new_source")]
+    for edit in tool_input.get("edits") or []:
+        if isinstance(edit, dict):
+            parts.append(edit.get("new_string"))
+    return "\n".join(p for p in parts if isinstance(p, str))
+
+
+def is_protected(path):
+    """Paths that hold the opt-out or this hook: off limits to the coordinator."""
     parts = path.split(os.sep)
     if parts[-1] in SETTINGS and ".claude" in parts[:-1]:
         return True
-    return bool(transcript) and path == os.path.realpath(transcript)
+    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    if plugin_root and under(path, plugin_root):
+        return True
+    return under(path, os.path.expanduser("~/.claude/plugins"))
 
 
 def brief_text(transcript):
@@ -83,8 +116,9 @@ def brief_text(transcript):
             else:
                 continue
             text = re.sub(r"<system-reminder>.*?</system-reminder>", "", text, flags=re.S)
-            if text.strip():
-                return text
+            if not text.strip() or text.lstrip().startswith(COMMAND_PREFIXES):
+                continue
+            return text
     return ""
 
 
@@ -96,24 +130,22 @@ def named_in_brief(rel, transcript):
     except OSError:
         return False
     for line in text.splitlines():
-        m = re.search(r"coordinator edits?:(.*)", line, re.I)
+        m = EDITS_LINE.match(line)
         if not m:
             continue
-        for token in re.split(r"[\s,;`'\"()\[\]]+", m.group(1)):
-            token = token.rstrip(".:")
-            if token.startswith("./"):
-                token = token[2:]
-            if token and token == rel:
-                return True
+        tokens = [t for t in re.split(r"[\s,;`'\"()\[\]]+", m.group(1)) if t]
+        if not tokens:
+            continue
+        token = tokens[0].rstrip(".:")
+        if token.startswith("./"):
+            token = token[2:]
+        if token == rel:
+            return True
     return False
 
 
 def main():
     data = json.load(sys.stdin)
-    if data.get("agent_id"):
-        return
-    if os.environ.get("AGENT_PRACTICES_COORDINATOR_EDITS") == "allow":
-        return
     tool_input = data.get("tool_input") or {}
     path = tool_input.get("file_path") or tool_input.get("notebook_path")
     cwd = data.get("cwd")
@@ -122,13 +154,27 @@ def main():
         return
     path = os.path.realpath(os.path.join(cwd, os.path.expanduser(path)))
     transcript = data.get("transcript_path")
-    if is_protected(path, transcript):
-        deny("The coordinator does not edit Claude Code settings or its own transcript; "
-             "they hold the opt-out from the coordinator edit check. Ask the user to "
-             "change them.")
+    # Opt-out tampering: denied to every caller, subagents included.
+    if transcript and path == os.path.realpath(transcript):
+        deny("No session edits its own transcript; it holds the brief that the "
+             "coordinator edit check reads. Ask the user to change it.")
         return
-    # Inside means the same repository as cwd, in any of its worktrees.
-    common = git(cwd, "rev-parse", "--git-common-dir")
+    if OPT_OUT in new_content(tool_input):
+        deny(f"No session writes {OPT_OUT}; it is the user's opt-out from the "
+             "coordinator edit check. Ask the user to set it.")
+        return
+    if data.get("agent_id"):
+        return
+    if os.environ.get(OPT_OUT) == "allow":
+        return
+    if is_protected(path):
+        deny("The coordinator does not edit Claude Code settings or plugin files; "
+             "they hold the opt-out from the coordinator edit check and the check "
+             "itself. Ask the user to change them.")
+        return
+    # Inside means the same repository as the project, in any of its worktrees.
+    anchor = os.environ.get("CLAUDE_PROJECT_DIR") or cwd
+    common = git(anchor, "rev-parse", "--git-common-dir")
     directory = nearest_dir(path)
     if not common or git(directory, "rev-parse", "--git-common-dir") != common:
         return
@@ -138,7 +184,7 @@ def main():
     rel = os.path.relpath(path, root)
     name = os.path.basename(path)
     ext = os.path.splitext(name)[1].lower()
-    if ext in DOCS:
+    if ext in DOCS and not any(fnmatch.fnmatchcase(name.lower(), p) for p in SOURCE_NAMES):
         return
     is_config = ext in CONFIG or (name.startswith(".") and ext == "")
     if is_config and named_in_brief(rel, transcript):

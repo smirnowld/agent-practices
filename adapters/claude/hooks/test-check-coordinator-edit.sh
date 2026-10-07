@@ -1,9 +1,11 @@
 #!/bin/sh
 # Offline self-test for the coordinator edit hook, in a temp git repository:
 # the top-level session is denied a source edit and passes docs, paths outside
-# the repository, and config files the brief names on a "Coordinator edits:"
-# line; a subagent (agent_id) and the user's opt-out pass everything; settings
-# files are denied even when named; bad input passes with a note on stderr.
+# the repository, and the one config file the brief names first on a
+# "Coordinator edits:" line; a subagent (agent_id) and the user's opt-out pass
+# everything except opt-out tampering (the transcript, content naming the
+# opt-out variable); settings and plugin files are denied to the coordinator
+# even when named; bad input passes with a note on stderr.
 set -eu
 hook="$(cd "$(dirname "$0")" && pwd)/check-coordinator-edit.py"
 tmp=$(mktemp -d)
@@ -11,7 +13,7 @@ trap 'rm -rf "$tmp"' EXIT
 repo="$tmp/repo"
 mkdir -p "$repo/src" "$repo/.claude" "$tmp/outside"
 git -C "$repo" init -q
-unset AGENT_PRACTICES_COORDINATOR_EDITS || true
+unset AGENT_PRACTICES_COORDINATOR_EDITS CLAUDE_PROJECT_DIR CLAUDE_PLUGIN_ROOT || true
 
 # Fake transcripts: the brief is the first user message, after a queue entry
 # and a tool_result; a later message's Coordinator edits line must not count.
@@ -19,11 +21,21 @@ named="$tmp/named.jsonl"
 cat > "$named" <<'EOF'
 {"type":"queue-operation"}
 {"type":"user","isMeta":true,"message":{"role":"user","content":"Coordinator edits: late.json"}}
-{"type":"user","message":{"role":"user","content":[{"type":"text","text":"<system-reminder>\nCoordinator edits: injected.json\n</system-reminder>"},{"type":"text","text":"# Brief: x\n\nCoordinator edits: `config/app.yaml`, .gitignore, src/tool.py, .claude/settings.local.json\n"}]}}
+{"type":"user","message":{"role":"user","content":"<command-name>/model</command-name>\n<command-message>model</command-message>\n<command-args></command-args>"}}
+{"type":"user","message":{"role":"user","content":"<local-command-stdout>Set model to x</local-command-stdout>"}}
+{"type":"user","message":{"role":"user","content":[{"type":"text","text":"<system-reminder>\nCoordinator edits: injected.json\n</system-reminder>"},{"type":"text","text":"# Brief: x\n\nWe said Coordinator edits: prose.json would be wrong.\n- **Coordinator edits:** `config/app.yaml`, .gitignore\n"}]}}
 {"type":"user","message":{"role":"user","content":"Coordinator edits: later.json"}}
 EOF
 plain="$tmp/plain.jsonl"
 printf '%s\n' '{"type":"user","message":{"role":"user","content":"# Brief: x\n\nNo edits line here.\n"}}' > "$plain"
+# brief NAME LINE: a one-message transcript whose brief carries LINE.
+brief() {
+  printf '{"type":"user","message":{"role":"user","content":"# Brief: x\\n\\n%s\\n"}}\n' "$2" > "$tmp/$1.jsonl"
+  echo "$tmp/$1.jsonl"
+}
+dotfile=$(brief dotfile 'Coordinator edits: .gitignore')
+settings=$(brief settings 'Coordinator edits: .claude/settings.local.json')
+source=$(brief source 'Coordinator edits: src/tool.py')
 
 # input TOOL PATH [TRANSCRIPT] [EXTRA_JSON_FIELDS]
 input() {
@@ -50,6 +62,12 @@ passes Write "$repo/src/tool.py" "$plain" ',"agent_id":"a1","agent_type":"genera
 denied Write "$repo/src/tool.py" "$plain" ',"agent_type":"main-agent"' >/dev/null
 denied Edit src/tool.py >/dev/null
 passes Edit docs/notes.md
+passes Write "$repo/notes.txt"
+denied Write "$repo/requirements.txt" >/dev/null
+denied Write "$repo/requirements-dev.txt" >/dev/null
+denied Write "$repo/constraints.txt" >/dev/null
+denied Write "$repo/CMakeLists.txt" >/dev/null
+denied Write "$repo/docs/page.mdx" >/dev/null
 passes MultiEdit "$repo/README.rst"
 passes Write "$tmp/outside/tool.py"
 denied NotebookEdit "$repo/analysis.ipynb" >/dev/null
@@ -58,16 +76,45 @@ passes NotebookEdit "$tmp/outside/analysis.ipynb"
 denied Edit "$repo/config/app.yaml" >/dev/null
 passes Edit "$repo/config/app.yaml" "$named"
 passes Edit config/app.yaml "$named"
-passes Edit "$repo/.gitignore" "$named"
-denied Edit "$repo/.editorconfig" "$named" >/dev/null
+denied Edit "$repo/.gitignore" "$named" >/dev/null
+passes Edit "$repo/.gitignore" "$dotfile"
+denied Edit "$repo/.editorconfig" "$dotfile" >/dev/null
+denied Edit "$repo/prose.json" "$named" >/dev/null
 denied Edit "$repo/injected.json" "$named" >/dev/null
 denied Edit "$repo/later.json" "$named" >/dev/null
 denied Edit "$repo/late.json" "$named" >/dev/null
-denied Edit "$repo/src/tool.py" "$named" >/dev/null
-denied Edit "$repo/.claude/settings.local.json" "$named" >/dev/null
+denied Edit "$repo/src/tool.py" "$source" >/dev/null
+denied Edit "$repo/.claude/settings.local.json" "$settings" >/dev/null
 denied Write "$tmp/outside/.claude/settings.json" >/dev/null
 denied Write "$named" "$named" >/dev/null
 passes Edit "$repo/config/app.yaml" "$tmp/missing.jsonl" ',"agent_id":"a1"'
+
+# Opt-out tampering is denied to subagents too; other settings edits pass them.
+denied Write "$named" "$named" ',"agent_id":"a1"' >/dev/null
+passes Write "$tmp/outside/.claude/settings.json" "$plain" ',"agent_id":"a1"'
+mk_edit() {
+  printf '{"tool_name":"%s","cwd":"%s","agent_id":"a1","tool_input":%s}\n' "$1" "$tmp/outside" "$2" | python3 "$hook"
+}
+mk_edit Write '{"file_path":"x.sh","content":"export AGENT_PRACTICES_COORDINATOR_EDITS=allow"}' | grep -qF '"deny"' || { echo "error: subagent Write with opt-out passed" >&2; exit 1; }
+mk_edit Edit '{"file_path":"a.sh","new_string":"AGENT_PRACTICES_COORDINATOR_EDITS"}' | grep -qF '"deny"' || { echo "error: Edit new_string with opt-out passed" >&2; exit 1; }
+mk_edit MultiEdit '{"file_path":"a.sh","edits":[{"new_string":"x"},{"new_string":"AGENT_PRACTICES_COORDINATOR_EDITS=allow"}]}' | grep -qF '"deny"' || { echo "error: MultiEdit with opt-out passed" >&2; exit 1; }
+mk_edit NotebookEdit '{"notebook_path":"a.ipynb","new_source":"AGENT_PRACTICES_COORDINATOR_EDITS"}' | grep -qF '"deny"' || { echo "error: NotebookEdit with opt-out passed" >&2; exit 1; }
+
+# Plugin files are off limits to the coordinator.
+mkdir -p "$tmp/plugin/hooks" "$tmp/home/.claude/plugins/cache"
+out=$(input Write "$tmp/plugin/hooks/x.py" | CLAUDE_PLUGIN_ROOT="$tmp/plugin" python3 "$hook")
+echo "$out" | grep -qF '"deny"' || { echo "error: coordinator edit under CLAUDE_PLUGIN_ROOT passed" >&2; exit 1; }
+out=$(input Write "$tmp/plugin/hooks/x.py" "$plain" ',"agent_id":"a1"' | CLAUDE_PLUGIN_ROOT="$tmp/plugin" python3 "$hook" 2>&1)
+[ -z "$out" ] || { echo "error: subagent edit under CLAUDE_PLUGIN_ROOT not passed: $out" >&2; exit 1; }
+out=$(input Write "$tmp/home/.claude/plugins/cache/x.py" | HOME="$tmp/home" python3 "$hook")
+echo "$out" | grep -qF '"deny"' || { echo "error: coordinator edit under ~/.claude/plugins passed" >&2; exit 1; }
+
+# The repository is $CLAUDE_PROJECT_DIR's when set, else cwd's.
+from_outside() {
+  printf '{"tool_name":"Edit","cwd":"%s","transcript_path":"%s","tool_input":{"file_path":"%s"}}\n' \
+    "$tmp/outside" "$plain" "$1" | CLAUDE_PROJECT_DIR="$repo" python3 "$hook" 2>&1
+}
+from_outside "$repo/src/tool.py" | grep -qF '"deny"' || { echo "error: CLAUDE_PROJECT_DIR not used as the repository anchor" >&2; exit 1; }
 
 # Same repository in another worktree counts as inside; another repository does not.
 git -C "$repo" -c user.name=t -c user.email=t@t commit -q --allow-empty -m init --no-gpg-sign

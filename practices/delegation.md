@@ -5,8 +5,8 @@ Tiers and effort per role are in [model-sizing.md](model-sizing.md).
 
 ## The coordinator
 
-Every top-level session is the coordinator, whether I started it, it came
-from a brief chip or from a routine. Subagents are not coordinators: they do
+Every top-level session is the coordinator, whether I started it or it
+was proposed from a brief or a routine. Subagents are not coordinators: they do
 the slice they were given and report.
 
 The coordinator plans, integrates, verifies and reports. It does not

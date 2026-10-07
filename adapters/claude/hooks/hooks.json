@@ -15,6 +15,10 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/adapters/claude/hooks/session-start.sh\" policy 2"
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/adapters/claude/hooks/session-start.sh\" policy 3"
           }
         ]
       }

@@ -25,15 +25,15 @@ marketplace (`.claude-plugin/marketplace.json`, plugin source `"."`), so
   reaches a machine is under [Updates and running
   sessions](#updates-and-running-sessions).
 - `hooks/hooks.json`: `SessionStart` on `startup|clear|compact` runs
-  `session-start.sh` three times, whose stdout becomes context (hooks.md):
+  `session-start.sh` four times, whose stdout becomes context (hooks.md):
   `bindings` prints the plugin root and [session.md](session.md) every time;
-  `policy 1` and `policy 2` print the two halves of the policy, split at a
-  `## P` heading, only when the project lacks the synced block, so the policy
+  `policy 1`, `policy 2` and `policy 3` print the policy in three parts,
+  split at `## P` headings, only when the project lacks the synced block, so the policy
   never loads twice. Each output stays under 9,500 characters
   (`test-session-start.sh`): output over 10,000 characters is saved to a file
   and only a 2,000-character preview reaches context. Hooks in one matcher
-  group run in parallel, so the parts may arrive in any order; the second
-  starts with its own heading (hooks.md, "Hook output" and "Hook execution
+  group run in parallel, so the parts may arrive in any order; parts 2 and 3
+  start with their own heading (hooks.md, "Hook output" and "Hook execution
   details", https://code.claude.com/docs/en/hooks, checked 2026-10-07).
   `PreToolUse` on `Edit|Write|MultiEdit|NotebookEdit` runs
   `check-coordinator-edit.py` (P2b; see Coordinator edits below). `PreToolUse` on `mcp__ccd_session__spawn_task` runs
@@ -351,22 +351,28 @@ checked 2026-10-07; confirmed with a headless run, claude 2.1.284,
 2026-10-07). `agent_type` is not used: it is also set in a session started
 with `--agent`. In order:
 
-1. A subagent's call passes.
-2. `AGENT_PRACTICES_COORDINATOR_EDITS=allow` in the environment passes
-   everything. It is for me: set it in settings `env`, which reaches hook
+1. For every caller, subagents included: an edit to the session's own
+   transcript, or one whose new text contains
+   `AGENT_PRACTICES_COORDINATOR_EDITS`, is denied, so no session can forge a
+   brief or write the opt-out.
+2. A subagent's call passes.
+3. `AGENT_PRACTICES_COORDINATOR_EDITS=allow` in the environment passes
+   the rest. It is for me: set it in settings `env`, which reaches hook
    processes (settings-reference.md, `env`, checked 2026-10-07). A session
    that sets it in its own shell does not reach the hook.
-3. Claude settings files (`settings.json`, `settings.local.json` under any
-   `.claude` folder) and the session's own transcript are denied, so the
-   session cannot switch the hook off or forge a brief.
-4. A path outside the session's repository passes; worktrees of one
-   repository count as the same repository (`git rev-parse
-   --git-common-dir`).
-5. Docs (`.md`, `.mdx`, `.markdown`, `.rst`, `.txt`, `.adoc`) pass.
-6. A config file (`.json`, `.yaml`, `.toml`, `.ini` and similar, or an
-   extensionless dotfile) passes only when the brief, the session's first
-   user message, has a `Coordinator edits:` line naming its repo path.
-7. Anything else is denied with a reason that names
+4. Claude settings files (`settings.json`, `settings.local.json` under any
+   `.claude` folder), `$CLAUDE_PLUGIN_ROOT` and `~/.claude/plugins/` are
+   denied, so the session cannot switch the hook off.
+5. A path outside the session's repository passes; the repository is
+   `$CLAUDE_PROJECT_DIR`, else the input `cwd`, and worktrees of one
+   repository count as the same (`git rev-parse --git-common-dir`).
+6. Docs (`.md`, `.markdown`, `.rst`, `.txt`, `.adoc`) pass, except
+   `CMakeLists.txt`, `requirements*.txt` and `constraints*.txt`.
+7. A config file (`.json`, `.yaml`, `.toml`, `.ini` and similar, or an
+   extensionless dotfile) passes only when the brief names it as the first
+   path on a line starting `Coordinator edits:`. The brief is the session's
+   first user message that is not a slash command or its output.
+8. Anything else is denied with a reason that names
    `agent-practices:implementer`.
 
 Any error passes the call (fails open). Not covered: shell writes, reading,

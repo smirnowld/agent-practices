@@ -52,14 +52,8 @@ def toml_multiline(s):
     return '"""\n' + s + '\n"""'
 
 
-REPO_URL = "https://github.com/smirnowld/agent-practices/blob/main"
-
-
 def codex(meta, body, t):
     # Codex standalone custom-agent schema: https://learn.chatgpt.com/docs/agent-configuration/subagents (checked 2026-09-27).
-    # Codex roles are copied into other projects, where a relative path is dead (#32).
-    # blob/main, not a commit SHA: a SHA would change every file on every commit.
-    body = re.sub(r"`((?:practices|templates|skills)/[^`]+)`", rf"[`\1`]({REPO_URL}/\1)", body)
     lines = ["# " + HEADER.format(**meta), f"name = {toml_str(meta['name'])}",
              f"description = {toml_str(meta['description'])}"]
     if t["models"][meta["tier"]]:
