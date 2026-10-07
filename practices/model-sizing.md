@@ -1,7 +1,9 @@
 # Model sizing
 
 Starting points for P2a. Tiers are vendor-neutral; adapters map them to
-models. Adjust from evidence.
+models. Adjust from evidence: the `cost-review` skill measures spend by role
+and model and checks each change against what it predicted; its figures stay
+in the results folder, and a change lands here with a general reason.
 
 ## Tiers
 
@@ -126,6 +128,10 @@ Repeated failed attempts, unclear root cause, many interacting files, a
 reviewer finding the implementer missed something basic, anything in the P4
 critical list. A slice past its response budget is a signal to split, not to
 go up a tier.
+
+The fast tier for briefs is still being tried: a fast-tier session that
+asks to be moved up says so in its closeout, so a cost review can weigh how
+often the table's fast rows held.
 
 ## Signals to go down
 

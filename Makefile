@@ -11,6 +11,7 @@ check:
 	sh -n scripts/test-ensure-labels.sh
 	sh -n scripts/test-check-action-pins.sh
 	sh -n scripts/test-check-adrs.sh
+	sh -n scripts/test-cost-review.sh
 	sh -n adapters/claude/hooks/session-start.sh
 	sh -n bin/with-secrets
 	sh -n bin/push-secrets
@@ -29,6 +30,7 @@ check:
 	sh scripts/test-check-action-pins.sh
 	python3 scripts/check-action-pins.py .
 	sh scripts/test-check-adrs.sh
+	sh scripts/test-cost-review.sh
 	sh adapters/claude/hooks/test-session-start.sh
 	sh adapters/claude/hooks/test-check-chip-brief.sh
 	sh adapters/claude/hooks/test-check-coordinator-edit.sh

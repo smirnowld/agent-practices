@@ -111,7 +111,7 @@ Several product, app and CI repos. Many answered questions were the agent
 asking leave for small fixes or closures it could rule on, sessions stopped
 over one-line fixes outside their owned files, one feature was split into
 many PRs each with its own review, review runs followed tweaks I had already
-seen, and open issues were mostly deferred review findings. In one app PR, three of four findings
-filed together as one deferred issue passed the test, no issue said which
+seen, and open issues were mostly deferred review findings. In one app PR, most findings filed
+together as one deferred issue passed the test, no issue said which
 part of the test it failed, and a dead end the PR itself introduced reached
 me only as an issue link after merge.
