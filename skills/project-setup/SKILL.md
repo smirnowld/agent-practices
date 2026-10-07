@@ -86,6 +86,9 @@ Order: CI and the aggregate check first, then the ruleset that requires it
 ## 4. Apply (setup mode)
 
 One PR for repository files, grouped commits per section of the checklist.
+Docs and policy text are the coordinator's; CI lanes, workflows, scanners,
+Makefile targets and other source or config go to implementer slices (P2b),
+one per checklist section, each with the check that proves it.
 New docs start from the templates, with only facts that are known; unknowns
 go to the question register (`templates/docs/questions.md`) or my open
 points, never invented. CI must pass on the PR, including new lanes; a new scanner's first findings are reported, not

@@ -23,9 +23,9 @@ P14; compaction thresholds themselves live in the adapters.
   carrying the whole context.
 - Do not re-read what is still in context and unchanged; re-read after the
   file changed or after a compaction.
-- A parent session's question over more than about three files, or over
-  history, goes to an explorer with the question and a bound, unless the
-  parent already holds the context (P2b); the explorer returns the conclusion
+- The coordinator reads the brief's core files at section level. A codebase
+  search, history, or more than about three other files goes to an explorer
+  with the question and a bound (P2b); the explorer returns the conclusion
   with `path:line`, not the files.
 - Ask the tool for the result, not the file: a build error's message, a test's
   failing lines, one grep with the pattern, not a listing to scan.

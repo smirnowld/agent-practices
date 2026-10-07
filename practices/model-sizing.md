@@ -70,7 +70,9 @@ The first row that matches wins:
 | Anything else (judgement, or size M) | standard / medium |
 
 Risk overrides the table: a brief whose Risk line is critical is never below
-standard. The Model line names the tier's model from the adapter's
+standard. The table sizes both the coordinator, from the brief as a whole,
+and each implementer slice, from that slice alone; a mechanical slice can run
+at fast under a standard coordinator. The Model line names the tier's model from the adapter's
 `tiers.json` and the two answers, for example "fast (MODEL) at high
 (exploration bounded, reasoning specified)", so I can start the session on
 that model and check the call. A
@@ -85,15 +87,17 @@ be moved up; the template's Handoff carries this.
 A brief is sized by the responses it will take. Each response re-sends the
 whole context, so cost is the response count times the context each carries,
 and the context grows until compaction; a slice that ran to 400 responses cost
-at least twice one of 200. The count covers the session that does the work
-and every agent it delegates to except review, since a delegated
-implementer's responses cost about the same as the parent's; review is
-mandatory (P4) and budgeted in its role.
+at least twice one of 200. The count covers the coordinator and every
+implementer it delegates to, but not review, since a delegated
+implementer's responses cost about the same as the coordinator's; review is
+mandatory (P4) and budgeted in its role. One implementer stops past about
+100 responses ([delegation.md](delegation.md#implementer-slices)), so an M
+brief runs as two or more slices.
 
 | Size | Responses | How it runs |
 |---|---|---|
 | S | up to 100 | one slice |
-| M | up to 200 | one slice, planned as phases that each end in proof |
+| M | up to 200 | one session, planned as phases that each end in proof, each phase one or more implementer slices |
 | L | over 200 | never one slice: split into M steps before the session starts, each to a fresh implementer or a new session with its own brief |
 
 The brief names the size (`templates/brief.md`). Whether to continue past the

@@ -1,6 +1,6 @@
 ---
 name: explorer
-description: Read-only exploration delegated by the parent session. Sweeps code, docs and history to answer a bounded question from evidence and returns the conclusion with file:line references, not file dumps.
+description: Read-only exploration delegated by the coordinator. Use it for any codebase search, history question, or reading beyond the brief's core files and about 3 others (P2b). Sweeps code, docs and history to answer a bounded question from evidence and returns the conclusion with file:line references, not file dumps.
 tier: fast
 effort: low
 tools: read-only-web
