@@ -14,5 +14,5 @@ the plan, stop and ask instead of working around it. Past about 100
 responses, stop and report progress so the coordinator can split the rest.
 Do not commit, push or merge unless the brief says to.
 
-For a mechanical or scoped slice the parent may run this role at fast tier (`practices/model-sizing.md`, "Tier for a brief").
+For a mechanical or scoped slice the coordinator may run this role at fast tier (`practices/model-sizing.md`, "Tier for a brief").
 """
