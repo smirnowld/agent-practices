@@ -107,12 +107,11 @@ is listed in the report, not fixed.
 
 ## Origin
 
-Several product, app and CI repos, 2026-10. Over three days about a fifth
-of answered questions were the agent asking leave for small fixes or
-closures it could rule on, sessions stopped over one-line fixes outside
-their owned files, one feature took seven PRs and as many reviews, a third
-of review runs followed a tweak I had already seen, and nearly all open
-issues were deferred review findings. In one app PR, three of four findings
-filed together as one deferred issue passed the test, no issue said which
+Several product, app and CI repos. Many answered questions were the agent
+asking leave for small fixes or closures it could rule on, sessions stopped
+over one-line fixes outside their owned files, one feature was split into
+many PRs each with its own review, review runs followed tweaks I had already
+seen, and open issues were mostly deferred review findings. In one app PR, most findings filed
+together as one deferred issue passed the test, no issue said which
 part of the test it failed, and a dead end the PR itself introduced reached
 me only as an issue link after merge.

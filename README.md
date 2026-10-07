@@ -12,7 +12,7 @@ adapters; no rule is written for one vendor only.
 
 ```
 policy/AGENTS.md        Always-on rules for every session (the policy)
-practices/              Best practices and lessons, with the evidence behind them
+practices/              Best practices and lessons, each with its reason in general terms
 skills/<name>/SKILL.md  Workflows loaded on demand (how to do a task)
 roles/<name>.md         Agent roles: purpose, tools, capability tier
 templates/              Output formats: updates, summaries, briefs, PRs, documents
@@ -28,7 +28,8 @@ Makefile                `make check`: the same checks CI runs
 | If it is… | Put it in | Test |
 |---|---|---|
 | A rule that must hold in every session | `policy/` | Would a session break the rule by not knowing it up front? |
-| Knowledge with a reason and evidence | `practices/` | Is it advice to consult, not a rule to enforce? |
+| Knowledge with a reason | `practices/` | Is it advice to consult, not a rule to enforce? |
+| Results: measurements, figures, reports from specific sessions or projects | Outside this repository, in the folder the user's configuration names | Would it be out of date after the next measurement? |
 | A repeatable procedure | `skills/` | Does it describe *how* to do a task, step by step? |
 | A delegated agent's job | `roles/` | Is it a kind of worker the parent hands work to? |
 | The shape of an output | `templates/` | Does it describe *what* a result looks like? |

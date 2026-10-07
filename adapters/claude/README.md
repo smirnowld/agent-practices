@@ -419,6 +419,58 @@ exit 0
   the session.
 - The policy still comes from the project's synced `AGENTS.md`.
 
+## Transcript facts the cost scanner relies on
+
+`cost-scan.py` reads Claude Code's local transcripts, a format the vendor
+does not document. Each fact below is **observed in local transcripts,
+2026-10; unverified against vendor docs**, unless it cites a source. The
+scanner exits non-zero when the window has main sessions but no assistant
+line with usage, or none with a cost-state line; recheck these facts then.
+
+- **Paths.** A main session is `~/.claude/projects/PROJECT/SESSION.jsonl`.
+  Its subagents are `PROJECT/SESSION/subagents/agent-ID.jsonl`, each with
+  `agent-ID.meta.json` holding `agentType` and `description` (prompt text,
+  never printed). Workflow agents are under
+  `subagents/workflows/wf_ID/agent-ID.jsonl`; `journal.jsonl` there holds
+  no usage and is skipped.
+- **Assistant lines.** One API call can span several lines with the same
+  `message.id`; the last line carries the final usage. Lines with model
+  `<synthetic>` are not API calls. Usage has `input_tokens`,
+  `output_tokens`, `cache_read_input_tokens`, `cache_creation` split into
+  `ephemeral_5m_input_tokens` and `ephemeral_1h_input_tokens`, `speed`
+  (`fast` for fast mode), `inference_geo` and
+  `server_tool_use.web_search_requests`.
+- **Subagent output tokens** in subagent transcripts are start-of-stream
+  placeholders (often 1), so subagent output is taken from the cost-state
+  line, less the main session's own output.
+- **Cost-state line.** A line `{"type":"cost-state", ...}` without a
+  timestamp carries `totalCostUSD`, `startTime` and `modelUsage`: per model,
+  `inputTokens`, `outputTokens` (thinking included), `thinkingTokens`,
+  `cacheReadInputTokens`, `cacheCreationInputTokens`, `webSearchRequests`
+  and `costUSD`. It covers the main session and its subagents. It can repeat
+  in a transcript, with totals that only grow, so the last one wins. A model
+  key can carry a `[1m]` suffix for the 1M-token context; it is the same
+  model and price.
+- **Calls after the cost-state line.** A session resumed after its last
+  cost-state line has calls the line does not count; the scanner adds their
+  transcript cost (main calls after the line, and subagent calls later than
+  the first main-session line after it, the resume) and marks the session
+  `cost-state+tail`. Without a main line after it there is no subagent tail:
+  a background subagent that ended before the session exited is already in
+  the line. An open session has no cost-state line yet, so the "none has a
+  cost-state line" stop is skipped when the window reaches today.
+- **Cache-write lifetime.** Claude Code's own `costUSD` matches 1-hour cache
+  writes for main sessions and 5-minute writes for subagents; transcripts
+  record which was used per call, and the scanner prices each as recorded.
+- **Compactions** are `{"type":"system","subtype":"compact_boundary"}` lines
+  with `compactMetadata.trigger` (`auto` or `manual`) and `preTokens`.
+- **Prices** are from <https://platform.claude.com/docs/en/about-claude/pricing>,
+  checked 2026-10-07: the per-model rates, fast mode at twice the standard
+  rates for the Opus models that offer it, US-only inference
+  (`inference_geo` `us`) at 1.1 times for models from Opus 4.6 on, the
+  1M-token context at standard rates, and web search at $10 per 1,000
+  searches.
+
 ## Not verified
 
 - Whether the desktop app's scheduled tasks can be defined from a repo file.

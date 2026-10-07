@@ -24,8 +24,8 @@ is in [policy/AGENTS.md](policy/AGENTS.md).
 - Adapter facts cite the vendor doc URL and the date checked. Mark anything not
   confirmed against the official page as unverified.
 - Practices record where a lesson came from by kind of project, never by
-  name, with a date only on a measured number or an observed tool or model
-  behaviour
+  name, with a date only on an observed tool or model behaviour or an
+  outside fact's check
   ([practices/record-keeping.md](practices/record-keeping.md#outcomes-not-conversations)).
 
 ## Public and portable
@@ -36,9 +36,14 @@ This repository is public so anyone can borrow or fork it.
   their repositories, PRs or machines. Say "a product repo", "a server-config
   repo". First person ("I", "me") for the author is fine.
 - The author's preferences stay in policy as written; a fork changes them.
-- No ephemeral documents: analyses, trial logs, briefs and session notes live
-  outside this repository (P17). Only their lasting conclusions land here,
-  anonymised.
+- No ephemeral documents and no results: analyses, measurements, reports,
+  trial logs, briefs and session notes live outside this repository (P17).
+  Only their lasting conclusions land here, as a rule with at most a short
+  reason in general terms. Figures, counts, costs, dates of measurements and
+  session tables stay out.
+- A skill that produces results writes them to the folder the user's own
+  agent configuration names, never into this repository. This repository
+  never names that folder or the repository behind it.
 - Before merging, search the diff for names that break this rule.
 
 ## Diagrams

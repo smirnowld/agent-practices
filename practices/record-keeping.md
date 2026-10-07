@@ -78,6 +78,12 @@ made a decision keeps that history: my words quoted (P11), who decided, when.
 - **Lessons say where they came from by kind of project** ("a product repo"),
   so a reader can judge whether they apply, with a date only under the rule
   above.
+- **Results stay out of shared rules.** A repository that holds rules for
+  other projects (agent-practices is one) keeps each lesson as the rule plus
+  a short reason in general terms. The measurement behind it (figures,
+  counts, costs, session tables, the dates they were taken) lives with the
+  results, outside that repository; a project's own docs follow its
+  `AGENTS.md`.
 - **Text found breaking this** is reworded as a fix on the go when it passes
   P6's test (`practices/scope-and-batching.md`); otherwise it is a
   `docs-gardening` item. Keep the fact, drop the attribution.

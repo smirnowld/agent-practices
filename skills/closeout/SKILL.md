@@ -137,11 +137,9 @@ the tools.
 
 A product repository: the done rule, blocked outcome, cleanup
 checklist, blocker owner and continuation routing came from its closeout.
-All projects, 2026-10: about a fifth of answered questions were "brief this
-small fix?", so small fixes now land in the PR and only real follow-ups are
-asked about.
-All projects, 2026-10: two days of closeouts ran a median of about 450
-words, over 40% of them process fields; asks sat in the tenth field or later,
-two were missed or wrong, and finished work waiting on my merge read as
+All projects: many answered questions were "brief this small fix?", so
+small fixes now land in the PR and only real follow-ups are asked about.
+All projects: closeouts ran long and were mostly process fields; asks sat
+deep in the list, some were missed or wrong, and finished work waiting on my merge read as
 "partly done". The chat closeout became a short summary ending with a
 colour-marked status and a TL;DR, with the record moved to the PR.
