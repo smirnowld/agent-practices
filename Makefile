@@ -18,7 +18,9 @@ check:
 	sh -n bin/test-wait-for.sh
 	sh -n bin/test-with-secrets.sh
 	sh -n bin/test-push-secrets.sh
+	sh -n adapters/claude/hooks/test-session-start.sh
 	sh -n adapters/claude/hooks/test-check-chip-brief.sh
+	sh -n adapters/claude/hooks/test-check-coordinator-edit.sh
 	sh -n adapters/claude/hooks/test-check-attention.sh
 	sh scripts/test-sync.sh
 	sh scripts/test-push-policy-sync.sh
@@ -27,7 +29,9 @@ check:
 	sh scripts/test-check-action-pins.sh
 	python3 scripts/check-action-pins.py .
 	sh scripts/test-check-adrs.sh
+	sh adapters/claude/hooks/test-session-start.sh
 	sh adapters/claude/hooks/test-check-chip-brief.sh
+	sh adapters/claude/hooks/test-check-coordinator-edit.sh
 	sh adapters/claude/hooks/test-check-attention.sh
 	sh bin/test-with-secrets.sh
 	sh bin/test-push-secrets.sh

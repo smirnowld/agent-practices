@@ -25,9 +25,18 @@ marketplace (`.claude-plugin/marketplace.json`, plugin source `"."`), so
   reaches a machine is under [Updates and running
   sessions](#updates-and-running-sessions).
 - `hooks/hooks.json`: `SessionStart` on `startup|clear|compact` runs
-  `session-start.sh`, whose stdout becomes context (hooks.md). It prints
-  [session.md](session.md) every time, and the policy only when the project lacks the synced block, so the policy never
-  loads twice. `PreToolUse` on `mcp__ccd_session__spawn_task` runs
+  `session-start.sh` four times, whose stdout becomes context (hooks.md):
+  `bindings` prints the plugin root and [session.md](session.md) every time;
+  `policy 1`, `policy 2` and `policy 3` print the policy in three parts,
+  split at `## P` headings, only when the project lacks the synced block, so the policy
+  never loads twice. Each output stays under 9,500 characters
+  (`test-session-start.sh`): output over 10,000 characters is saved to a file
+  and only a 2,000-character preview reaches context. Hooks in one matcher
+  group run in parallel, so the parts may arrive in any order; parts 2 and 3
+  start with their own heading (hooks.md, "Hook output" and "Hook execution
+  details", https://code.claude.com/docs/en/hooks, checked 2026-10-07).
+  `PreToolUse` on `Edit|Write|MultiEdit|NotebookEdit` runs
+  `check-coordinator-edit.py` (P2b; see Coordinator edits below). `PreToolUse` on `mcp__ccd_session__spawn_task` runs
   `check-chip-brief.py` (see Chips below); it denies with
   `hookSpecificOutput.permissionDecision: "deny"`, and on its own errors
   exits 0 so the call proceeds (hooks.md, checked 2026-09-29). It needs
@@ -332,6 +341,44 @@ unverified against vendor docs.
   `/compact keep: goal, decisions, core files, proof status, next step`
   (https://code.claude.com/docs/en/claude-code-on-the-web.md, "Manage
   context").
+
+### Coordinator edits
+
+The hook behind P2b ([practices/delegation.md](../../practices/delegation.md)).
+It tells a subagent from the top-level session by `agent_id`, which the
+hook input carries only inside a subagent (hooks.md, "Common input fields",
+checked 2026-10-07; confirmed with a headless run, claude 2.1.284,
+2026-10-07). `agent_type` is not used: it is also set in a session started
+with `--agent`. In order:
+
+1. For every caller, subagents included: an edit to the session's own
+   transcript is denied, and so is an edit to a settings file, a shell
+   startup file or a `.env` file whose new text names
+   `AGENT_PRACTICES_COORDINATOR_EDITS`. This stops an accidental or naive
+   forged brief or opt-out, not a determined one.
+2. A subagent's call passes.
+3. `AGENT_PRACTICES_COORDINATOR_EDITS=allow` in the environment passes
+   the rest. It is for me: set it in settings `env`, which reaches hook
+   processes (settings-reference.md, `env`, checked 2026-10-07). A session
+   that sets it in its own shell does not reach the hook.
+4. Claude settings files (`settings.json`, `settings.local.json` under any
+   `.claude` folder), `$CLAUDE_PLUGIN_ROOT` and `~/.claude/plugins/` are
+   denied to the coordinator. A subagent may still edit them.
+5. A path outside the session's repository passes; the repository is
+   `$CLAUDE_PROJECT_DIR`, else the input `cwd`, and worktrees of one
+   repository count as the same (`git rev-parse --git-common-dir`).
+6. Docs (`.md`, `.markdown`, `.rst`, `.txt`, `.adoc`) pass, except
+   `CMakeLists.txt`, `requirements*.txt` and `constraints*.txt`.
+7. A config file (`.json`, `.yaml`, `.toml`, `.ini` and similar, or an
+   extensionless dotfile) passes only when the brief names it as the first
+   path on a line starting `Coordinator edits:`. The brief is the session's
+   first user message that is not a slash command or its output.
+8. Anything else is denied with a reason that names
+   `agent-practices:implementer`.
+
+Any error passes the call (fails open). Not covered: shell writes, reading,
+files inside `.git/`, and settings or plugin edits by a subagent beyond the
+opt-out name. Tests: `hooks/test-check-coordinator-edit.sh`.
 
 ## Cloud sessions
 

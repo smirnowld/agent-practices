@@ -44,7 +44,9 @@ on every Codex host or cloud environment.
   can add developer context at session start. User hooks can live in
   `~/.codex/hooks.json`; non-managed hooks require review and trust before
   they run. Project hooks load only for trusted projects.
-  https://learn.chatgpt.com/docs/hooks (checked 2026-09-30).
+  https://learn.chatgpt.com/docs/hooks (checked 2026-09-30). No hook that
+  can deny a file edit before it runs, as P2b's enforcement would need, is
+  verified here, so P2b is wording only in Codex (unverified).
 - **Plugins:** Codex plugins can bundle skills and lifecycle hooks. This could
   distribute this repository's skills and session-start policy loader as one
   installable package, but local marketplace plugins run from an installed
@@ -235,7 +237,7 @@ https://developers.openai.com/plugins/build/plugins (checked 2026-09-30).
 
 ## Codex usability notes for the neutral source
 
-- Neutral roles and skills refer to `parent session`, `delegated agent`, and
+- Neutral roles and skills refer to the `coordinator` (the top-level session), `delegated agent`, and
   capability tiers. These map cleanly to Codex subagents and spawned-agent
   settings; terms such as “routine” and “routine entry” mean scheduled tasks
   and are not Codex configuration terms.

@@ -6,7 +6,19 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/adapters/claude/hooks/session-start.sh\""
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/adapters/claude/hooks/session-start.sh\" bindings"
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/adapters/claude/hooks/session-start.sh\" policy 1"
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/adapters/claude/hooks/session-start.sh\" policy 2"
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/adapters/claude/hooks/session-start.sh\" policy 3"
           }
         ]
       }
@@ -28,6 +40,15 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/adapters/claude/hooks/check-chip-brief.py\""
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/adapters/claude/hooks/check-coordinator-edit.py\""
           }
         ]
       }

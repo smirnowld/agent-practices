@@ -55,7 +55,9 @@ unverified (2026-09-30).
 - **Delegate a role** (P2): spawn the custom agent by name (`explorer`,
   `implementer`, `light-reviewer`, `reviewer`, `critical-reviewer`,
   `critical-reviewer-strongest`), installed as copies in
-  `~/.codex/agents/` or the project's `.codex/agents/`.
+  `~/.codex/agents/` or the project's `.codex/agents/`. The top-level session
+  is the coordinator: source and test edits go to `implementer` (P2b). No
+  hook enforces this here; the rule is wording only.
 - **Model check** (P2d): no tool to switch a running session is checked; on
   a mismatch, ask me to switch the model and effort and stop.
 - **Ask me, or wait on me** (P6b): questions are chat text, numbered with
