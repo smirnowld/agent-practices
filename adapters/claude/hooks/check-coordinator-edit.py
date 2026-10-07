@@ -4,9 +4,14 @@ session is the coordinator and does not edit source (P2b).
 
 Decision order:
 1. Any caller, subagents included: deny an edit to the session's own
-   transcript, and an edit whose new content names the opt-out variable
-   AGENT_PRACTICES_COORDINATOR_EDITS, so no session can lift this check.
-2. Inside a subagent (the input carries agent_id) every other edit passes.
+   transcript, and an edit to a file that can set environment for this hook
+   (settings*.json, a shell startup file, .env or .env.*) whose new content
+   names the opt-out variable AGENT_PRACTICES_COORDINATOR_EDITS, also after
+   decoding JSON \\u escapes and dropping backslashes and quotes. These checks
+   stop accidental or naive writes of the opt-out, not a determined session.
+2. Inside a subagent (the input carries agent_id) every other edit passes:
+   subagents may still edit settings and plugin files, where only the opt-out
+   content above is checked.
 3. The user opts out by setting AGENT_PRACTICES_COORDINATOR_EDITS=allow.
 4. The coordinator is denied Claude Code settings files and anything under
    $CLAUDE_PLUGIN_ROOT or ~/.claude/plugins/, where this hook lives.
@@ -17,6 +22,8 @@ Decision order:
    not a slash command or its output; the line must start with that label
    (after an optional bullet and bold), and only its first path counts.
    Anything else is denied with a pointer to the implementer.
+
+Shell writes (Bash) are not covered by this hook.
 
 Any error lets the edit through with a note on stderr; a broken check must not
 block every session.
@@ -36,6 +43,10 @@ EDITS_LINE = re.compile(r"^\s*(?:[-*]\s*)?(?:\*\*)?coordinator edits?:(?:\*\*)?(
 COMMAND_PREFIXES = ("<command-name>", "<command-message>", "<local-command-", "/")
 CONFIG = {".json", ".jsonc", ".yaml", ".yml", ".toml", ".ini", ".cfg", ".conf", ".properties"}
 SETTINGS = {"settings.json", "settings.local.json"}
+# Files that can set environment for this hook, by basename.
+ENV_FILES = ("settings*.json", ".zshrc", ".zshenv", ".zprofile", ".bashrc",
+             ".bash_profile", ".profile", ".env", ".env.*")
+UNICODE_ESCAPE = re.compile(r"\\u([0-9a-fA-F]{4})")
 REASON = (
     "The top-level session is the coordinator and does not edit source (P2b). "
     "Hand this change to an implementer with the Agent tool, subagent_type "
@@ -82,6 +93,16 @@ def new_content(tool_input):
         if isinstance(edit, dict):
             parts.append(edit.get("new_string"))
     return "\n".join(p for p in parts if isinstance(p, str))
+
+
+def sets_opt_out(path, tool_input):
+    """New content for an environment-setting file that names the opt-out."""
+    name = os.path.basename(path).lower()
+    if not any(fnmatch.fnmatchcase(name, p) for p in ENV_FILES):
+        return False
+    text = UNICODE_ESCAPE.sub(lambda m: chr(int(m.group(1), 16)), new_content(tool_input))
+    text = re.sub(r"[\\\"']", "", text)
+    return OPT_OUT in text.upper()
 
 
 def is_protected(path):
@@ -159,7 +180,7 @@ def main():
         deny("No session edits its own transcript; it holds the brief that the "
              "coordinator edit check reads. Ask the user to change it.")
         return
-    if OPT_OUT in new_content(tool_input):
+    if sets_opt_out(path, tool_input):
         deny(f"No session writes {OPT_OUT}; it is the user's opt-out from the "
              "coordinator edit check. Ask the user to set it.")
         return

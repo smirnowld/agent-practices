@@ -352,9 +352,10 @@ checked 2026-10-07; confirmed with a headless run, claude 2.1.284,
 with `--agent`. In order:
 
 1. For every caller, subagents included: an edit to the session's own
-   transcript, or one whose new text contains
-   `AGENT_PRACTICES_COORDINATOR_EDITS`, is denied, so no session can forge a
-   brief or write the opt-out.
+   transcript is denied, and so is an edit to a settings file, a shell
+   startup file or a `.env` file whose new text names
+   `AGENT_PRACTICES_COORDINATOR_EDITS`. This stops an accidental or naive
+   forged brief or opt-out, not a determined one.
 2. A subagent's call passes.
 3. `AGENT_PRACTICES_COORDINATOR_EDITS=allow` in the environment passes
    the rest. It is for me: set it in settings `env`, which reaches hook
@@ -362,7 +363,7 @@ with `--agent`. In order:
    that sets it in its own shell does not reach the hook.
 4. Claude settings files (`settings.json`, `settings.local.json` under any
    `.claude` folder), `$CLAUDE_PLUGIN_ROOT` and `~/.claude/plugins/` are
-   denied, so the session cannot switch the hook off.
+   denied to the coordinator. A subagent may still edit them.
 5. A path outside the session's repository passes; the repository is
    `$CLAUDE_PROJECT_DIR`, else the input `cwd`, and worktrees of one
    repository count as the same (`git rev-parse --git-common-dir`).
@@ -376,7 +377,8 @@ with `--agent`. In order:
    `agent-practices:implementer`.
 
 Any error passes the call (fails open). Not covered: shell writes, reading,
-and files inside `.git/`. Tests: `hooks/test-check-coordinator-edit.sh`.
+files inside `.git/`, and settings or plugin edits by a subagent beyond the
+opt-out name. Tests: `hooks/test-check-coordinator-edit.sh`.
 
 ## Cloud sessions
 

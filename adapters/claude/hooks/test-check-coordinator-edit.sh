@@ -4,7 +4,7 @@
 # the repository, and the one config file the brief names first on a
 # "Coordinator edits:" line; a subagent (agent_id) and the user's opt-out pass
 # everything except opt-out tampering (the transcript, content naming the
-# opt-out variable); settings and plugin files are denied to the coordinator
+# opt-out variable in a settings, shell startup or .env file); settings and plugin files are denied to the coordinator
 # even when named; bad input passes with a note on stderr.
 set -eu
 hook="$(cd "$(dirname "$0")" && pwd)/check-coordinator-edit.py"
@@ -95,11 +95,18 @@ passes Write "$tmp/outside/.claude/settings.json" "$plain" ',"agent_id":"a1"'
 mk_edit() {
   printf '{"tool_name":"%s","cwd":"%s","agent_id":"a1","tool_input":%s}\n' "$1" "$tmp/outside" "$2" | python3 "$hook"
 }
-mk_edit Write '{"file_path":"x.sh","content":"export AGENT_PRACTICES_COORDINATOR_EDITS=allow"}' | grep -qF '"deny"' || { echo "error: subagent Write with opt-out passed" >&2; exit 1; }
-mk_edit Edit '{"file_path":"a.sh","new_string":"AGENT_PRACTICES_COORDINATOR_EDITS"}' | grep -qF '"deny"' || { echo "error: Edit new_string with opt-out passed" >&2; exit 1; }
-mk_edit MultiEdit '{"file_path":"a.sh","edits":[{"new_string":"x"},{"new_string":"AGENT_PRACTICES_COORDINATOR_EDITS=allow"}]}' | grep -qF '"deny"' || { echo "error: MultiEdit with opt-out passed" >&2; exit 1; }
-mk_edit NotebookEdit '{"notebook_path":"a.ipynb","new_source":"AGENT_PRACTICES_COORDINATOR_EDITS"}' | grep -qF '"deny"' || { echo "error: NotebookEdit with opt-out passed" >&2; exit 1; }
-
+mk_edit Write '{"file_path":".zshrc","content":"export AGENT_PRACTICES_COORDINATOR_EDITS=allow"}' | grep -qF '"deny"' || { echo "error: subagent Write of the opt-out to .zshrc passed" >&2; exit 1; }
+mk_edit Edit '{"file_path":".env","new_string":"AGENT_PRACTICES_COORDINATOR_EDITS"}' | grep -qF '"deny"' || { echo "error: Edit of the opt-out to .env passed" >&2; exit 1; }
+mk_edit MultiEdit '{"file_path":"x/.env.local","edits":[{"new_string":"x"},{"new_string":"AGENT_PRACTICES_COORDINATOR_EDITS=allow"}]}' | grep -qF '"deny"' || { echo "error: MultiEdit of the opt-out to .env.local passed" >&2; exit 1; }
+mk_edit Write '{"file_path":".claude/settings.local.json","content":"{\"env\":{\"AGENT_PRACTICES_COORDINATOR_EDITS\":\"allow\"}}"}' | grep -qF '"deny"' || { echo "error: subagent Write of the opt-out to settings.local.json passed" >&2; exit 1; }
+# The name JSON-escaped in the file content (\u0041 is A) is decoded when settings load.
+mk_edit Write '{"file_path":".claude/settings.local.json","content":"{\"env\":{\"\\u0041GENT_PRACTICES_COORDINATOR_EDITS\":\"allow\"}}"}' | grep -qF '"deny"' || { echo "error: subagent Write of the escaped opt-out to settings.local.json passed" >&2; exit 1; }
+mk_edit Write '{"file_path":".bashrc","content":"export A\\GENT_PRACTICES_\"COORDINATOR\"_EDITS=allow"}' | grep -qF '"deny"' || { echo "error: subagent Write of the quoted opt-out to .bashrc passed" >&2; exit 1; }
+# Elsewhere the name is ordinary text: docs and this hook may carry it.
+out=$(mk_edit Edit '{"file_path":"README.md","old_string":"x","new_string":"Set AGENT_PRACTICES_COORDINATOR_EDITS=allow"}' 2>&1)
+[ -z "$out" ] || { echo "error: subagent Edit naming the opt-out in README.md not passed: $out" >&2; exit 1; }
+out=$(mk_edit Write '{"file_path":"check-coordinator-edit.py","content":"OPT_OUT = \"AGENT_PRACTICES_COORDINATOR_EDITS\""}' 2>&1)
+[ -z "$out" ] || { echo "error: subagent Write naming the opt-out in the hook not passed: $out" >&2; exit 1; }
 # Plugin files are off limits to the coordinator.
 mkdir -p "$tmp/plugin/hooks" "$tmp/home/.claude/plugins/cache"
 out=$(input Write "$tmp/plugin/hooks/x.py" | CLAUDE_PLUGIN_ROOT="$tmp/plugin" python3 "$hook")
