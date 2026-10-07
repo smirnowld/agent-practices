@@ -52,7 +52,9 @@ This skill's results live in `PATH/cost-review/`: one file per run, named by
 the window's last day (`YYYY-MM-DD.md`). Files are kept. The previous record
 is the latest one whose window ends before this window starts; if none does
 but a record covers some of the same days, this run is a re-run: use that
-record and say so in the header.
+record and say so in the header. A re-run never replaces a record:
+its own record takes the next free name (`YYYY-MM-DD-2.md`) and names the
+record it re-ran.
 
 ## 1. Window
 
