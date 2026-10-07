@@ -44,7 +44,8 @@ the template's order: the asks and the TL;DR come last, where a chat opens.
   acceptance waits on its own card (`templates/acceptance-card.md`); point
   to it rather than repeating it.
 - **Status**, with its colour mark so I can read it at a glance:
-  - 🟢 **done**: merged and cleaned up;
+  - 🟢 **done**: merged and cleaned up; a deploy that follows is not
+    waited on (`merge` skill);
   - 🔵 **ready for you**: finished, reviewed and green, waiting only on my
     acceptance or merge;
   - 🟡 **partly done**: assigned work is left undone;

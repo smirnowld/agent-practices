@@ -9,7 +9,7 @@ skill. -->
 **Try it:** <P18 link to preview / build / screenshots page, and the path to
 click through>
 
-**Evidence:** <screenshots | deployed preview | phone build | recording>
+**Evidence:** <screenshots | PR preview or local run | phone build | recording>
 - <artifact link> — <what it shows>
 
 **Assumptions I made:** <assumption — how to undo if wrong; or "none">
