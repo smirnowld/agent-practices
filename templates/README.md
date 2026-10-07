@@ -7,6 +7,7 @@ fields. Using the template is mandatory; empty sections may be omitted.
 | Template | Used for | Stored |
 |---|---|---|
 | `brief.md` | Work package for another session or agent (P2c) | Message or chat, not the repo |
+| `session-title.md` | Every session's title: autonomy, type, size (P2a) | Session list |
 | `progress-update.md` | Checkpoint and compaction handoff (P14) | Chat |
 | `question.md` | One question for me, options by effect (P6, P11) | Chat or register |
 | `acceptance-card.md` | My acceptance of user-facing work (P6) | Chat and PR |

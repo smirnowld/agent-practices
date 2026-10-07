@@ -12,6 +12,11 @@ when ToolSearch cannot find it either, and the report says so.
   `mcp__ccd_session__spawn_task` chip per brief. The prompt is the filled
   brief; the title is its title; the summary says why now and repeats the
   Model line's model and effort. Briefs listed only in chat are not proposed.
+- **Title and place a session** (P2a, `templates/session-title.md`): rename
+  with `mcp__ccd_session_mgmt__set_session_title` and `session_id` `self`, at
+  start once sized and whenever the autonomy marker moves up. A `spawn_task`
+  chip's title is already in that form. Move into a project with
+  `mcp__ccd_directory__change_directory`; the move applies when the turn ends.
 - **Work in flight** (`brief` step 1): `mcp__ccd_session_mgmt__list_sessions`,
   plus this session's own `spawn_task` calls. Chips not yet started from other
   sessions or routines are invisible; say so.
