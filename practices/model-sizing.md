@@ -77,7 +77,7 @@ The first row that matches wins:
 |---|---|
 | Exploration or reasoning open | standard / high, or strong / medium for hard design |
 | Mechanical: formulaic output, objective proof (rename, fixtures, copy, screen to approved design), any size | fast / medium |
-| Exploration none or bounded, reasoning specified, size S | fast / high |
+| Exploration none or bounded, reasoning specified, size XS or S | fast / high |
 | Anything else (judgement, or size M) | standard / medium |
 
 Risk overrides the table: a brief whose Risk line is critical is never below

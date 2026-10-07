@@ -93,7 +93,8 @@ Fill `templates/brief.md`, every section.
 
 Set Size from "Size in responses" and the Model line from "Tier for a brief"
 (`practices/model-sizing.md`), which says what the Model line names. An L
-is split before it is proposed.
+is split before it is proposed. Set Autonomy and the title from
+`templates/session-title.md`.
 
 ## 6. Propose
 

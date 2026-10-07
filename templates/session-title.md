@@ -2,19 +2,20 @@
 
 <!-- The title every session carries, proposed or started by me (P2a). It
 lets me see from the session list what a session does and whether it waits
-on me. The project is not in the title: the session list groups sessions by
-folder. -->
+on me. The project is not in the title: where sessions are listed, they are
+grouped by project. -->
 
 ```
 AUTONOMY Type·Size — REF what it does
 ```
 
-Example: `🔵 Build·M — WP73b cart contract before the location is known`.
+Example: `🔵 Build·M — WP12 checkout contract for guest orders`.
 
 ## Autonomy
 
-How much of me the session needs. The estimate comes from the brief or from
-sizing the task (P2a).
+How much of me the session needs, in rising order 🟢 🔵 🟡 🔴; the highest
+that applies wins. The estimate comes from the brief or from sizing the task
+(P2a).
 
 | Marker | Name | What it needs from me |
 |---|---|---|
@@ -24,9 +25,7 @@ sizing the task (P2a).
 | 🔴 | With me | Throughout: decisions I own (P11), rulings, steering research, or steps I do by hand. |
 | ⏱ | Routine | Nothing: scheduled and read-only, it only proposes sessions. |
 
-The marker only moves up, never down: a session that starts waiting on me
-beyond its estimate retitles itself to the marker that now applies, and the
-closeout names the miss.
+⏱ goes only with the Routine type and no size: `⏱ Routine — daily triage`.
 
 ## Type
 
@@ -50,12 +49,6 @@ size.
 
 ## Rest
 
-`REF` is the plan or register reference when there is one (`WP73b`, `Q98`,
-`ADR-0058`, `#706`). The description says what the session does, in my
+`REF` is the plan or register reference when there is one (`WP12`, `Q3`,
+`ADR-0001`, `#42`). The description says what the session does, in my
 words, not the first message that started it.
-
-## Placement
-
-A session started in a folder above several projects, to route a request or
-explore a wider problem, moves into the project once the work clearly belongs
-to one. Work that spans projects stays where it started.

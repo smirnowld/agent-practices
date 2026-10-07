@@ -28,7 +28,9 @@ reviewer. Projects may add roles. Detail: `practices/delegation.md`.
 
 - **P2a. Size every task**: tier and effort for the work, not by habit
   (`practices/model-sizing.md`). Title the session by
-  `templates/session-title.md` once sized, and keep it true.
+  `templates/session-title.md` once sized; raise its marker when it starts
+  waiting on me beyond it, and say so in the closeout. A session started
+  above several projects moves into the one its work belongs to.
 - **P2b. The coordinator does not implement.** It never edits source or
   iterates on builds or tests, even from a complete brief; an implementer
   slice does. It edits only docs, briefs, plans, PR text and a one-file config

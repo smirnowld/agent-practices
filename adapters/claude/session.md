@@ -17,6 +17,8 @@ when ToolSearch cannot find it either, and the report says so.
   start once sized and whenever the autonomy marker moves up. A `spawn_task`
   chip's title is already in that form. Move into a project with
   `mcp__ccd_directory__change_directory`; the move applies when the turn ends.
+  A declined rename or move is not retried, and an unattended session does
+  not move.
 - **Work in flight** (`brief` step 1): `mcp__ccd_session_mgmt__list_sessions`,
   plus this session's own `spawn_task` calls. Chips not yet started from other
   sessions or routines are invisible; say so.
