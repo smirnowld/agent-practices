@@ -49,8 +49,9 @@ line, and stop: editing my global instructions is outside the repository
 repository, and never fall back to a default folder.
 
 This skill's results live in `PATH/cost-review/`: one file per run, named by
-the window's last day (`YYYY-MM-DD.md`). Files are kept. The previous record
-is the latest one whose window ends before this window starts; if none does
+the window's last day (`YYYY-MM-DD.md`). Files are kept. Records are ordered
+by that day, then by re-run number (`YYYY-MM-DD-2.md` follows
+`YYYY-MM-DD.md`). The previous record is the latest one whose window ends before this window starts; if none does
 but a record covers some of the same days, this run is a re-run: use that
 record and say so in the header. A re-run never replaces a record:
 its own record takes the next free name (`YYYY-MM-DD-2.md`) and names the
@@ -211,7 +212,7 @@ not re-ask a question an earlier record answered unless its figures moved.
 ## 7. Record
 
 After I answer, write `PATH/cost-review/YYYY-MM-DD.md` (the window's last
-day), following the folder's own rules if it is in a repository:
+day; a re-run takes the next free `-N` name, step 0), following the folder's own rules if it is in a repository:
 
 - Summary: window, totals with basis, the price table's date, the report
   link.
