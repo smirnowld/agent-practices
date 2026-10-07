@@ -31,20 +31,12 @@ line is set by whoever writes the brief, never by the coordinator for itself.
 
 Coherence, not cost. A coordinator that implements fills its context with
 diffs, build output and retries, compacts more often, and loses the brief's
-decisions across compactions. Coordinator sessions across my projects,
-measured 2026-10:
-
-| Sessions | n | Median cost | Compactions per session | Median coordinator reads |
-|---|---|---|---|---|
-| Coordinator implemented itself | 13 | $13.3 | 4.0 | 171 |
-| Handed implementation to implementers | 14 | $14.6 | 2.6 | 113 |
-| Did neither | 171 | $5.8 | 1.6 | 66 |
-
-Handing off did not save money: cost was about the same. It cut
-compactions and the coordinator's own reading. Reading was the larger
-spend: the 171 sessions that only read cost $1,363, 57% of the total, which
-is why wide reading goes to an explorer too. Delegated implementers reached
-a median peak context of 131k, so a slice needs its own budget (below).
+decisions across compactions. Handing implementation off did not save money,
+since an implementer's responses cost about what the coordinator's would,
+but it cut the coordinator's compactions and its own reading. Reading was
+the larger spend in sessions that only coordinated, which is why wide
+reading goes to an explorer too. Delegated implementers reach large contexts
+of their own, so a slice needs its own budget (below).
 
 ## Implementer slices
 

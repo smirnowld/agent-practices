@@ -48,8 +48,8 @@ number."
 
 ## Origin
 
-All projects, 2026-10: two days of closeouts from two agents. The densest
-ones (noun stacks, policy numbers, commit hashes in the text) were the
-hardest to act on, and two asks were missed or wrong. The closeout
+All projects: closeouts from two agents. The densest ones (noun stacks,
+policy numbers, commit hashes in the text) were the hardest to act on, and
+asks in them were missed or wrong. The closeout
 template took the structural fixes; this practice holds the wording rules so
 every message gets them, whichever agent writes it.

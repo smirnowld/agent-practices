@@ -30,9 +30,9 @@ P14; compaction thresholds themselves live in the adapters.
 - Ask the tool for the result, not the file: a build error's message, a test's
   failing lines, one grep with the pattern, not a listing to scan.
 
-Evidence: five product-repo sessions measured in 2026-09, each expected to be
-one slice, made 125 to 165 read-style shell calls, mostly windows over the
-same files, at about 120k context per call.
+Why: in product repos, sessions expected to be one slice made many read-style
+shell calls each, mostly windows over the same files, each re-sending a
+near-full context.
 
 ## Rules of thumb
 

@@ -67,6 +67,10 @@ above.
 
 Fill `templates/brief.md`, every section.
 
+- **The target repository's rules.** A brief for a repository follows that
+  repository's own `AGENTS.md`: it never tells a session to put a file where
+  that repository forbids it, such as results or analyses in a repository
+  that keeps them out. Name the place they go instead.
 - **Core files** do not overlap between briefs from one run, and each
   brief's No-go list carries the core files of the others and of sessions in
   flight. Where one must follow another, its Handoff says "start after BRIEF

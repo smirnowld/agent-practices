@@ -47,6 +47,15 @@ P4 sorts changes by what a mistake would do. Examples:
   jobs between runners, a change its brief rates low or normal risk, and
   every re-check of a fix given the finding (P4a).
 
+Why: critical review at the strongest tier was a large share of delegated
+spend, and much of it went to fix re-checks, repeats of one change across
+repositories, and changes where a mistake could do no critical harm. A
+standard-tier critical review found most of what the strongest one found, at
+a fraction of the cost; what it missed was an operator rollout step on a
+change touching a credential. A split that relied on each caller lowering
+the model did not hold, since callers left the role's defaults in place, so
+each stake is its own role.
+
 ## Tier for a brief
 
 A brief's tier comes from two questions, answered from what the brief
@@ -94,6 +103,10 @@ mandatory (P4) and budgeted in its role. One implementer stops past about
 100 responses ([delegation.md](delegation.md#implementer-slices)), so an M
 brief runs as two or more slices.
 
+Why: briefs expected to be one slice ran to several hundred responses with
+repeated compactions, and the total response count, not who made the
+responses, drove their cost.
+
 | Size | Responses | How it runs |
 |---|---|---|
 | S | up to 100 | one slice |
@@ -118,41 +131,3 @@ go up a tier.
 
 The brief fully specifies the change; the check is objective (compiler,
 snapshot, lint); output is formulaic.
-
-## Evidence log
-
-Forks: record notable outcomes (tier too weak or wasteful) here.
-
-- All projects: "Tier for a brief" moved scoped slices from
-  standard to fast tier. A starting point, not yet measured: record fast-tier
-  briefs that had to move up, and standard-tier briefs that fast would have
-  finished.
-- 2026-09, product repos: five briefs expected to be one slice ran 290 to
-  430 responses each with five to seven compactions. The total response
-  count, not who made the responses, was the cost driver. Led to "Size in
-  responses".
-- 2026-09, infrastructure and product repos: critical review was about 38%
-  of delegated spend, a strongest-tier run costing about four plain reviews;
-  a third of runs were confirm rounds or repeats of one change across repos.
-  Two strongest-tier critical reviews that had found blocking issues were
-  replayed at standard tier on the same commits: it found two of the three
-  blockers, and one real blocker the original missed, at about 40% of the
-  cost. The blocker the standard-tier run missed was an operator rollout
-  step on a change touching a runner token, which stays at strongest tier.
-  Led to P4a and a standard-tier critical review outside security, auth,
-  payments and data loss, since replaced (next entry).
-- 2026-09-29 to 2026-10-06, all projects: 87 critical reviews cost about
-  $380, about $4.30 each, with about 42k output tokens per run, mostly
-  thinking. After that split, 33 of 34 still ran at strongest / extra-high,
-  11 of them only release or migration work: the split depended on each
-  caller lowering the model, and callers did not. Sorted by what a mistake
-  would do, 6 needed the strongest tier, about 48 a standard-tier critical
-  review, and about 31 no critical review (9 fix re-checks, 5 agent tooling
-  changes, 5 rated low or normal risk, 4 ADRs and docs, plus runner moves, a
-  rename, a version bump CI proved and a table layout). The plain reviewer
-  ran 284 times; 29% were docs, plan or policy reviews, almost all at
-  standard / high, and callers who lowered the model to fast left effort at
-  high, since effort comes from the role, not the call. Led to the
-  effect-based critical list in P4, the strongest critical reviewer as a
-  separate role, the light reviewer, and P4a's fix re-check by the reviewer;
-  expected critical review spend about $125 a week.
