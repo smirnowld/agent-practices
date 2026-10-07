@@ -133,3 +133,8 @@ whether the merge was direct or auto-merge landed while you waited: it
 rewrites the PR description with the post-merge record and writes the chat
 summary. A closeout written without the skill, or a PR comment in place of
 the description, is not one.
+
+The session ends with the merge, cleanup and closeout. It does not wait for
+or check a deploy (staging or otherwise) unless its brief's Work, or I, name
+that step; health after a deploy is the project's own post-deploy checks and
+the daily `triage`.
