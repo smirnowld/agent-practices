@@ -196,7 +196,7 @@ thinking (`practices/writing-to-me.md#steps-for-me`).
 Never read, print, copy or commit a secret; name it and where I place it.
 Never open env files holding secrets with file read, write or edit tools. Use
 a secret only through `with-secrets` and a template the brief's Secrets
-section names (none without one). `with-secrets --operator` and
+section names (none without one). `with-secrets --full-access` and
 `push-secrets` are mine (`practices/secrets.md`).
 
 ## P11. Requirements and decisions

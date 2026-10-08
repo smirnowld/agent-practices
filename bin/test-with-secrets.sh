@@ -93,11 +93,33 @@ grep -q 'no Keychain item op-agent-other' "$dir/out"
 fails env X=op://agents-demo/other/field "$tool" --project demo --template "$dir/agent.tpl" -- true
 grep -q 'environment holds op:// references (X)' "$dir/out"
 
-# Operator mode: any vault, and a token in the caller's shell is dropped.
-: > "$log"
-OP_SERVICE_ACCOUNT_TOKEN=stray "$tool" --operator --template "$dir/ops.tpl" -- true
-grep -qx 'op token=none' "$log"
-lacks security "$log"
+# Full-access mode: any vault, and a token in the caller's shell is dropped.
+# --operator is the old name and behaves the same.
+for flag in --full-access --operator; do
+  : > "$log"
+  OP_SERVICE_ACCOUNT_TOKEN=stray "$tool" "$flag" --template "$dir/ops.tpl" -- true
+  grep -qx 'op token=none' "$log"
+  lacks security "$log"
+done
+
+# Full-access mode reports itself, and its default template is full-access.env.tpl,
+# else operator.env.tpl; an explicit --template is used as given.
+mkdir "$dir/dt"
+(cd "$dir/dt" && "$tool" --full-access --dry-run -- true 2>&1 | grep -q 'no template full-access.env.tpl')
+(cd "$dir/dt" && ! "$tool" --full-access --dry-run -- true >/dev/null 2>&1)
+cp "$dir/ops.tpl" "$dir/dt/operator.env.tpl"
+(cd "$dir/dt" && "$tool" --full-access --dry-run -- true 2>&1 | grep -qx 'mode full-access, template operator.env.tpl')
+(cd "$dir/dt" && "$tool" --operator --dry-run -- true 2>&1 | grep -qx 'mode full-access, template operator.env.tpl')
+cp "$dir/ops.tpl" "$dir/dt/full-access.env.tpl"
+(cd "$dir/dt" && "$tool" --full-access --dry-run -- true 2>&1 | grep -qx 'mode full-access, template full-access.env.tpl')
+(cd "$dir/dt" && "$tool" --full-access --dry-run --template operator.env.tpl -- true 2>&1 | grep -qx 'mode full-access, template operator.env.tpl')
+rm "$dir/dt/full-access.env.tpl" "$dir/dt/operator.env.tpl"
+(cd "$dir/dt" && ! "$tool" --full-access --dry-run -- true >/dev/null 2>&1)
+(cd "$dir/dt" && ! "$tool" --full-access --dry-run --template full-access.env.tpl -- true >/dev/null 2>&1)
+
+# Unknown flags print usage and exit 2.
+rc=0; "$tool" --bogus -- true >"$dir/out" 2>&1 || rc=$?
+[ "$rc" = 2 ] && grep -q 'usage: with-secrets \[--full-access\]' "$dir/out"
 
 # Dry run lists names and vaults and calls nothing.
 : > "$log"
