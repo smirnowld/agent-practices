@@ -186,7 +186,9 @@ project's agreed host is not publishing.
 
 **P9a. Do it, then hand me the rest.** Run and check what the work needs
 yourself; for a P9 action, ask, then run it after my OK. A step is mine only
-when you cannot do it even with my OK. Each such step reaches me in chat and
+when you cannot do it even with my OK; one that is only clicks in a web page,
+offer to do in my browser where the adapter names one. Each such step reaches
+me in chat and
 in the closeout, never only in a README, PR body, comment or thinking
 (`practices/writing-to-me.md#steps-for-me`).
 

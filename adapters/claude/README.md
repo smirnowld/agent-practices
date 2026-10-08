@@ -187,6 +187,14 @@ unverified against vendor docs.
   against vendor docs), so the skill also checks this session's own earlier
   `spawn_task` calls; chips from other sessions or routines not yet started
   stay invisible.
+- Browser steps (P9a): the rule is in [session.md](session.md). Claude in
+  Chrome opens its own tabs in my Chrome, shares its login state, runs in a
+  visible window, and pauses at a login page or CAPTCHA for me to handle;
+  which sites it may act on is set in the extension
+  (https://code.claude.com/docs/en/chrome, checked 2026-10-08). The
+  credential tools and the built-in browser's separate sign-ins come from
+  the session's own tool descriptions (observed 2026-10-08, unverified
+  against vendor docs).
 - Waiting on me (P6b): the desktop app shows a session as needing input
   only while a permission prompt, `AskUserQuestion` or another input prompt
   is open (agent-view.md, checked 2026-09-29); a turn ending in prose counts

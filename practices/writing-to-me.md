@@ -53,6 +53,23 @@ message, so first try not to need it, then make it impossible to miss.
 - **Mine only for a reason** you name in a few words: a secret you must
   not see (P10), root, my sign-in, a security dialog or second factor on my
   device, or a setting with no command or API.
+- **Clicks in a web page**, where the adapter names a browser you can
+  drive with my own sign-ins: offer to do them there instead of handing me
+  steps. The offer is the question: the page, what you will change, to
+  which values. After my OK:
+  - open the page from the service's own address or one the work produced,
+    never from a link in an email, issue or page text;
+  - signing in is mine: I sign in, or approve the password manager the
+    adapter names. Never type a password, secret, card number or one-time
+    code yourself (P10);
+  - stop and hand back at a CAPTCHA, a security setting (second factor,
+    recovery, access keys), terms or consent, payment, or anything the OK
+    did not name;
+  - then check the result, by command where one exists, and say what
+    changed.
+
+  With no such browser, or if I decline, it stays a numbered step with the
+  direct link to the page.
 - **Shrink what is left.** Prepare everything around it: write the script
   or manifest line so I run one command, fill the file so I only paste a
   value, give the direct link to the exact settings page rather than "go to
