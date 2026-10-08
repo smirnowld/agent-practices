@@ -27,7 +27,20 @@ echo "security \$*" >> "$log"
 [ "\$3" = op-agent-demo ] || exit 44
 echo tok-demo
 FAKE
-chmod +x "$dir/bin/op" "$dir/bin/security"
+# Fake uname: Darwin unless FAKE_UNAME says otherwise, so the Keychain cases
+# run the same on a Linux CI runner. Fake id: FAKE_UID for -u when set.
+real_uname=$(command -v uname) real_id=$(command -v id)
+cat > "$dir/bin/uname" <<FAKE
+#!/bin/sh
+[ "\$1" = -s ] && { echo "\${FAKE_UNAME:-Darwin}"; exit 0; }
+exec "$real_uname" "\$@"
+FAKE
+cat > "$dir/bin/id" <<FAKE
+#!/bin/sh
+[ "\$1" = -u ] && [ -n "\${FAKE_UID:-}" ] && { echo "\$FAKE_UID"; exit 0; }
+exec "$real_id" "\$@"
+FAKE
+chmod +x "$dir/bin/op" "$dir/bin/security" "$dir/bin/uname" "$dir/bin/id"
 PATH="$dir/bin:$PATH"; export PATH
 lacks() { [ -f "$2" ] || { echo "no $2"; exit 1; }; if grep -q "$1" "$2"; then echo "$2 holds $1"; exit 1; fi; }
 fails() { if "$@" >"$dir/out" 2>&1; then echo "expected failure: $*"; exit 1; fi; }
@@ -75,4 +88,71 @@ lacks security "$log"
 "$tool" --project demo --dry-run --template "$dir/agent.tpl" > "$dir/out" 2>/dev/null
 grep -qx "$(printf 'A\tagents-demo')" "$dir/out"
 [ ! -s "$log" ]
+
+# Linux: the token comes from ~/.config/op/agent-PROJECT.token, mode 600 or
+# 400 and yours; the Keychain is never asked.
+HOME="$dir/home"; export HOME
+tokdir="$HOME/.config/op"; tok="$tokdir/agent-demo.token"
+mkdir -p "$tokdir"
+printf 'tok-file\n' > "$tok"; chmod 600 "$tok"
+FAKE_UNAME=Linux; export FAKE_UNAME
+: > "$log"
+"$tool" --project demo --template "$dir/agent.tpl" -- \
+  sh -c 'echo "$A $B" > "$0"; env > "$0.env"' "$dir/child"
+[ "$(cat "$dir/child")" = "value-A value-B" ]
+lacks OP_SERVICE_ACCOUNT_TOKEN "$dir/child.env"
+grep -qx 'op token=tok-file' "$log"
+lacks security "$log"
+
+# The project name comes from the repository, as on macOS.
+: > "$log"
+(cd "$dir/demo" && "$tool" -- true)
+grep -qx 'op token=tok-file' "$log"
+
+chmod 400 "$tok"
+"$tool" --project demo --template "$dir/agent.tpl" -- true
+
+# Refused, naming the file and the practice, never showing the token.
+printf 'tok-file-SECRET\n' > "$dir/valid"; chmod 600 "$dir/valid"
+refused() {
+  fails "$tool" --project demo --template "$dir/agent.tpl" -- true
+  grep -q "$tok" "$dir/out" || { echo "no path in: $(cat "$dir/out")"; exit 1; }
+  grep -q 'practices/secrets.md' "$dir/out" || { echo "no practice in: $(cat "$dir/out")"; exit 1; }
+  grep -q "$1" "$dir/out" || { echo "expected '$1' in: $(cat "$dir/out")"; exit 1; }
+  lacks tok-file "$dir/out"
+}
+for m in 644 640 660 700 604; do
+  rm -f "$tok"; printf 'tok-file-SECRET\n' > "$tok"; chmod "$m" "$tok"
+  refused "has mode"
+done
+rm -f "$tok"; refused "is missing"
+: > "$tok"; chmod 600 "$tok"; refused "is empty"
+printf '\n' > "$tok"; refused "is empty"
+rm -f "$tok"; ln -s "$dir/valid" "$tok"; refused "is a symlink"
+rm -f "$tok"; mkdir "$tok"; refused "is not a regular file"
+rmdir "$tok"; printf 'tok-file-SECRET\n' > "$tok"; chmod 600 "$tok"
+FAKE_UID=4242; export FAKE_UID
+refused "is not owned by you"
+unset FAKE_UID
+"$tool" --project demo --template "$dir/agent.tpl" -- true
+
+# A project name that could leave the directory is refused on Linux.
+for p in ../demo .demo -demo 'de/mo'; do
+  fails "$tool" --project "$p" --template "$dir/agent.tpl" -- true
+  grep -q 'project name' "$dir/out"
+done
+fails "$tool" --project "$(printf 'demo\n../x')" --template "$dir/agent.tpl" -- true
+grep -q 'project name' "$dir/out"
+
+# Other systems are refused.
+FAKE_UNAME=FreeBSD
+fails "$tool" --project demo --template "$dir/agent.tpl" -- true
+grep -q 'macOS (Keychain) and Linux (token file) only' "$dir/out"
+
+# macOS ignores the token file and asks the Keychain.
+FAKE_UNAME=Darwin
+: > "$log"
+"$tool" --project demo --template "$dir/agent.tpl" -- true
+grep -qx 'op token=tok-demo' "$log"
+grep -q '^security ' "$log"
 echo "with-secrets self-test passed"

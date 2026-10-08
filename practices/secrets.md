@@ -20,7 +20,7 @@ Cross-project lesson.
 How agents and I use secrets without pasting them or approving a prompt per
 lookup. Built on 1Password service accounts and its CLI, `op`; checked
 2026-10-05 against [service accounts](https://www.1password.dev/service-accounts/get-started.md)
-and [rate limits](https://www.1password.dev/service-accounts/rate-limits).
+and, on 2026-10-08, [rate limits](https://www.1password.dev/service-accounts/rate-limits).
 
 ### Vaults
 
@@ -46,7 +46,8 @@ and [rate limits](https://www.1password.dev/service-accounts/rate-limits).
 
 ### Token in the Keychain
 
-The service account's token lives in the macOS Keychain. `-T /usr/bin/security`
+On macOS the service account's token lives in the Keychain (on Linux, see
+Token on Linux). `-T /usr/bin/security`
 lets any of my processes read it without a prompt through that tool, agents
 included; the vault scope, not the Keychain, is the boundary.
 
@@ -75,9 +76,44 @@ any of my processes read it. Rotate with Rotate Token on the service account
 now or after a grace period, and store the new one the same way. Revoke
 Token there revokes the current token, so it is not part of a rotation.
 
+### Token on Linux
+
+The token lives in `~/.config/op/agent-<project>.token`, with `<project>`
+derived as on macOS (`--project NAME` overrides). `with-secrets` refuses the
+file unless it is a regular file (not a symlink), owned by the user running
+it, mode 600 or 400, and not empty; a trailing newline is trimmed. As with the
+Keychain, anyone running as that user can read it, so the vault scope is the
+boundary.
+
+Create it so the token never reaches argv or the screen. In bash or zsh
+(`read -s` is not POSIX sh), paste at the prompt; the guard refuses a value
+that is not a token:
+
+```sh
+mkdir -p -m 700 ~/.config/op && (umask 077; IFS= read -rs t && case $t in ops_*) printf '%s\n' "$t" > ~/.config/op/agent-<project>.token ;; *) echo "not a token" >&2 ;; esac; unset t)
+```
+
+Or pipe it from the Mac: copy with the 1Password app's copy button, run the
+line below, then clear the clipboard (`pbcopy </dev/null`):
+
+```sh
+pbpaste | ssh HOST 'mkdir -p -m 700 ~/.config/op && umask 077 && cat > ~/.config/op/agent-<project>.token'
+```
+
+Check the length and prefix, and the owner and mode, never the value (GNU
+`stat`):
+
+```sh
+awk '{print length($0), substr($0,1,4)}' ~/.config/op/agent-<project>.token
+stat -c '%U %a' ~/.config/op/agent-<project>.token
+```
+
+Rotate as in the Keychain section, then rewrite the file the same way.
+
 ### Running with secrets
 
-- `with-secrets -- CMD` (agent mode) reads the token from the Keychain and
+- `with-secrets -- CMD` (agent mode) reads the token (Keychain on macOS, token
+  file on Linux) and
   runs `CMD` under `op run` with the template's `op://` references. The token
   is kept out of `CMD`'s environment (hygiene for logs, not a boundary).
   `op run` masks values in output. In both modes, `op://` references in the
@@ -99,8 +135,10 @@ Token there revokes the current token, so it is not part of a rotation.
 
 ### Quotas
 
-Families and Teams accounts allow 1,000 service-account requests per day for
-the whole account, and 1,000 reads per hour per token. Reading a reference by
+Per the [rate limits](https://www.1password.dev/service-accounts/rate-limits),
+service-account requests per day for the whole account are capped at 1,000 on
+Families, 5,000 on Teams and 50,000 on Business; reads per hour per token at
+1,000 on Families and Teams and 10,000 on Business. Reading a reference by
 name costs 3 requests; by vault and item ID, 1
 ([multiple requests](https://www.1password.dev/service-accounts/use-with-1password-cli.md)).
 So agent templates use IDs. Desktop-app sign-in doesn't count against these quotas. Check usage with
