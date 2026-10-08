@@ -28,7 +28,8 @@ echo "security \$*" >> "$log"
 echo tok-demo
 FAKE
 # Fake uname: Darwin unless FAKE_UNAME says otherwise, so the Keychain cases
-# run the same on a Linux CI runner. Fake id: FAKE_UID for -u when set.
+# run the same on a Linux CI runner. Fake id: FAKE_UID for -u when set,
+# except once while the file FAKE_UID_SKIP names exists (it is removed).
 real_uname=$(command -v uname) real_id=$(command -v id)
 cat > "$dir/bin/uname" <<FAKE
 #!/bin/sh
@@ -37,10 +38,25 @@ exec "$real_uname" "\$@"
 FAKE
 cat > "$dir/bin/id" <<FAKE
 #!/bin/sh
-[ "\$1" = -u ] && [ -n "\${FAKE_UID:-}" ] && { echo "\$FAKE_UID"; exit 0; }
+if [ "\$1" = -u ] && [ -n "\${FAKE_UID:-}" ]; then
+  if [ -n "\${FAKE_UID_SKIP:-}" ] && [ -e "\$FAKE_UID_SKIP" ]; then rm -f "\$FAKE_UID_SKIP"
+  else echo "\$FAKE_UID"; exit 0; fi
+fi
 exec "$real_id" "\$@"
 FAKE
-chmod +x "$dir/bin/op" "$dir/bin/security" "$dir/bin/uname" "$dir/bin/id"
+# Fake stat: with FAKE_SWAP set, replaces that file just before it is
+# inspected by path, as a race after the open would.
+real_stat=$(command -v stat)
+cat > "$dir/bin/stat" <<FAKE
+#!/bin/sh
+for a; do
+  if [ -n "\${FAKE_SWAP:-}" ] && [ "\$a" = "\$FAKE_SWAP" ]; then
+    rm -f "\$a"; printf 'tok-swapped\\n' > "\$a"; chmod 600 "\$a"
+  fi
+done
+exec "$real_stat" "\$@"
+FAKE
+chmod +x "$dir/bin/op" "$dir/bin/security" "$dir/bin/uname" "$dir/bin/id" "$dir/bin/stat"
 PATH="$dir/bin:$PATH"; export PATH
 lacks() { [ -f "$2" ] || { echo "no $2"; exit 1; }; if grep -q "$1" "$2"; then echo "$2 holds $1"; exit 1; fi; }
 fails() { if "$@" >"$dir/out" 2>&1; then echo "expected failure: $*"; exit 1; fi; }
@@ -93,7 +109,7 @@ grep -qx "$(printf 'A\tagents-demo')" "$dir/out"
 # 400 and yours; the Keychain is never asked.
 HOME="$dir/home"; export HOME
 tokdir="$HOME/.config/op"; tok="$tokdir/agent-demo.token"
-mkdir -p "$tokdir"
+mkdir -p "$tokdir"; chmod 700 "$tokdir"
 printf 'tok-file\n' > "$tok"; chmod 600 "$tok"
 FAKE_UNAME=Linux; export FAKE_UNAME
 : > "$log"
@@ -131,15 +147,57 @@ printf '\n' > "$tok"; refused "is empty"
 rm -f "$tok"; ln -s "$dir/valid" "$tok"; refused "is a symlink"
 rm -f "$tok"; mkdir "$tok"; refused "is not a regular file"
 rmdir "$tok"; printf 'tok-file-SECRET\n' > "$tok"; chmod 600 "$tok"
+FAKE_UID=4242 FAKE_UID_SKIP="$dir/skip"; export FAKE_UID FAKE_UID_SKIP
+: > "$FAKE_UID_SKIP"; refused "is not owned by you"
+unset FAKE_UID FAKE_UID_SKIP
+"$tool" --project demo --template "$dir/agent.tpl" -- true
+
+# A file replaced between the open and the checks is not read.
+FAKE_SWAP=$tok; export FAKE_SWAP
+refused "changed while it was checked"
+unset FAKE_SWAP
+rm -f "$tok"; printf 'tok-file\n' > "$tok"; chmod 600 "$tok"
+
+# A carriage return (CRLF line ending) is refused, not sent to op.
+printf 'tok-file-SECRET\r\n' > "$tok"; refused "contains a carriage return"
+printf 'tok-file\n' > "$tok"
+
+# Setuid and setgid token files are refused. Skipped, with a note, where the
+# system drops the bit (setgid outside your groups, for one).
+fmode() { stat -c '%a' -- "$1" 2>/dev/null || stat -f '%Mp%Lp' -- "$1"; }
+for m in 4600 2600 1600; do
+  rm -f "$tok"; printf 'tok-file-SECRET\n' > "$tok"
+  if chmod "$m" "$tok" 2>/dev/null && [ "$(fmode "$tok")" = "$m" ]; then
+    refused "has mode $m"
+  else
+    echo "note: skipped mode $m (chmod did not set it here)"
+  fi
+done
+rm -f "$tok"; printf 'tok-file\n' > "$tok"; chmod 600 "$tok"
+
+# The directory: yours, not a symlink, not writable by group or others.
+refused_dir() {
+  fails "$tool" --project demo --template "$dir/agent.tpl" -- true
+  grep -q "token directory $tokdir $1" "$dir/out" || { echo "expected '$1' in: $(cat "$dir/out")"; exit 1; }
+  grep -q 'practices/secrets.md' "$dir/out" || { echo "no practice in: $(cat "$dir/out")"; exit 1; }
+  lacks tok-file "$dir/out"
+}
+for m in 777 775 757 720; do chmod "$m" "$tokdir"; refused_dir "has mode"; done
+for m in 755 700 750; do chmod "$m" "$tokdir"; "$tool" --project demo --template "$dir/agent.tpl" -- true; done
 FAKE_UID=4242; export FAKE_UID
-refused "is not owned by you"
+refused_dir "is not owned by you"
 unset FAKE_UID
+mv "$tokdir" "$HOME/.config/op-real"; ln -s op-real "$tokdir"
+refused_dir "is a symlink"
+rm "$tokdir"; mv "$HOME/.config/op-real" "$tokdir"
+chmod 700 "$tokdir"
 "$tool" --project demo --template "$dir/agent.tpl" -- true
 
 # A project name that could leave the directory is refused on Linux.
 for p in ../demo .demo -demo 'de/mo'; do
   fails "$tool" --project "$p" --template "$dir/agent.tpl" -- true
-  grep -q 'project name' "$dir/out"
+  grep -q 'project name must match' "$dir/out"
+  lacks 'de/mo' "$dir/out"; lacks '\.\./demo' "$dir/out"; lacks ' -demo' "$dir/out"
 done
 fails "$tool" --project "$(printf 'demo\n../x')" --template "$dir/agent.tpl" -- true
 grep -q 'project name' "$dir/out"

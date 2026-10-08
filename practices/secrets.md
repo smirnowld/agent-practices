@@ -81,23 +81,29 @@ Token there revokes the current token, so it is not part of a rotation.
 The token lives in `~/.config/op/agent-<project>.token`, with `<project>`
 derived as on macOS (`--project NAME` overrides). `with-secrets` refuses the
 file unless it is a regular file (not a symlink), owned by the user running
-it, mode 600 or 400, and not empty; a trailing newline is trimmed. As with the
-Keychain, anyone running as that user can read it, so the vault scope is the
-boundary.
+it, mode 600 or 400 (no setuid, setgid or sticky bit), not empty and free of
+carriage returns; a trailing newline is trimmed. It also refuses the
+directory `~/.config/op` if it is a symlink, not owned by that user, or
+writable by group or others. It checks the file it has opened and reads the
+token from it, so a file swapped in after the checks is never read. As with
+the Keychain, anyone running as that user can read it, so the vault scope is
+the boundary. Keep the file out of any dotfiles setup or git checkout (a
+stow-managed `~/.config`, for one), so it is never committed or linked.
 
-Create it so the token never reaches argv or the screen. In bash or zsh
-(`read -s` is not POSIX sh), paste at the prompt; the guard refuses a value
-that is not a token:
+Create it so the token never reaches argv or the screen. Both lines below set
+the directory to 700 and remove an old file first, so an existing directory
+or file can't keep a looser mode. In bash or zsh (`read -s` is not POSIX sh),
+paste at the prompt; the guard refuses a value that is not a token:
 
 ```sh
-mkdir -p -m 700 ~/.config/op && (umask 077; IFS= read -rs t && case $t in ops_*) printf '%s\n' "$t" > ~/.config/op/agent-<project>.token ;; *) echo "not a token" >&2 ;; esac; unset t)
+mkdir -p ~/.config/op && chmod 700 ~/.config/op && (umask 077; IFS= read -rs t && case $t in ops_*) rm -f ~/.config/op/agent-<project>.token && printf '%s\n' "$t" > ~/.config/op/agent-<project>.token ;; *) echo "not a token" >&2 ;; esac; unset t)
 ```
 
 Or pipe it from the Mac: copy with the 1Password app's copy button, run the
 line below, then clear the clipboard (`pbcopy </dev/null`):
 
 ```sh
-pbpaste | ssh HOST 'mkdir -p -m 700 ~/.config/op && umask 077 && cat > ~/.config/op/agent-<project>.token'
+pbpaste | ssh HOST 'mkdir -p ~/.config/op && chmod 700 ~/.config/op && umask 077 && rm -f ~/.config/op/agent-<project>.token && cat > ~/.config/op/agent-<project>.token'
 ```
 
 Check the length and prefix, and the owner and mode, never the value (GNU
