@@ -289,9 +289,10 @@ unverified against vendor docs.
   found the same way, and a subagent whose `Agent` (or `Task`) result
   starts with "Async agent launched successfully" and names "agentId: ID"
   on a later line (observed 2026-10-08, not documented), counts as a
-  running task until its notification or `TaskStop`. The ID must be on the
-  result's first line, and "running in background" counts only for a call
-  with `run_in_background`, so output that quotes these lines (a `cat` of
+  running task until its notification or `TaskStop`. A Bash result must open with
+  "Command running in background with ID: ID" (only for a call with
+  `run_in_background`) or "Command did not finish (or complete) … moved to
+  the background (ID: ID)", so output that quotes these lines (a `cat` of
   the hook's tests, a subagent's report) starts no task.
   It blocks a final message whose sentence pairs a waiting phrase with CI,
   a run, a check or a merge while no background task or subagent runs, unless the wait is on

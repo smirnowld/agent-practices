@@ -118,12 +118,12 @@ OPEN_REASON = (
     "waiting on it. If you are, say so in one line and end the turn; it wakes you when it "
     "ends. Otherwise, or if it is stale, stop it with TaskStop" + "{1}" + " first: a "
     "closeout leaves none of the session's own waits running (closeout skill).")
-# A background task's id on the first line of its own Bash tool result, for a
+# A background task's id opening its own Bash tool result, for a
 # call with run_in_background or one moved there on timeout, and its end in a
 # task notification or TaskStop (observed 2026-10-06, not documented). Output
 # that only quotes the sentence (a `cat` of this hook's tests) is no task.
-BG_ID = re.compile(r"\s*[^\n]*?running in background with ID: (\w+)")
-MOVED_ID = re.compile(r"\s*[^\n]*?moved to the background \(ID: (\w+)\)")
+BG_ID = re.compile(r"\s*Command running in background with ID: (\w+)")
+MOVED_ID = re.compile(r"\s*Command did not (?:finish|complete)[^\n]*?moved to the background \(ID: (\w+)\)")
 # A background subagent's id in its Agent tool result, which starts with the
 # launch line; its notification names it as the task id (observed 2026-10-08,
 # not documented). A synchronous subagent's report that quotes it is no task.

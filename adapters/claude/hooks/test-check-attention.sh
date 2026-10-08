@@ -348,7 +348,7 @@ CI is running, and I'll report when it finishes." '' "$wait"
 # The session's own waits, read from the transcript. A background result names
 # the task; a notification or TaskStop ends it.
 bg='r:Command running in background with ID: bg1. Output is being written to: /tmp/bg1.output'
-moved='r:Command did not complete within its 600s timeout and was moved to the background (ID: bg1). Output'
+moved='r:Command did not finish within its 600s timeout and was moved to the background (ID: bg1). Output'
 note='<task-notification>
 <task-id>bg1</task-id>
 <tool-use-id>s2</tool-use-id>
@@ -421,13 +421,17 @@ passes "$claim"
 session u:go 'b:make check' "$moved"
 passes "$docs"
 passes 'Done.'
-# Output that only quotes a background result is no task: a foreground call,
-# or the sentence after the result's first line.
+# Output that only quotes a background result is no task: a foreground call's,
+# a quote after the first line, or a grep line that quotes it.
 session u:go 'b:cat adapters/claude/hooks/test-check-attention.sh' "$bg"
 blocks "$claim" '' "$wait"
 session u:go 'w:cat test.sh' "r:#!/bin/sh
 bg='${bg#r:}'
 moved='${moved#r:}'"
+blocks "$claim" '' "$wait"
+session u:go 'b:grep -n moved test.sh' "r:351:moved='${moved#r:}'"
+blocks "$claim" '' "$wait"
+session u:go 'w:grep -n bg= test.sh' "r:350:bg='${bg#r:}'"
 blocks "$claim" '' "$wait"
 # A background subagent excuses it until its notification, by task id or
 # tool-use id, arrives or it is stopped; a synchronous one, or a failed launch,
