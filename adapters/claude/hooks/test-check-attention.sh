@@ -3,7 +3,7 @@
 # ends a turn without a signal is blocked once; a turn that already signalled,
 # a repeat stop and plain answers pass silently; bad input passes with a note
 # on stderr. A merge without its closeout, a turn that says it waits on CI with
-# none of its own GitHub waits running, and a turn that ends with its own
+# none of its background tasks or subagents running, and a turn that ends with its own
 # wait-for running and no word of waiting, are blocked; so is a closeout
 # written without the closeout skill, and an auto-merge that landed without
 # its closeout.
@@ -403,12 +403,56 @@ session u:go 'b:wait-for pr-ci 5' e:"$bg"
 passes 'Done.'
 session u:go 'b:wait-for pr-ci 5'
 passes 'Done.'
-# Not waits: a script with the name in it, a quoted mention, a dev server.
+# Not the session's own waits: a script with the name in it, a quoted mention.
 session u:go 'b:sh bin/test-wait-for.sh' "$bg" 'b:grep "wait-for pr-ci" README.md' "$bg"
 passes 'Done.'
+# Any other running background task excuses a waiting claim, since its end wakes
+# the session: a local test run, and a dev server too (accepted); once it ends,
+# the claim is blocked again.
+docs='The docs check (`make check`) is running in the background and will wake this session.'
+session u:go 'w:make check' "$bg"
+passes "$docs"
+passes 'Done.'
+session u:go 'w:make check' "$bg" u:"$note"
+blocks "$docs" '' "$wait"
 session u:go 'b:npm run dev' "$bg"
-blocks "$claim" '' "$wait"
-blocks "$claim" '{"background_tasks":[{"id":"bg1","type":"bash"}]}' "$wait"
+passes "$claim"
+# A background subagent excuses it until its notification, by task id or
+# tool-use id, arrives or it is stopped; a finished one, or a failed launch, does not.
+agent() {
+  session u:go
+  python3 -c '
+import json, sys
+print(json.dumps({"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "ag1",
+    "name": sys.argv[1], "input": {"description": "Review the diff", "run_in_background": True}}]}}))
+print(json.dumps({"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "ag1",
+    "is_error": sys.argv[3:] == ["e"], "content": [{"type": "text", "text": sys.argv[2]}]}]}}))' "$@" >>"$tmp/t.jsonl"
+}
+launched='Async agent launched successfully.
+agentId: a1b2c3 (use SendMessage with to: a1b2c3 to continue this agent)'
+review="I'm waiting on the review run; it'll report when it finishes."
+for name in Agent Task; do
+  agent "$name" "$launched"
+  passes "$review"
+  passes 'Done.'
+done
+agent Agent "$launched"
+printf '%s\n' '{"type":"user","message":{"content":"<task-notification>\n<task-id>a1b2c3</task-id>\n<status>completed</status>\n</task-notification>"}}' >>"$tmp/t.jsonl"
+blocks "$review" '' "$wait"
+agent Agent "$launched"
+python3 -c 'import json,sys; print(json.dumps({"type":"attachment","attachment":{"type":"queued_command","prompt":sys.argv[1]}}))' \
+  '<task-notification><tool-use-id>ag1</tool-use-id><status>completed</status></task-notification>' >>"$tmp/t.jsonl"
+blocks "$review" '' "$wait"
+agent Agent "$launched"
+printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"x1","name":"TaskStop","input":{"task_id":"a1b2c3"}}]}}' >>"$tmp/t.jsonl"
+blocks "$review" '' "$wait"
+agent Agent 'The review found no problems.'
+blocks "$review" '' "$wait"
+agent Agent "$launched" e
+blocks "$review" '' "$wait"
+# A true wait on a merge with nothing running is still blocked.
+session u:go "$auto" r
+blocks "I'm waiting for the merge, and it'll wake me." '' "$wait"
 # GitHub watches excuse a waiting claim but are not the closeout's to stop.
 for watch in 'b:gh run watch 9 --exit-status' 'b:gh pr checks 5 --watch' \
   'b:timeout 1500 gh pr checks 5 --watch' 'b:GH_REPO=o/r gh run watch 9' 'b:gh -R o/r run watch 9'; do

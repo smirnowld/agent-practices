@@ -231,8 +231,10 @@ unverified against vendor docs.
     to a question is the turn's last entry and no text follows it, a final
     message equal to the text I answered is not checked again;
   - it says it is waiting on CI, a run or a merge while none of the
-    session's own GitHub waits is running, or it ends while one of its own
-    `wait-for` waits runs without saying it is waiting (below);
+    session's background tasks or subagents is running (any running one
+    wakes the session when it ends, so it excuses the claim, a background
+    dev server included), or it ends while one of its own `wait-for` waits
+    runs without saying it is waiting (below);
   - a chat closeout misses a required summary field of
     `templates/closeout.md` (Status, TL;DR), or was written without the
     `agent-practices:closeout` skill loaded this session (a `Skill` call or
@@ -283,20 +285,22 @@ unverified against vendor docs.
   or tool-use id, found in a user message or, mid-turn, in a
   `queued_command` attachment and queue operations, or with a `TaskStop` of
   the task (or of its older name, `KillShell`). Run over 150 recent
-  sessions, it reported no wait still open.
+  sessions, it reported no wait still open. Any other background Bash call
+  found the same way, and a subagent whose `Agent` (or `Task`) result reads
+  "Async agent launched successfully" and "agentId: ID" (observed
+  2026-10-08, not documented), counts as a running task until its
+  notification or `TaskStop`.
   It blocks a final message whose sentence pairs a waiting phrase with CI,
-  a run, a check or a merge while no such wait runs, unless the wait is on
+  a run, a check or a merge while no background task or subagent runs, unless the wait is on
   me ("once you accept"); a "when CI passes or fails" list of outcomes
   describes waits and passes. It also blocks a turn that ends while a
   `wait-for` of its own runs and no sentence pairs a waiting phrase with a
   wait, CI, a run or a merge, asking it to say so or `TaskStop` the wait; a
   closeout leaves none running. It ignores `background_tasks` in the hook
-  input: its entries' shape is unverified, and an unrelated dev server must
-  not excuse a waiting claim. Known limits: a waiting claim in other words
-  passes, as does one tied to "you" or "your" ("once your CI passes"); a
-  claim to wait on a background test run or subagent, which does notify
-  the session, is blocked once (the reason says to end the turn again); a
-  wait started in a form it does not parse (as an `if` or `while` condition, say) is not seen;
+  input: its entries' shape is unverified. Known limits: a waiting claim in
+  other words passes, as does one tied to "you" or "your" ("once your CI
+  passes"), and one made while an unrelated background task such as a dev
+  server runs; a wait started in a form it does not parse (as an `if` or `while` condition, say) is not seen;
   a wait that ended without a notification in the transcript, such as one
   lost to a crash, still counts as running, and a sentence that mentions
   both waiting and CI for another reason is blocked once (the reason says
