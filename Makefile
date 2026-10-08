@@ -3,6 +3,7 @@
 # Same checks as CI.
 check:
 	python3 scripts/build-adapters.py --check
+	python3 adapters/codex/test-update-install.py
 	sh -n scripts/sync-policy.sh
 	sh -n scripts/push-policy-sync.sh
 	sh -n scripts/test-push-policy-sync.sh

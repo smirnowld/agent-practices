@@ -15,12 +15,8 @@ on every Codex host or cloud environment.
   `~/.codex/skills` is not listed as a skill discovery path. Each `SKILL.md`
   needs YAML frontmatter with `name` and `description`; the folders in this
   repository meet that requirement and can be used as-is. For a user install
-  from the repository root, run:
-
-  ```sh
-  mkdir -p ~/.agents/skills
-  ln -s "$PWD"/skills/* ~/.agents/skills/
-  ```
+  from the live checkout, use the guarded updater described in
+  [Keeping the local install current](#keeping-the-local-install-current).
 
   Official guide: https://developers.openai.com/codex/skills.
 - **Roles:** Generated standalone TOML files use the custom-agent schema.
@@ -32,6 +28,7 @@ on every Codex host or cloud environment.
   `model_reasoning_effort`, and `sandbox_mode` are supported config keys.
   Official schema and locations:
   https://learn.chatgpt.com/docs/agent-configuration/subagents.
+  The [updater](#keeping-the-local-install-current) maintains the user copies.
 - **Effort:** `model_reasoning_effort` accepts reasoning levels supported by
   the selected model; `low`, `medium`, `high`, and `xhigh` are documented
   Codex values. `agents.default_subagent_reasoning_effort` sets the default
@@ -212,8 +209,8 @@ a loader that refuses to follow symlinks; inferred, not documented), then
 returned
 `agent type is currently not available`. The same files copied into
 `~/.codex/agents` spawned from `codex exec` (observed 2026-09-30, same
-build). Copies go stale:
-recopy them after `scripts/build-adapters.py` changes a role. Linked skill
+build). The [updater](#keeping-the-local-install-current) recopies changed
+roles at session start. Linked skill
 folders did load, including `brief`, and resolved repository-relative paths
 from the checkout.
 
@@ -223,17 +220,79 @@ Keep the short `~/.codex/AGENTS.md` pointer as the global bootstrap. Codex
 reads that file at session start, then project `AGENTS.md` files in root-to-leaf
 order; it does not automatically read changes made to those files mid-session.
 https://learn.chatgpt.com/docs/agent-configuration/agents-md (checked
-2026-09-30). Prefer a user-level `SessionStart` hook over a Codex plugin for a
-future local updater: a hook can read the checked-out source at startup,
-whereas a locally installed plugin uses a cached copy. A hook alone does not
-fetch new commits or link new skill folders. Automatic updates need a guarded
-fast-forward of the checkout, idempotent reconciliation of skill symlinks and
-a recopy of changed role files, with a clear outcome when the checkout is
-dirty or the fetch fails. That updater is
-not installed yet; its trust setup, checkout safety, and failure handling
-warrant a separate brief. Hook behavior and plugin caching:
-https://learn.chatgpt.com/docs/hooks and
-https://developers.openai.com/plugins/build/plugins (checked 2026-09-30).
+2026-09-30). A user-level hook runs the live checkout; a plugin uses an
+installed cache (https://developers.openai.com/plugins/build/plugins, checked
+2026-09-30).
+
+`update-install.py` derives the checkout from its own resolved path. It
+fetches `main` over anonymous HTTPS derived from the GitHub `origin` URL,
+with credential helpers and askpass prompts disabled. Git URL rewrites that
+change the derived HTTPS URL are rejected before fetching. It has a
+ten-second update budget, plus up to one second
+to remove its temporary fetch ref. It only
+fast-forwards a clean `main` whose history is an ancestor of the fetched
+commit, checking the checkout again after fetching. It never stashes, resets,
+cleans or switches branches. Git hooks and autostash are disabled; ignored
+files that would be overwritten also stop the merge. Concurrent updater
+runs share a nonblocking checkout lock; a second run reports a skip. Other
+tools should avoid changing the checkout while the updater runs.
+
+After updating or skipping, it links skill folders, removes dangling skill
+links only when their resolved targets are inside this checkout, and copies
+changed role files. It preserves skill name collisions, role symlinks and
+foreign role filenames, reporting skipped collisions. Existing regular role
+files whose names the checkout provides are maintained copies. The targets
+default to `~/.agents/skills` and `~/.codex/agents`; override them with
+`AGENT_PRACTICES_SKILLS_DIR` and `AGENT_PRACTICES_ROLES_DIR`. Targets resolving
+inside the checkout or overlapping each other are rejected. Tests use an
+isolated home and temporary targets. Failed updates leave the session free
+to start, with the reason in the note; installation failures are reported too.
+
+After reviewing the command, add this entry to `~/.codex/hooks.json`,
+preserving any existing hooks. Replace `/ABSOLUTE/CHECKOUT` with the stable
+checkout path, not a disposable worktree. The single quotes shown protect
+spaces; a path containing a single quote needs shell escaping before JSON
+escaping.
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "^(startup|resume|clear)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 '/ABSOLUTE/CHECKOUT/adapters/codex/update-install.py'",
+            "timeout": 20
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+The official [hook guide](https://learn.chatgpt.com/docs/hooks) documents
+user-level `hooks.json`, the `SessionStart` matcher, timeout in seconds, and
+review and trust of non-managed hooks. In the CLI, open `/hooks` to review
+and trust the definition before starting a fresh session (checked
+2026-10-08). The updater emits a single JSON line: `systemMessage` surfaces
+its one-line note as a warning in the UI or event stream, while
+`hookSpecificOutput.additionalContext` asks the agent to repeat that exact
+note as its first response line. Look for `agent-practices:` after startup,
+resume or clear. Desktop rendering and the full installed flow remain
+unverified until tested in a fresh local session. The guide does not promise
+that refreshed skills and roles are discovered after `SessionStart` in that
+same session; discovery timing also needs live verification. Changed hook
+definitions may require renewed trust.
+
+To turn off only this updater, remove its handler from `hooks.json`, leaving
+other handlers intact. For a direct check, run
+`python3 '/ABSOLUTE/CHECKOUT/adapters/codex/update-install.py'`; a second run
+should report `already current` and zero installation changes when the
+checkout is clean and the remote is reachable. No hook installation or trust
+is performed by this repository's checks.
 
 ## Codex usability notes for the neutral source
 
