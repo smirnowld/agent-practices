@@ -24,13 +24,15 @@ landing too; a later view of that PR still open with auto-merge on re-arms
 it, so a stalled auto-merge that lands later is caught again.
 
 A turn that says it waits on CI, a run or a merge while none of the
-session's own GitHub waits is running is blocked: nothing will wake the
-session, since the app's monitor wakes it only on failures, conflicts and
-review comments. A sentence whose wait is on me ("once you accept") is left
-alone. A turn that ends while one of the session's own `wait-for` waits still
-runs, without saying it is waiting, is blocked too: a closeout leaves none
-running. Both read the waits from the transcript; another background task,
-such as a dev server, excuses nothing. When my answer to a question is the
+session's background tasks or subagents is running is blocked: nothing will
+wake the session, since the app's monitor wakes it only on failures,
+conflicts and review comments. Any running background Bash task or subagent
+excuses this check, since its end wakes the session; a dev server started in
+the background counts as running too, which lets a false wait through. A
+sentence whose wait is on me ("once you accept") is left alone. A turn that
+ends while one of the session's own `wait-for` waits still runs, without
+saying it is waiting, is blocked too: a closeout leaves none running. Both
+read the tasks from the transcript. When my answer to a question is the
 last thing in the turn, the final message is the one I answered and is not
 checked again. A repeat stop always ends the turn. Any error lets the turn end
 with a note on stderr; a broken check must not trap a session.
@@ -104,22 +106,29 @@ CI_NOUN = re.compile(
     r"\b(?:ci|checks?|runs?|builds?|tests?|lanes?|workflow|pipeline|deploy\w*|release"
     r"|auto-merge|merges?|verifier)\b", re.I)
 WAIT_REASON = (
-    "You say you are waiting on CI, a run or a merge, but none of this session's GitHub "
-    "waits is running, so nothing will wake this session. The app's Auto-fix monitor wakes "
-    "it only on CI failures, merge conflicts and review comments, never on success, and "
-    "a running dev server is not a wait. Start the wait as a background task (merge skill "
-    "step 4: `wait-for pr-ci PR` with run_in_background and a long timeout) and end the "
-    "turn; or, if what remains is mine, say so and send PushNotification. If you are not "
-    "waiting on GitHub, or wait on a background test run or subagent that notifies you "
-    "when it ends, end the turn again as is.")
+    "You say you are waiting on CI, a run or a merge, but none of this session's background "
+    "tasks or subagents is running, so nothing will wake this session. The app's Auto-fix "
+    "monitor wakes it only on CI failures, merge conflicts and review comments, never on "
+    "success. Start the wait as a background task (merge skill step 4: `wait-for pr-ci PR` "
+    "with run_in_background and a long timeout) and end the turn; or, if what remains is "
+    "mine, say so and send PushNotification. If you are not waiting on GitHub, end the "
+    "turn again as is.")
 OPEN_REASON = (
     "This session's own wait still runs ({0}), and your message does not say you are "
     "waiting on it. If you are, say so in one line and end the turn; it wakes you when it "
     "ends. Otherwise, or if it is stale, stop it with TaskStop" + "{1}" + " first: a "
     "closeout leaves none of the session's own waits running (closeout skill).")
-# A background task's id in its Bash tool result, and its end in a task
-# notification or TaskStop (observed 2026-10-06, not documented).
-BG_ID = re.compile(r"running in background with ID: (\w+)|moved to the background \(ID: (\w+)\)")
+# A background task's id opening its own Bash tool result, for a
+# call with run_in_background or one moved there on timeout, and its end in a
+# task notification or TaskStop (observed 2026-10-06, not documented). Output
+# that only quotes the sentence (a `cat` of this hook's tests) is no task.
+BG_ID = re.compile(r"\s*Command running in background with ID: (\w+)")
+MOVED_ID = re.compile(r"\s*Command did not (?:finish|complete)[^\n]*?moved to the background \(ID: (\w+)\)")
+# A background subagent's id in its Agent tool result, which starts with the
+# launch line; its notification names it as the task id (observed 2026-10-08,
+# not documented). A synchronous subagent's report that quotes it is no task.
+AGENT_ID = re.compile(r"\s*Async agent launched successfully[^\n]*\n(?:[^\n]*\n)*?\s*agentId: (\w+)")
+AGENTS = {"Agent", "Task"}  # Task: Agent's older name
 NOTICE = re.compile(r"<task-notification>(.*?)</task-notification>", re.S)
 NOTICE_IDS = re.compile(r"<(task-id|tool-use-id)>\s*([^<\s]+)\s*</\1>")
 STOPS = {"TaskStop": "task_id", "KillShell": "shell_id"}  # KillShell: TaskStop's older name
@@ -265,15 +274,16 @@ def turn_tools(path):
     return [(n, i) for n, i, _ in kept], closeout, skill, landed, dismissed, asked
 
 
-def open_waits(path):
-    """The session's background GitHub waits still running, as (is wait-for,
-    command). A wait is a background Bash call (or one moved to the background
-    on timeout) that runs `wait-for`, `gh run watch` or `gh pr checks
-    --watch`; a task notification naming its task or tool-use id, or a
-    TaskStop of its task, ends it; a notification only quoted in a tool
-    result does not. An ending may come before or after the call's result;
-    a call without its background result is not counted."""
-    waits, tasks, ended = {}, {}, set()
+def open_tasks(path):
+    """The session's background tasks still running, as (kind, command).
+    A task is a background Bash call (or one moved to the background on
+    timeout), of kind "own" when it runs `wait-for`, "gh" when it runs `gh
+    run watch` or `gh pr checks --watch` and "bash" otherwise, or a
+    background subagent ("agent"). A task notification naming its task or
+    tool-use id, or a TaskStop of its task, ends it; a notification only
+    quoted in a tool result does not. An ending may come before or after the
+    call's result; a call without its background result is not counted."""
+    calls, ids, tasks, ended = {}, {}, {}, set()
     for entry, content, parts in entries(path):
         if entry.get("type") == "assistant":
             for c in parts:
@@ -284,9 +294,13 @@ def open_waits(path):
                     ended.add(str(inp.get(STOPS[c["name"]])))
                 elif c.get("name") == "Bash":
                     steps = steps_of([str(inp.get("command", ""))])
-                    own = any(OWN_WAIT.match(s) for s in steps)
-                    if own or any(GH_WAIT.match(s) for s in steps):
-                        waits[c.get("id")] = (own, " ".join(str(inp.get("command", "")).split())[:80])
+                    kind = ("own" if any(OWN_WAIT.match(s) for s in steps)
+                            else "gh" if any(GH_WAIT.match(s) for s in steps) else "bash")
+                    calls[c.get("id")] = (kind, " ".join(str(inp.get("command", "")).split())[:80])
+                    ids[c.get("id")] = [MOVED_ID] + ([BG_ID] if inp.get("run_in_background") else [])
+                elif c.get("name") in AGENTS:
+                    calls[c.get("id")] = ("agent", str(inp.get("description", ""))[:80])
+                    ids[c.get("id")] = [AGENT_ID]
             continue
         # A notification is a user message, or, when it lands mid-turn, a
         # queued-command attachment and queue operations (observed 2026-10-06).
@@ -297,11 +311,12 @@ def open_waits(path):
             for notice in NOTICE.findall(text):
                 ended |= {v for _, v in NOTICE_IDS.findall(notice)}
         for c in parts:
-            if c.get("type") == "tool_result" and c.get("tool_use_id") in waits and not c.get("is_error"):
-                found = BG_ID.search(json.dumps(c.get("content")))
+            if c.get("type") == "tool_result" and c.get("tool_use_id") in calls and not c.get("is_error"):
+                out = result_text(c.get("content"))
+                found = [m for m in (p.match(out) for p in ids[c["tool_use_id"]]) if m]
                 if found:
-                    tasks[c["tool_use_id"]] = found.group(1) or found.group(2)
-    return [waits[k] for k, t in tasks.items() if k not in ended and t not in ended]
+                    tasks[c["tool_use_id"]] = found[0].group(1)
+    return [calls[k] for k, t in tasks.items() if k not in ended and t not in ended]
 
 
 def unheredoc(command):
@@ -397,10 +412,10 @@ def main():
     reasons = ["Closeout incomplete (closeout skill): " + "; ".join(gaps) + "."] if gaps else []
     if ((ask and not dismissed) or notify) and not {n for n, _ in calls} & SIGNALS:
         reasons.append(signal_reason(ask))
-    waits = open_waits(data["transcript_path"])
-    if waits_unwatched(text) and not waits:
+    tasks = open_tasks(data["transcript_path"])
+    if waits_unwatched(text) and not tasks:
         reasons.append(WAIT_REASON)
-    own = [cmd for is_own, cmd in waits if is_own]
+    own = [cmd for kind, cmd in tasks if kind == "own"]
     if own and not stale and not waiting(text, WAIT_NOUN):
         reasons.append(OPEN_REASON.format("; ".join("`" + c + "`" for c in own), LOAD.format("TaskStop")))
     if reasons:
