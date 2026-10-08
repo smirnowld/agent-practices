@@ -47,6 +47,26 @@ XS, S or M, the response budget in `practices/model-sizing.md` ("Size in
 responses"). L is never one session, so never a title. Routines carry no
 size.
 
+## Sessions started by a skill
+
+A session whose first message runs a skill titles itself before the skill's
+first step, from what the skill will do, not from the command. Defaults
+when nothing else is known:
+
+| Skill | Title |
+|---|---|
+| `brief next` | `🟡 Decide·S — choose next tasks` |
+| `merge` | `🟢 Land·XS — #N merge` |
+| `cost-review` | `🟡 Research·M — agent spend review` |
+| `project-setup` | `🟡 Chore·M — baseline setup` (audit: `🟢 Research·S — baseline audit`) |
+| `docs-gardening` | `🟢 Chore·S — consolidate DOCS` |
+| `project-visuals` | `🟢 Chore·S — redraw VISUAL` |
+| a routine skill run by hand | `🟢 Research·XS — NAME by hand` |
+
+A skill run inside a session already titled, such as `closeout` or
+`acceptance-evidence`, keeps the title. A scheduled routine is titled
+where it is configured (`⏱ Routine — NAME`).
+
 ## Rest
 
 `REF` is the plan or register reference when there is one (`WP12`, `Q3`,
