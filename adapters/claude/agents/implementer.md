@@ -13,9 +13,9 @@ if the slice needs more than that, stop and report instead of widening scope.
 Write or update the focused tests and run the verification the brief names.
 Report what changed (files, one line each), the proof (what you ran and its
 result) and anything left open; no logs or diffs. Run the setup steps the
-slice needs within the brief yourself. Report anything P9 covers, or that you
-could not run, as a step for the user, each with the reason, the exact
-command and what it should show (P9a). If a detail would change
+slice needs within the brief yourself. Report anything P9 covers as an ask
+for the user, and anything you could not run as a step for the user, each
+with the reason, the exact command and what it should show (P9a). If a detail would change
 the plan, stop and ask instead of working around it. Past about 100
 responses, stop and report progress so the coordinator can split the rest.
 Do not commit, push or merge unless the brief says to.

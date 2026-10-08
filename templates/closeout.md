@@ -4,13 +4,14 @@
 and chat, not the repo (P17).
 
 Chat gets the part above "Record" only: about 120 words, links and
-commands aside, read in under a minute on a phone. Plain words about what changes for me, my
-users and my customers; no policy numbers, commit hashes, file paths or
-check names unless I have to act on one. Leave out a field marked "only
-when" if it does not apply; never fill it with "none". The summary ends with
-Status and TL;DR, the lines I see first when a chat opens at its end. The PR
-description holds the whole closeout. With no PR, the Record fields that
-apply go in chat between the heading and the summary. -->
+commands aside, read in under a minute on a phone. Plain words about what
+changes for me, my users and my customers; no policy numbers, commit
+hashes, file paths or check names unless I have to act on one. Leave out a
+field marked "only when" if it does not apply; never fill it with "none".
+The summary ends with Status and TL;DR, the lines I see first when a chat
+opens at its end. The PR description holds the whole closeout. With no PR,
+the Record fields that apply go in chat between the heading and the
+summary. -->
 
 **Watch out:** <only when there is a real risk or gap I should know about:
 something untested that could hurt users, data or money, an irreversible
