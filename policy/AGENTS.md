@@ -180,13 +180,17 @@ don't back it up or resume it unless I say it was abandoned.
 ## P9. Outside the repo
 
 Ask before acting outside the repository: accounts, money, messages,
-publishing, infrastructure provisioning, privileged commands. Hand me root
+publishing, infrastructure provisioning, privileged commands. Reuse my
+existing approval for the task's concrete actions, resources and limits;
+ask again only when that scope changes. Task approval does not replace
+technical safeguards or actions reserved for me
+(`practices/authorization.md`). Hand me root
 commands exactly as I would run them. A private evidence page on the
 project's agreed host is not publishing.
 
 **P9a. Do it, then hand me the rest.** Run and check what the work needs
-yourself; for a P9 action, ask, then run it after my OK. A step is mine only
-when you cannot do it even with my OK; one that is only clicks in a web page,
+yourself; for a P9 action, obtain or reuse my scoped OK, then run it. A step
+is mine only when you cannot do it even with my OK; one that is only clicks in a web page,
 offer to do in my browser where the adapter names one. Each such step reaches
 me in chat and in the closeout, never only in a README, PR body, comment or
 thinking (`practices/writing-to-me.md#steps-for-me`).
