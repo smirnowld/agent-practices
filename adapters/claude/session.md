@@ -43,13 +43,14 @@ when ToolSearch cannot find it either, and the report says so.
   `PushNotification`: one line under 200 characters naming what waits on me. Everything a
   question depends on (commands, steps, a card) is in the chat text, never
   only in thinking or a tool result. Never re-ask an unchanged question.
-- **Drive my browser** (P9a): Claude in Chrome (`mcp__claude-in-chrome__*`,
-  load the core set in one ToolSearch), which uses my Chrome and its
-  sign-ins; not the built-in browser, which has neither. Sign in through
-  `request_credentials` and `autofill_credential` (I approve in the password
-  manager; you never see the values), a code through
-  `enter_verification_code`; at a login page with no saved item, or a
-  CAPTCHA, hand it to me. Not connected: offer the numbered steps instead.
+- **Drive my browser** (P9a), within the limits in
+  [writing-to-me.md](../../practices/writing-to-me.md#steps-for-me): Claude in
+  Chrome (`mcp__claude-in-chrome__*`; load the tools the step needs plus
+  `enter_verification_code` in one ToolSearch), my Chrome with its sign-ins;
+  not the built-in browser, which has neither. Sign in with
+  `request_credentials` for that login only, then `autofill_credential`; a
+  code through `enter_verification_code` (I approve each; you never see the
+  values); `release_credentials` when done. Not connected: numbered steps.
 - **Wait on CI or a merge** (P6b, `merge` step 4): run `wait-for` (the
   plugin's `bin/` is on the Bash PATH) with Bash `run_in_background` and a
   `timeout` above its deadline: 4200000 ms covers the defaults (45 and 60
