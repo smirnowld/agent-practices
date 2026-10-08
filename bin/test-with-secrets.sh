@@ -105,7 +105,7 @@ done
 # Full-access mode reports itself, and its default template is full-access.env.tpl,
 # else operator.env.tpl; an explicit --template is used as given.
 mkdir "$dir/dt"
-(cd "$dir/dt" && "$tool" --full-access --dry-run -- true 2>&1 | grep -q 'no template full-access.env.tpl')
+(cd "$dir/dt" && "$tool" --full-access --dry-run -- true 2>&1 | grep -q 'no template full-access.env.tpl (or operator.env.tpl)')
 (cd "$dir/dt" && ! "$tool" --full-access --dry-run -- true >/dev/null 2>&1)
 cp "$dir/ops.tpl" "$dir/dt/operator.env.tpl"
 (cd "$dir/dt" && "$tool" --full-access --dry-run -- true 2>&1 | grep -qx 'mode full-access, template operator.env.tpl')
@@ -119,7 +119,19 @@ rm "$dir/dt/full-access.env.tpl" "$dir/dt/operator.env.tpl"
 
 # Unknown flags print usage and exit 2.
 rc=0; "$tool" --bogus -- true >"$dir/out" 2>&1 || rc=$?
-[ "$rc" = 2 ] && grep -q 'usage: with-secrets \[--full-access\]' "$dir/out"
+[ "$rc" = 2 ] || { echo "usage rc $rc"; exit 1; }
+grep -q 'usage: with-secrets \[--full-access\]' "$dir/out" || { echo "no usage line"; exit 1; }
+# Partial flags and flags with a value are unknown, not the mode switch.
+fails "$tool" --full --dry-run --template "$dir/ops.tpl" -- true
+fails "$tool" --full-access=1 --dry-run --template "$dir/ops.tpl" -- true
+fails "$tool" --operator=1 --dry-run --template "$dir/ops.tpl" -- true
+
+# Agent mode ignores the full-access templates.
+mkdir "$dir/at"
+cp "$dir/ops.tpl" "$dir/at/full-access.env.tpl"
+cp "$dir/ops.tpl" "$dir/at/operator.env.tpl"
+(cd "$dir/at" && ! "$tool" --project demo --dry-run -- true >"$dir/out" 2>&1)
+grep -q 'no template agent.env.tpl' "$dir/out" || { echo "expected agent.env.tpl in: $(cat "$dir/out")"; exit 1; }
 
 # Dry run lists names and vaults and calls nothing.
 : > "$log"

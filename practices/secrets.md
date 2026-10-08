@@ -22,7 +22,8 @@ How secrets are named and kept in any password manager or secret store.
 - Name items in lowercase kebab-case, project first:
   `PROJECT-SERVICE-WHAT[-ENV]`, for example `PROJECT-stripe-api-key-staging`.
 - A key issued separately for agents is its own key with its own name,
-  suffixed `-agents`, not a copy of mine.
+  suffixed `-agents` (`PROJECT-stripe-api-key-staging-agents`), not a copy
+  of mine.
 - One value, one item. A template points at the item; never paste a value
   into a second item.
 - Every item has notes: what it is for, which repository and template use
@@ -32,6 +33,8 @@ How secrets are named and kept in any password manager or secret store.
   contract with whoever reads the result: rename one only together with its
   readers.
 - Rename an item in the same change that repoints its references.
+
+Lesson from a server-config repo and a product repo.
 
 ## Secrets from a password manager
 
@@ -47,13 +50,15 @@ are fine.
 
 | Vault | Who reads it | Holds |
 |---|---|---|
-| `my-master-keys` | Only me, through the desktop app | Production, signing, backup and recovery keys, and every service-account token, each tagged with its project |
+| `my-master-keys` | Only me, through the desktop app | Production, signing, backup and recovery keys no service account reads, and every service-account token, each tagged with its project |
 | `operator-CLUSTER` | The 1Password Kubernetes Operator's service account in that cluster | Only what the cluster syncs that agents must not see |
 | `agents-PROJECT` | That project's agent service account, and the Operator's in that project's cluster | Keys this project's agents use, and keys they generate |
 | `agents-shared` | Every project's agent service account | Keys several projects' agents use |
 
 - Each secret lives in the one vault with the fewest readers that still
-  reaches everything that needs it.
+  reaches everything that needs it. A key a cluster syncs goes in
+  `operator-CLUSTER`, or in `agents-PROJECT` when that project's agents need
+  it too.
 - Each service account is named after its vault: `agents-PROJECT` reads its
   vault and `agents-shared`; `operator-CLUSTER` reads its vault and that
   project's `agents-PROJECT`. Give an agent account write on its own vault
@@ -93,16 +98,17 @@ How [Secret items](#secret-items) map onto 1Password's
 - `op item list --tags PROJECT` lists a project's items; nothing filters by
   expiry.
 
-Why `snake_case`: [secret references](https://www.1password.dev/cli/secret-reference-syntax/)
-are case-insensitive and allow only letters, digits, `-`, `_`, `.` and
-whitespace; a reference with spaces must be quoted in a shell (checked
-2026-10-08). The [Kubernetes Operator](https://www.1password.dev/k8s/operator/)
+Why lowercase with no spaces: [secret references](https://www.1password.dev/cli/secret-reference-syntax/)
+are case-insensitive and take letters, digits, `-`, `_`, `.` and whitespace;
+a reference with spaces must be quoted in a shell, and a name with other
+characters must be referred to by ID (checked 2026-10-08). The [Kubernetes Operator](https://www.1password.dev/k8s/operator/)
 syncs a whole item (`itemPath` is `vaults/V/items/I`, with no field
 selection), and each field label becomes a Kubernetes Secret key. Its page
 says labels are lowercased, but its
 [source](https://github.com/1Password/onepassword-operator/blob/cd5f2df73134a28005ecd7a74c0147424b587f2e/pkg/kubernetessecrets/kubernetes_secrets_builder.go#L222-L260)
-keeps a valid key as written and replaces other characters with `-`; only
-the Secret's own name is lowercased (checked 2026-10-08).
+keeps a valid key as written; otherwise it drops invalid characters at the
+ends, turns each run of them inside into one `-`, and skips a label left
+empty. Only the Secret's own name is lowercased (checked 2026-10-08).
 
 ### Token in the Keychain
 
