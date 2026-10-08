@@ -51,7 +51,7 @@ are fine.
 | Vault | Who reads it | Holds |
 |---|---|---|
 | `my-master-keys` | Only me, through the desktop app | Production, signing, backup and recovery keys no service account reads, and every service-account token, each tagged with its project |
-| `operator-CLUSTER` | The 1Password Kubernetes Operator's service account in that cluster | Only what the cluster syncs that agents must not see |
+| `operator-CLUSTER` | The 1Password Kubernetes Operator's service account in that cluster | Only what the cluster syncs that agents don't need |
 | `agents-PROJECT` | That project's agent service account, and the Operator's in that project's cluster | Keys this project's agents use, and keys they generate |
 | `agents-shared` | Every project's agent service account | Keys several projects' agents use |
 
