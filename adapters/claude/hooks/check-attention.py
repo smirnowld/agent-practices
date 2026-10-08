@@ -118,12 +118,16 @@ OPEN_REASON = (
     "waiting on it. If you are, say so in one line and end the turn; it wakes you when it "
     "ends. Otherwise, or if it is stale, stop it with TaskStop" + "{1}" + " first: a "
     "closeout leaves none of the session's own waits running (closeout skill).")
-# A background task's id in its Bash tool result, and its end in a task
-# notification or TaskStop (observed 2026-10-06, not documented).
-BG_ID = re.compile(r"running in background with ID: (\w+)|moved to the background \(ID: (\w+)\)")
-# A background subagent's id in its Agent tool result; its notification names
-# it as the task id (observed 2026-10-08, not documented).
-AGENT_ID = re.compile(r"Async agent launched successfully.*?agentId: (\w+)", re.S)
+# A background task's id on the first line of its own Bash tool result, for a
+# call with run_in_background or one moved there on timeout, and its end in a
+# task notification or TaskStop (observed 2026-10-06, not documented). Output
+# that only quotes the sentence (a `cat` of this hook's tests) is no task.
+BG_ID = re.compile(r"\s*[^\n]*?running in background with ID: (\w+)")
+MOVED_ID = re.compile(r"\s*[^\n]*?moved to the background \(ID: (\w+)\)")
+# A background subagent's id in its Agent tool result, which starts with the
+# launch line; its notification names it as the task id (observed 2026-10-08,
+# not documented). A synchronous subagent's report that quotes it is no task.
+AGENT_ID = re.compile(r"\s*Async agent launched successfully[^\n]*\n(?:[^\n]*\n)*?\s*agentId: (\w+)")
 AGENTS = {"Agent", "Task"}  # Task: Agent's older name
 NOTICE = re.compile(r"<task-notification>(.*?)</task-notification>", re.S)
 NOTICE_IDS = re.compile(r"<(task-id|tool-use-id)>\s*([^<\s]+)\s*</\1>")
@@ -279,7 +283,7 @@ def open_tasks(path):
     tool-use id, or a TaskStop of its task, ends it; a notification only
     quoted in a tool result does not. An ending may come before or after the
     call's result; a call without its background result is not counted."""
-    calls, tasks, ended = {}, {}, set()
+    calls, ids, tasks, ended = {}, {}, {}, set()
     for entry, content, parts in entries(path):
         if entry.get("type") == "assistant":
             for c in parts:
@@ -293,8 +297,10 @@ def open_tasks(path):
                     kind = ("own" if any(OWN_WAIT.match(s) for s in steps)
                             else "gh" if any(GH_WAIT.match(s) for s in steps) else "bash")
                     calls[c.get("id")] = (kind, " ".join(str(inp.get("command", "")).split())[:80])
+                    ids[c.get("id")] = [MOVED_ID] + ([BG_ID] if inp.get("run_in_background") else [])
                 elif c.get("name") in AGENTS:
                     calls[c.get("id")] = ("agent", str(inp.get("description", ""))[:80])
+                    ids[c.get("id")] = [AGENT_ID]
             continue
         # A notification is a user message, or, when it lands mid-turn, a
         # queued-command attachment and queue operations (observed 2026-10-06).
@@ -306,11 +312,10 @@ def open_tasks(path):
                 ended |= {v for _, v in NOTICE_IDS.findall(notice)}
         for c in parts:
             if c.get("type") == "tool_result" and c.get("tool_use_id") in calls and not c.get("is_error"):
-                out = json.dumps(c.get("content"))
-                agent = calls[c["tool_use_id"]][0] == "agent"
-                found = (AGENT_ID if agent else BG_ID).search(out)
+                out = result_text(c.get("content"))
+                found = [m for m in (p.match(out) for p in ids[c["tool_use_id"]]) if m]
                 if found:
-                    tasks[c["tool_use_id"]] = next(g for g in found.groups() if g)
+                    tasks[c["tool_use_id"]] = found[0].group(1)
     return [calls[k] for k, t in tasks.items() if k not in ended and t not in ended]
 
 

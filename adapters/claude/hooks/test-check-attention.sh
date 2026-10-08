@@ -2,11 +2,11 @@
 # Offline self-test for the attention hook: a card, question or closeout that
 # ends a turn without a signal is blocked once; a turn that already signalled,
 # a repeat stop and plain answers pass silently; bad input passes with a note
-# on stderr. A merge without its closeout, a turn that says it waits on CI with
-# none of its background tasks or subagents running, and a turn that ends with its own
-# wait-for running and no word of waiting, are blocked; so is a closeout
-# written without the closeout skill, and an auto-merge that landed without
-# its closeout.
+# on stderr. A merge without its closeout, a turn that says it waits on CI
+# with none of its background tasks or subagents running, and a turn that ends
+# with its own wait-for running and no word of waiting, are blocked; so is a
+# closeout written without the closeout skill, and an auto-merge that landed
+# without its closeout.
 set -eu
 dir=$(dirname "$0")
 hook="$dir/check-attention.py"
@@ -356,9 +356,9 @@ note='<task-notification>
 </task-notification>'
 open='This session'"'"'s own wait still runs'
 claim="CI is running, and I'll report when it finishes."
-for start in 'b:wait-for pr-ci 5' 'b:/p/bin/wait-for -R o/r pr-merged 5' 'b:cd x && wait-for run 9' \
-  'b:(wait-for pr-ci 5)' 'b:env X=1 time wait-for pr-ci 5' 'b:for p in 5 6; do wait-for pr-ci $p; done' \
-  'b:sh bin/wait-for pr-ci 5'; do
+for start in 'w:wait-for pr-ci 5' 'w:/p/bin/wait-for -R o/r pr-merged 5' 'w:cd x && wait-for run 9' \
+  'w:(wait-for pr-ci 5)' 'w:env X=1 time wait-for pr-ci 5' 'w:for p in 5 6; do wait-for pr-ci $p; done' \
+  'w:sh bin/wait-for pr-ci 5'; do
   session u:go 'b:ls' r "$start" "$bg"
   blocks "$closeout" '' "$open"
   blocks "$closeout" '' 'TaskStop'
@@ -376,35 +376,35 @@ done
 session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$moved"
 blocks 'Done.' '' "$open"
 # It ended: notified by task id or tool-use id, or stopped.
-session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$bg" u:"$note"
+session u:go 'b:ls' r 'w:wait-for pr-ci 5' "$bg" u:"$note"
 passes 'Merged as abc.'
-session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$bg" u:"<task-notification><tool-use-id>s2</tool-use-id></task-notification>"
+session u:go 'b:ls' r 'w:wait-for pr-ci 5' "$bg" u:"<task-notification><tool-use-id>s2</tool-use-id></task-notification>"
 passes 'Merged as abc.'
-session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$bg" k:bg1 r
+session u:go 'b:ls' r 'w:wait-for pr-ci 5' "$bg" k:bg1 r
 passes 'Merged as abc.'
-session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$bg"
+session u:go 'b:ls' r 'w:wait-for pr-ci 5' "$bg"
 printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"x1","name":"KillShell","input":{"shell_id":"bg1"}}]}}' >>"$tmp/t.jsonl"
 passes 'Merged as abc.'
-session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$bg"
+session u:go 'b:ls' r 'w:wait-for pr-ci 5' "$bg"
 python3 -c 'import json,sys; print(json.dumps({"type":"user","message":{"content":[{"type":"text","text":sys.argv[1]}]}}))' "$note" >>"$tmp/t.jsonl"
 passes 'Merged as abc.'
 # Mid-turn, the notification is a queued-command attachment or a queue operation.
 for shape in '{"type":"attachment","attachment":{"type":"queued_command","prompt":NOTE}}' \
   '{"type":"queue-operation","operation":"enqueue","content":NOTE}'; do
-  session u:go 'b:ls' r 'b:wait-for pr-ci 5' "$bg"
+  session u:go 'b:ls' r 'w:wait-for pr-ci 5' "$bg"
   python3 -c 'import json,sys; print(sys.argv[1].replace("NOTE", json.dumps(sys.argv[2])))' "$shape" "$note" >>"$tmp/t.jsonl"
   passes 'Merged as abc.'
 done
 # A notification only quoted in a tool result ends nothing.
-session u:go 'b:wait-for pr-ci 5' "$bg" 'b:cat log' r:"$note"
+session u:go 'w:wait-for pr-ci 5' "$bg" 'b:cat log' r:"$note"
 blocks 'Done.' '' "$open"
 # A failed call or one without its background result is not a running wait.
-session u:go 'b:wait-for pr-ci 5' e:"$bg"
+session u:go 'w:wait-for pr-ci 5' e:"$bg"
 passes 'Done.'
 session u:go 'b:wait-for pr-ci 5'
 passes 'Done.'
 # Not the session's own waits: a script with the name in it, a quoted mention.
-session u:go 'b:sh bin/test-wait-for.sh' "$bg" 'b:grep "wait-for pr-ci" README.md' "$bg"
+session u:go 'w:sh bin/test-wait-for.sh' "$bg" 'w:grep "wait-for pr-ci" README.md' "$bg"
 passes 'Done.'
 # Any other running background task excuses a waiting claim, since its end wakes
 # the session: a local test run, and a dev server too (accepted); once it ends,
@@ -415,10 +415,23 @@ passes "$docs"
 passes 'Done.'
 session u:go 'w:make check' "$bg" u:"$note"
 blocks "$docs" '' "$wait"
-session u:go 'b:npm run dev' "$bg"
+session u:go 'w:npm run dev' "$bg"
 passes "$claim"
+# A command moved to the background on timeout is a running task too.
+session u:go 'b:make check' "$moved"
+passes "$docs"
+passes 'Done.'
+# Output that only quotes a background result is no task: a foreground call,
+# or the sentence after the result's first line.
+session u:go 'b:cat adapters/claude/hooks/test-check-attention.sh' "$bg"
+blocks "$claim" '' "$wait"
+session u:go 'w:cat test.sh' "r:#!/bin/sh
+bg='${bg#r:}'
+moved='${moved#r:}'"
+blocks "$claim" '' "$wait"
 # A background subagent excuses it until its notification, by task id or
-# tool-use id, arrives or it is stopped; a finished one, or a failed launch, does not.
+# tool-use id, arrives or it is stopped; a synchronous one, or a failed launch,
+# does not, nor does a synchronous report that quotes the launch line.
 agent() {
   session u:go
   python3 -c '
@@ -448,14 +461,17 @@ printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id"
 blocks "$review" '' "$wait"
 agent Agent 'The review found no problems.'
 blocks "$review" '' "$wait"
+agent Agent "The hook reads the launch result:
+$launched"
+blocks "$review" '' "$wait"
 agent Agent "$launched" e
 blocks "$review" '' "$wait"
 # A true wait on a merge with nothing running is still blocked.
 session u:go "$auto" r
 blocks "I'm waiting for the merge, and it'll wake me." '' "$wait"
 # GitHub watches excuse a waiting claim but are not the closeout's to stop.
-for watch in 'b:gh run watch 9 --exit-status' 'b:gh pr checks 5 --watch' \
-  'b:timeout 1500 gh pr checks 5 --watch' 'b:GH_REPO=o/r gh run watch 9' 'b:gh -R o/r run watch 9'; do
+for watch in 'w:gh run watch 9 --exit-status' 'w:gh pr checks 5 --watch' \
+  'w:timeout 1500 gh pr checks 5 --watch' 'w:GH_REPO=o/r gh run watch 9' 'w:gh -R o/r run watch 9'; do
   session u:go "$watch" "$bg"
   passes "$claim"
   passes 'Done.'
@@ -479,7 +495,7 @@ blocks "$card" '' 'PushNotification'
 # A final message the transcript does not hold yet is still checked.
 session u:go a:"$card" q 'r:The user answered: accept'
 blocks "$closeout" '' 'PushNotification'
-session u:go 'b:wait-for pr-ci 5' "$bg" a:"$card" q 'r:The user answered: accept'
+session u:go 'w:wait-for pr-ci 5' "$bg" a:"$card" q 'r:The user answered: accept'
 passes "$card"
 
 # Missing fields and a missing signal are reported together.

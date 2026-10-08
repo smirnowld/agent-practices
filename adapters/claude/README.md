@@ -286,10 +286,13 @@ unverified against vendor docs.
   `queued_command` attachment and queue operations, or with a `TaskStop` of
   the task (or of its older name, `KillShell`). Run over 150 recent
   sessions, it reported no wait still open. Any other background Bash call
-  found the same way, and a subagent whose `Agent` (or `Task`) result reads
-  "Async agent launched successfully" and "agentId: ID" (observed
-  2026-10-08, not documented), counts as a running task until its
-  notification or `TaskStop`.
+  found the same way, and a subagent whose `Agent` (or `Task`) result
+  starts with "Async agent launched successfully" and names "agentId: ID"
+  on a later line (observed 2026-10-08, not documented), counts as a
+  running task until its notification or `TaskStop`. The ID must be on the
+  result's first line, and "running in background" counts only for a call
+  with `run_in_background`, so output that quotes these lines (a `cat` of
+  the hook's tests, a subagent's report) starts no task.
   It blocks a final message whose sentence pairs a waiting phrase with CI,
   a run, a check or a merge while no background task or subagent runs, unless the wait is on
   me ("once you accept"); a "when CI passes or fails" list of outcomes
@@ -301,8 +304,9 @@ unverified against vendor docs.
   other words passes, as does one tied to "you" or "your" ("once your CI
   passes"), and one made while an unrelated background task such as a dev
   server runs; a wait started in a form it does not parse (as an `if` or `while` condition, say) is not seen;
-  a wait that ended without a notification in the transcript, such as one
-  lost to a crash, still counts as running, and a sentence that mentions
+  a background task or subagent that ended without a notification in the
+  transcript, such as one lost to a crash, still counts as running, so a
+  waiting claim made after it passes (fails open), and a sentence that mentions
   both waiting and CI for another reason is blocked once (the reason says
   to end the turn again if nothing is awaited). A repeat stop always ends
   the turn, so no rule can block twice in a row.
