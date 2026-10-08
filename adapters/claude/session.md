@@ -14,7 +14,8 @@ when ToolSearch cannot find it either, and the report says so.
   Model line's model and effort. Briefs listed only in chat are not proposed.
 - **Title and place a session** (P2a, `templates/session-title.md`): rename
   with `mcp__ccd_session_mgmt__set_session_title` and `session_id` `self`, at
-  start once sized and whenever the autonomy marker moves up. A `spawn_task`
+  start once sized (started by a skill: before its first step) and whenever
+  the autonomy marker moves up. A `spawn_task`
   chip's title is already in that form. Move into a project with
   `mcp__ccd_directory__change_directory`; the move applies when the turn ends.
   A declined rename or move is not retried, and an unattended session does
