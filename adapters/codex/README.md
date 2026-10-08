@@ -234,19 +234,21 @@ fast-forwards a clean `main` whose history is an ancestor of the fetched
 commit, checking the checkout again after fetching. It never stashes, resets,
 cleans or switches branches. Git hooks and autostash are disabled; ignored
 files that would be overwritten also stop the merge. Concurrent updater
-runs share a nonblocking checkout lock; a second run reports a skip. Other
+runs share a nonblocking checkout lock; a second run skips installation. Other
 tools should avoid changing the checkout while the updater runs.
 
 After updating or skipping, it links skill folders, removes dangling skill
 links only when their resolved targets are inside this checkout, and copies
 changed role files. It preserves skill name collisions, role symlinks and
-foreign role filenames, reporting skipped collisions. Existing regular role
-files whose names the checkout provides are maintained copies. The targets
+foreign role filenames, counting skipped collisions for diagnostics. Existing
+regular role files whose names the checkout provides are maintained copies. The targets
 default to `~/.agents/skills` and `~/.codex/agents`; override them with
 `AGENT_PRACTICES_SKILLS_DIR` and `AGENT_PRACTICES_ROLES_DIR`. Targets resolving
 inside the checkout or overlapping each other are rejected. Tests use an
-isolated home and temporary targets. Failed updates leave the session free
-to start, with the reason in the note; installation failures are reported too.
+isolated home and temporary targets. The hook is silent by default on success,
+skips and failures: it emits no output or agent context and leaves the session
+free to start. Use `--verbose` for a single plain-text diagnostic line with
+the update result, installation changes and any failure reason.
 
 After reviewing the command, add this entry to `~/.codex/hooks.json`,
 preserving any existing hooks. Replace `/ABSOLUTE/CHECKOUT` with the stable
@@ -277,20 +279,17 @@ The official [hook guide](https://learn.chatgpt.com/docs/hooks) documents
 user-level `hooks.json`, the `SessionStart` matcher, timeout in seconds, and
 review and trust of non-managed hooks. In the CLI, open `/hooks` to review
 and trust the definition before starting a fresh session (checked
-2026-10-08). The updater emits a single JSON line: `systemMessage` surfaces
-its one-line note as a warning in the UI or event stream, while
-`hookSpecificOutput.additionalContext` asks the agent to repeat that exact
-note as its first response line. Look for `agent-practices:` after startup,
-resume or clear. Desktop rendering and the full installed flow remain
-unverified until tested in a fresh local session. The guide does not promise
-that refreshed skills and roles are discovered after `SessionStart` in that
+2026-10-08). A user hook trusted through the CLI also ran in a fresh desktop
+session (observed 2026-10-08). The updater runs silently at startup, resume
+or clear. The guide does not promise that refreshed skills and roles are
+discovered after `SessionStart` in that
 same session; discovery timing also needs live verification. Changed hook
 definitions may require renewed trust.
 
 To turn off only this updater, remove its handler from `hooks.json`, leaving
 other handlers intact. For a direct check, run
-`python3 '/ABSOLUTE/CHECKOUT/adapters/codex/update-install.py'`; a second run
-should report `already current` and zero installation changes when the
+`python3 '/ABSOLUTE/CHECKOUT/adapters/codex/update-install.py' --verbose`;
+a second run should report `already current` and zero installation changes when the
 checkout is clean and the remote is reachable. No hook installation or trust
 is performed by this repository's checks.
 

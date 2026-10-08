@@ -2,7 +2,6 @@
 """Exercise the updater against disposable repositories and an isolated home."""
 
 import fcntl
-import json
 import os
 from pathlib import Path
 import shutil
@@ -81,16 +80,29 @@ class UpdaterTest(unittest.TestCase):
         self.commit(self.seed)
         self.run_git(self.seed, "push", "origin", "main")
 
-    def update(self):
-        result = subprocess.run(["python3", str(self.repo / "adapters/codex/update-install.py")],
+    def update(self, verbose=True):
+        command = ["python3", str(self.repo / "adapters/codex/update-install.py")]
+        if verbose:
+            command.append("--verbose")
+        result = subprocess.run(command,
                                 env=self.env, capture_output=True, text=True, timeout=15)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(len(result.stdout.splitlines()), 1)
-        output = json.loads(result.stdout)
-        note = output["systemMessage"]
-        self.assertEqual(output["hookSpecificOutput"]["hookEventName"], "SessionStart")
-        self.assertTrue(output["hookSpecificOutput"]["additionalContext"].endswith(note))
-        return note
+        self.assertEqual(result.stderr, "")
+        if verbose:
+            self.assertEqual(len(result.stdout.splitlines()), 1)
+            self.assertTrue(result.stdout.startswith("agent-practices: "))
+        else:
+            self.assertEqual(result.stdout, "")
+        return result.stdout.strip()
+
+    def test_default_quiet_still_installs_and_updates(self):
+        self.update(verbose=False)
+        self.assertEqual((self.skills / "example").resolve(), (self.repo / "skills/example").resolve())
+        self.assertEqual((self.roles / "example.toml").read_text(), "role\n")
+        self.advance()
+        self.update(verbose=False)
+        self.assertEqual(self.run_git(self.repo, "rev-parse", "HEAD"),
+                         self.run_git(self.seed, "rev-parse", "HEAD"))
 
     def test_fast_forward_and_idempotency(self):
         self.advance()
@@ -111,6 +123,7 @@ class UpdaterTest(unittest.TestCase):
         target = self.repo / "skills/example/SKILL.md"
         target.write_text("local work\n")
         self.assertIn("checkout has local changes", self.update())
+        self.update(verbose=False)
         self.assertEqual(target.read_text(), "local work\n")
         self.assertFalse((self.repo / "new-file").exists())
 
@@ -123,6 +136,7 @@ class UpdaterTest(unittest.TestCase):
     def test_unreachable_origin(self):
         self.origin.rename(self.base / "unavailable.git")
         self.assertIn("Git operation failed", self.update())
+        self.update(verbose=False)
 
     def test_url_rewrite_and_askpass_blocked(self):
         marker = self.base / "prompt-was-run"
