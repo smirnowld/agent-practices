@@ -77,6 +77,17 @@ Fill `templates/brief.md`, every section.
   merges".
 - **Secrets** lists only templates the work needs, from the project's
   committed ones; `none` when it needs none. Never a new template or a value.
+- **Authorization** follows `practices/authorization.md`. Carry granted
+  task approval and its evidence in Settled decisions: concrete actions,
+  resources, source, workflow, allowed credential route and applicable
+  numeric cost/build/time limits. Carry gates still awaiting me too. Work
+  shows these actions and limits, including approved temporary nonsecret
+  setup and restoration, inspection, recovery and retries. Distinguish
+  task approval from technical per-run bindings; a handoff does not erase
+  approved scope, but another chat may rely on it only with trusted direct
+  human evidence allowed by its tools. Starting a brief approves outside
+  actions only when those actions and limits were shown and explicitly
+  approved; a generic launch is not account or money authorization.
 - **Related issues.** Search open issues (`deferred-review` too) that name
   the core files, their modules or the goal (`gh issue list --search`, then
   `issue-review` step 2 on each hit) and list them, so the session fixes

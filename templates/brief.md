@@ -16,7 +16,10 @@ follows templates/session-title.md and is the proposed session's title. -->
 
 ## Settled decisions
 
-<!-- Not to be reopened. Link the ADR or message where each was made. -->
+<!-- Not to be reopened. Link the ADR or message where each was made.
+Carry granted task approval with its actions, resources, source, workflow,
+credential route and applicable numeric cost/build/time limits, plus gates
+still awaiting approval (practices/authorization.md). -->
 - <decision> (<link>)
 
 ## Core files and resources
@@ -50,6 +53,11 @@ that passes the fix-on-the-go test in this PR (Fixes #N); report the rest. -->
 
 ## Work
 
+<!-- Show outside actions and their limits before requesting approval;
+starting a generic brief does not approve undisclosed account or money
+actions. Distinguish task approval from technical per-run bindings. Include
+approved setup/restoration, inspection, recovery and retries within limits;
+name the gates that still need me (practices/authorization.md). -->
 1. <step>
 
 ## Proof
