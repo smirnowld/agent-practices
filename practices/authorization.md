@@ -51,9 +51,13 @@ new chats, messages, persistent goals or scheduled work.
 Record the request or job identifier as soon as it is available and track
 attempts, costs and time against the approved limits. If a submission's
 outcome is unknown, retrieve the recorded identifier with a read-only
-request (GET) and inspect the result. Never repeat the submission (POST)
-to resolve uncertainty. If no identifier was recorded or retrieval cannot
-establish the outcome, stop and resolve it with me before submitting again.
+request (GET) and inspect the result. If the tool contract explicitly
+supports idempotent recovery after an unknown outcome, retry only with the
+exact original arguments and original idempotency key, within the approved
+scope and limits. Never use a fresh key, create a new operation or repeat a
+non-idempotent submission (POST) to resolve uncertainty. If neither retrieval
+nor documented idempotent recovery can establish the outcome, stop and
+resolve it with me before submitting again.
 
 Restore temporary settings through the approved route, inspecting current
 state first so another person's intervening changes are not overwritten.
@@ -94,8 +98,10 @@ generic request to start work does not supply missing authority.
   allowance. A fourth submission, a different workflow or a source change
   outside the named module needs approval.
 - A build response is lost after its job identifier is recorded. Retrieve
-  that job by GET and inspect its status and results. Do not issue another
-  POST. A technical binding for a later allowed attempt can be renewed by
+  that job by GET and inspect its status and results. If the tool contract
+  instead requires idempotent recovery, repeat only the original arguments
+  and key within the approved limits, never a fresh submission. A technical
+  binding for a later allowed attempt can be renewed by
   the agent only through the already approved operator route.
 - An approved test needs a nonsecret account setting temporarily changed.
   The scope names the setting, temporary value and restoration. Inspect it,
