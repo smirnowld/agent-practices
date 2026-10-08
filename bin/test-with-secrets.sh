@@ -113,9 +113,14 @@ mkdir -p "$tokdir"; chmod 700 "$tokdir"
 printf 'tok-file\n' > "$tok"; chmod 600 "$tok"
 FAKE_UNAME=Linux; export FAKE_UNAME
 : > "$log"
+# Run with fd 3 closed here, so an open fd 3 in the command can only be the
+# token file's descriptor leaking through op.
 "$tool" --project demo --template "$dir/agent.tpl" -- \
-  sh -c 'echo "$A $B" > "$0"; env > "$0.env"' "$dir/child"
+  sh -c 'echo "$A $B" > "$0"; env > "$0.env"
+    if [ -e /dev/fd/3 ]; then echo open; else echo closed; fi > "$0.fd3"' \
+  "$dir/child" 3<&-
 [ "$(cat "$dir/child")" = "value-A value-B" ]
+[ "$(cat "$dir/child.fd3")" = closed ] || { echo "the command inherited fd 3"; exit 1; }
 lacks OP_SERVICE_ACCOUNT_TOKEN "$dir/child.env"
 grep -qx 'op token=tok-file' "$log"
 lacks security "$log"
@@ -146,7 +151,14 @@ rm -f "$tok"; refused "is missing"
 printf '\n' > "$tok"; refused "is empty"
 rm -f "$tok"; ln -s "$dir/valid" "$tok"; refused "is a symlink"
 rm -f "$tok"; mkdir "$tok"; refused "is not a regular file"
-rmdir "$tok"; printf 'tok-file-SECRET\n' > "$tok"; chmod 600 "$tok"
+rmdir "$tok"; printf 'tok-file-SECRET\n' > "$tok"
+# Mode 200 passes the mode check but cannot be opened; root reads it anyway.
+if [ "$(id -u)" = 0 ]; then
+  echo "note: skipped unreadable token file (running as root)"
+else
+  chmod 200 "$tok"; refused "cannot be read"
+fi
+chmod 600 "$tok"
 FAKE_UID=4242 FAKE_UID_SKIP="$dir/skip"; export FAKE_UID FAKE_UID_SKIP
 : > "$FAKE_UID_SKIP"; refused "is not owned by you"
 unset FAKE_UID FAKE_UID_SKIP
