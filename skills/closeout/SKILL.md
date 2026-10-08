@@ -25,6 +25,9 @@ PR (P17), never in the repository.
 - Anything not verified, deferred review findings, records updated, cleanup
   done. Cleanup includes your own background waits: none may still be
   running; stop any left (the adapter names the tool) and say so.
+- Steps addressed to me anywhere: the PR body, changed READMEs and docs,
+  workers' reports, your own notes. Run each one you can (P9a); the rest go
+  under **Needs you**.
 - What was fixed on the go and which issues the PR closed (P6). Work left
   over that would have passed the fix-on-the-go test is a miss: say so under
   **Deferred** and why it was not done.

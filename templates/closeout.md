@@ -21,9 +21,10 @@ line>
 
 **Full record:** <only when there is a PR: its link>
 
-**Needs you:** <only when something waits on me: each step in the order to
-do it, with the exact command, link or choice, and what happens if I do it
-(for example "merging deploys")>
+**Needs you:** <only when something waits on me after you did what you
+could (P9a): numbered steps in the order to do it, each with where, the exact
+command in its own code block, link or choice, what I should see, and what
+happens if I do it (for example "merging deploys")>
 
 **Status:** <🟢 done | 🔵 ready for you | 🟡 partly done | 🔴 blocked |
 ⚪ abandoned> — <one sentence>

@@ -37,6 +37,42 @@ a colleague giving a quick spoken update, not like a log.
 - **Short**: under about 150 words for most messages. If more is needed,
   the summary comes where I will see it first.
 
+## Steps for me
+
+Detail for P9a. A step I have to do by hand is the costliest line in any
+message, so first try not to need it, then make it impossible to miss.
+
+- **Try first.** Run what you can: install, configure, create the label or
+  the repository setting through `gh`, write the config file, start the
+  service. Check the result. A step becomes mine only for a real reason:
+  consent (P9), a secret (P10), root, a sign-in, an approval prompt, or a
+  setting with no command or API. Say the reason in a few words.
+- **Shrink what is left.** Prepare everything around it: write the script
+  so I run one command, fill the file so I only paste a value, give the
+  direct link to the exact settings page rather than "go to settings".
+- **Say it in chat**, numbered, in the order to do it. A README, runbook or
+  PR body may also keep a step that must be repeated later, but a step that
+  is only there, in a code comment or in thinking is a step I never saw.
+  Steps a worker reports go into the coordinator's message the same way.
+- **Each step** says where (which machine, directory or page), the exact
+  command in its own code block, one command per block, ready to paste with
+  no placeholders I must invent (name the value and where it comes from
+  when one is unavoidable), what I should see when it worked, and what
+  happens next: "then tell me" or "the session picks it up by itself".
+- **After I do it**, verify it yourself and continue; don't ask me to check.
+
+Before: "You'll need to add the deploy key and enable the workflow."
+
+After: "1. On your laptop, add the deploy key (it is a secret I must not
+read), then reply 'done':
+
+```bash
+gh secret set DEPLOY_KEY --repo OWNER/REPO < ~/.ssh/deploy_key
+```
+
+You should see 'Set Actions secret DEPLOY_KEY'. I enable the workflow and
+start the first run myself."
+
 ## Before and after
 
 Before: "Upstream timeouts now fall back to cached values; partial
