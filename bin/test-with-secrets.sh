@@ -117,9 +117,11 @@ FAKE_UNAME=Linux; export FAKE_UNAME
 # token file's descriptor leaking through op.
 "$tool" --project demo --template "$dir/agent.tpl" -- \
   sh -c 'echo "$A $B" > "$0"; env > "$0.env"
+    if [ -e /dev/fd/1 ]; then echo yes; else echo no; fi > "$0.devfd"
     if [ -e /dev/fd/3 ]; then echo open; else echo closed; fi > "$0.fd3"' \
   "$dir/child" 3<&-
 [ "$(cat "$dir/child")" = "value-A value-B" ]
+[ "$(cat "$dir/child.devfd")" = yes ] || { echo "no /dev/fd; the fd 3 check cannot run"; exit 1; }
 [ "$(cat "$dir/child.fd3")" = closed ] || { echo "the command inherited fd 3"; exit 1; }
 lacks OP_SERVICE_ACCOUNT_TOKEN "$dir/child.env"
 grep -qx 'op token=tok-file' "$log"
@@ -152,7 +154,8 @@ printf '\n' > "$tok"; refused "is empty"
 rm -f "$tok"; ln -s "$dir/valid" "$tok"; refused "is a symlink"
 rm -f "$tok"; mkdir "$tok"; refused "is not a regular file"
 rmdir "$tok"; printf 'tok-file-SECRET\n' > "$tok"
-# Mode 200 passes the mode check but cannot be opened; root reads it anyway.
+# Mode 200 is not readable by its owner, so the file cannot be opened and the
+# tool refuses it before reading; root opens it anyway.
 if [ "$(id -u)" = 0 ]; then
   echo "note: skipped unreadable token file (running as root)"
 else
