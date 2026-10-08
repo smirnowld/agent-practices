@@ -25,6 +25,9 @@ PR (P17), never in the repository.
 - Anything not verified, deferred review findings, records updated, cleanup
   done. Cleanup includes your own background waits: none may still be
   running; stop any left (the adapter names the tool) and say so.
+- Steps addressed to me anywhere: the PR body, changed READMEs and docs,
+  workers' reports, your own notes. Run each one you can (P9a; file changes
+  through a slice, P2b); the rest go under **Needs you**.
 - What was fixed on the go and which issues the PR closed (P6). Work left
   over that would have passed the fix-on-the-go test is a miss: say so under
   **Deferred** and why it was not done.
@@ -38,8 +41,9 @@ the template's order: the asks and the TL;DR come last, where a chat opens.
   missed it: something untested that matters, a surprise, a new cost. Not
   routine gaps such as a skipped local check that CI covered.
 - **Next**: one line, only when there is a real next task.
-- **Needs you**: every step that waits on me, in order, each with the exact
-  command, link or choice. Name an irreversible effect next to its step
+- **Needs you**: every step that waits on me, numbered in order, each with
+  where, the exact command in its own code block, link or choice, and what I
+  should see (`practices/writing-to-me.md#steps-for-me`). Name an irreversible effect next to its step
   ("merging deploys"). Check the order against what I have already done. An
   acceptance waits on its own card (`templates/acceptance-card.md`); point
   to it rather than repeating it.
@@ -56,7 +60,7 @@ the template's order: the asks and the TL;DR come last, where a chat opens.
   makes possible.
 
 Plain words throughout (P21, `practices/writing-to-me.md`). About 120
-words, links aside. If it runs longer, cut process, not the ask or the risk.
+words, links and commands aside. If it runs longer, cut process, not the ask or the risk.
 
 Then fill the Record field by field for the PR. Keep each field to what a
 reader needs; leave out process detail. Every Record field appears in the PR,

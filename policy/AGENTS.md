@@ -184,6 +184,12 @@ publishing, infrastructure provisioning, privileged commands. Hand me root
 commands exactly as I would run them. A private evidence page on the
 project's agreed host is not publishing.
 
+**P9a. Do it, then hand me the rest.** Run and check what the work needs
+yourself; for a P9 action, ask, then run it after my OK. A step is mine only
+when you cannot do it even with my OK. Each such step reaches me in chat and
+in the closeout, never only in a README, PR body, comment or thinking
+(`practices/writing-to-me.md#steps-for-me`).
+
 ## P10. Secrets
 
 Never read, print, copy or commit a secret; name it and where I place it.
