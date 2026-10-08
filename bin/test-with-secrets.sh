@@ -27,7 +27,36 @@ echo "security \$*" >> "$log"
 [ "\$3" = op-agent-demo ] || exit 44
 echo tok-demo
 FAKE
-chmod +x "$dir/bin/op" "$dir/bin/security"
+# Fake uname: Darwin unless FAKE_UNAME says otherwise, so the Keychain cases
+# run the same on a Linux CI runner. Fake id: FAKE_UID for -u when set,
+# except once while the file FAKE_UID_SKIP names exists (it is removed).
+real_uname=$(command -v uname) real_id=$(command -v id)
+cat > "$dir/bin/uname" <<FAKE
+#!/bin/sh
+[ "\$1" = -s ] && { echo "\${FAKE_UNAME:-Darwin}"; exit 0; }
+exec "$real_uname" "\$@"
+FAKE
+cat > "$dir/bin/id" <<FAKE
+#!/bin/sh
+if [ "\$1" = -u ] && [ -n "\${FAKE_UID:-}" ]; then
+  if [ -n "\${FAKE_UID_SKIP:-}" ] && [ -e "\$FAKE_UID_SKIP" ]; then rm -f "\$FAKE_UID_SKIP"
+  else echo "\$FAKE_UID"; exit 0; fi
+fi
+exec "$real_id" "\$@"
+FAKE
+# Fake stat: with FAKE_SWAP set, replaces that file just before it is
+# inspected by path, as a race after the open would.
+real_stat=$(command -v stat)
+cat > "$dir/bin/stat" <<FAKE
+#!/bin/sh
+for a; do
+  if [ -n "\${FAKE_SWAP:-}" ] && [ "\$a" = "\$FAKE_SWAP" ]; then
+    rm -f "\$a"; printf 'tok-swapped\\n' > "\$a"; chmod 600 "\$a"
+  fi
+done
+exec "$real_stat" "\$@"
+FAKE
+chmod +x "$dir/bin/op" "$dir/bin/security" "$dir/bin/uname" "$dir/bin/id" "$dir/bin/stat"
 PATH="$dir/bin:$PATH"; export PATH
 lacks() { [ -f "$2" ] || { echo "no $2"; exit 1; }; if grep -q "$1" "$2"; then echo "$2 holds $1"; exit 1; fi; }
 fails() { if "$@" >"$dir/out" 2>&1; then echo "expected failure: $*"; exit 1; fi; }
@@ -75,4 +104,128 @@ lacks security "$log"
 "$tool" --project demo --dry-run --template "$dir/agent.tpl" > "$dir/out" 2>/dev/null
 grep -qx "$(printf 'A\tagents-demo')" "$dir/out"
 [ ! -s "$log" ]
+
+# Linux: the token comes from ~/.config/op/agent-PROJECT.token, mode 600 or
+# 400 and yours; the Keychain is never asked.
+HOME="$dir/home"; export HOME
+tokdir="$HOME/.config/op"; tok="$tokdir/agent-demo.token"
+mkdir -p "$tokdir"; chmod 700 "$tokdir"
+printf 'tok-file\n' > "$tok"; chmod 600 "$tok"
+FAKE_UNAME=Linux; export FAKE_UNAME
+: > "$log"
+# Run with fd 3 closed here, so an open fd 3 in the command can only be the
+# token file's descriptor leaking through op.
+"$tool" --project demo --template "$dir/agent.tpl" -- \
+  sh -c 'echo "$A $B" > "$0"; env > "$0.env"
+    if [ -e /dev/fd/1 ]; then echo yes; else echo no; fi > "$0.devfd"
+    if [ -e /dev/fd/3 ]; then echo open; else echo closed; fi > "$0.fd3"' \
+  "$dir/child" 3<&-
+[ "$(cat "$dir/child")" = "value-A value-B" ]
+[ "$(cat "$dir/child.devfd")" = yes ] || { echo "no /dev/fd; the fd 3 check cannot run"; exit 1; }
+[ "$(cat "$dir/child.fd3")" = closed ] || { echo "the command inherited fd 3"; exit 1; }
+lacks OP_SERVICE_ACCOUNT_TOKEN "$dir/child.env"
+grep -qx 'op token=tok-file' "$log"
+lacks security "$log"
+
+# The project name comes from the repository, as on macOS.
+: > "$log"
+(cd "$dir/demo" && "$tool" -- true)
+grep -qx 'op token=tok-file' "$log"
+
+chmod 400 "$tok"
+"$tool" --project demo --template "$dir/agent.tpl" -- true
+
+# Refused, naming the file and the practice, never showing the token.
+printf 'tok-file-SECRET\n' > "$dir/valid"; chmod 600 "$dir/valid"
+refused() {
+  fails "$tool" --project demo --template "$dir/agent.tpl" -- true
+  grep -q "$tok" "$dir/out" || { echo "no path in: $(cat "$dir/out")"; exit 1; }
+  grep -q 'practices/secrets.md' "$dir/out" || { echo "no practice in: $(cat "$dir/out")"; exit 1; }
+  grep -q "$1" "$dir/out" || { echo "expected '$1' in: $(cat "$dir/out")"; exit 1; }
+  lacks tok-file "$dir/out"
+}
+for m in 644 640 660 700 604; do
+  rm -f "$tok"; printf 'tok-file-SECRET\n' > "$tok"; chmod "$m" "$tok"
+  refused "has mode"
+done
+rm -f "$tok"; refused "is missing"
+: > "$tok"; chmod 600 "$tok"; refused "is empty"
+printf '\n' > "$tok"; refused "is empty"
+rm -f "$tok"; ln -s "$dir/valid" "$tok"; refused "is a symlink"
+rm -f "$tok"; mkdir "$tok"; refused "is not a regular file"
+rmdir "$tok"; printf 'tok-file-SECRET\n' > "$tok"
+# Mode 200 is not readable by its owner, so the file cannot be opened and the
+# tool refuses it before reading; root opens it anyway.
+if [ "$(id -u)" = 0 ]; then
+  echo "note: skipped unreadable token file (running as root)"
+else
+  chmod 200 "$tok"; refused "cannot be read"
+fi
+chmod 600 "$tok"
+FAKE_UID=4242 FAKE_UID_SKIP="$dir/skip"; export FAKE_UID FAKE_UID_SKIP
+: > "$FAKE_UID_SKIP"; refused "is not owned by you"
+unset FAKE_UID FAKE_UID_SKIP
+"$tool" --project demo --template "$dir/agent.tpl" -- true
+
+# A file replaced between the open and the checks is not read.
+FAKE_SWAP=$tok; export FAKE_SWAP
+refused "changed while it was checked"
+unset FAKE_SWAP
+rm -f "$tok"; printf 'tok-file\n' > "$tok"; chmod 600 "$tok"
+
+# A carriage return (CRLF line ending) is refused, not sent to op.
+printf 'tok-file-SECRET\r\n' > "$tok"; refused "contains a carriage return"
+printf 'tok-file\n' > "$tok"
+
+# Setuid and setgid token files are refused. Skipped, with a note, where the
+# system drops the bit (setgid outside your groups, for one).
+fmode() { stat -c '%a' -- "$1" 2>/dev/null || stat -f '%Mp%Lp' -- "$1"; }
+for m in 4600 2600 1600; do
+  rm -f "$tok"; printf 'tok-file-SECRET\n' > "$tok"
+  if chmod "$m" "$tok" 2>/dev/null && [ "$(fmode "$tok")" = "$m" ]; then
+    refused "has mode $m"
+  else
+    echo "note: skipped mode $m (chmod did not set it here)"
+  fi
+done
+rm -f "$tok"; printf 'tok-file\n' > "$tok"; chmod 600 "$tok"
+
+# The directory: yours, not a symlink, not writable by group or others.
+refused_dir() {
+  fails "$tool" --project demo --template "$dir/agent.tpl" -- true
+  grep -q "token directory $tokdir $1" "$dir/out" || { echo "expected '$1' in: $(cat "$dir/out")"; exit 1; }
+  grep -q 'practices/secrets.md' "$dir/out" || { echo "no practice in: $(cat "$dir/out")"; exit 1; }
+  lacks tok-file "$dir/out"
+}
+for m in 777 775 757 720; do chmod "$m" "$tokdir"; refused_dir "has mode"; done
+for m in 755 700 750; do chmod "$m" "$tokdir"; "$tool" --project demo --template "$dir/agent.tpl" -- true; done
+FAKE_UID=4242; export FAKE_UID
+refused_dir "is not owned by you"
+unset FAKE_UID
+mv "$tokdir" "$HOME/.config/op-real"; ln -s op-real "$tokdir"
+refused_dir "is a symlink"
+rm "$tokdir"; mv "$HOME/.config/op-real" "$tokdir"
+chmod 700 "$tokdir"
+"$tool" --project demo --template "$dir/agent.tpl" -- true
+
+# A project name that could leave the directory is refused on Linux.
+for p in ../demo .demo -demo 'de/mo'; do
+  fails "$tool" --project "$p" --template "$dir/agent.tpl" -- true
+  grep -q 'project name must match' "$dir/out"
+  lacks 'de/mo' "$dir/out"; lacks '\.\./demo' "$dir/out"; lacks ' -demo' "$dir/out"
+done
+fails "$tool" --project "$(printf 'demo\n../x')" --template "$dir/agent.tpl" -- true
+grep -q 'project name' "$dir/out"
+
+# Other systems are refused.
+FAKE_UNAME=FreeBSD
+fails "$tool" --project demo --template "$dir/agent.tpl" -- true
+grep -q 'macOS (Keychain) and Linux (token file) only' "$dir/out"
+
+# macOS ignores the token file and asks the Keychain.
+FAKE_UNAME=Darwin
+: > "$log"
+"$tool" --project demo --template "$dir/agent.tpl" -- true
+grep -qx 'op token=tok-demo' "$log"
+grep -q '^security ' "$log"
 echo "with-secrets self-test passed"
