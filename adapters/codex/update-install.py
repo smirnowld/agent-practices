@@ -2,12 +2,12 @@
 """Fail-open SessionStart updater; uses only the Python standard library."""
 
 import fcntl
-import json
 import os
 from pathlib import Path
 import re
 import signal
 import subprocess
+import sys
 import tempfile
 import time
 import uuid
@@ -150,7 +150,7 @@ def reconcile():
     return "skills +{}/-{}, roles {}, collisions skipped {}".format(linked, removed, copied, skipped)
 
 
-def main():
+def main(verbose=False):
     global END
     END = time.monotonic() + DEADLINE
     note = "agent-practices: "
@@ -174,12 +174,9 @@ def main():
                 note += "; install skipped: " + str(error)
     except Exception as error:
         note += "skipped: " + str(error)
-    note = " ".join(note.split())
-    print(json.dumps({"systemMessage": note, "hookSpecificOutput": {
-        "hookEventName": "SessionStart",
-        "additionalContext": "Repeat this exact update note as the first line of your first response: " + note,
-    }}))
+    if verbose:
+        print(" ".join(note.split()))
 
 
 if __name__ == "__main__":
-    main()
+    main(verbose="--verbose" in sys.argv[1:])
