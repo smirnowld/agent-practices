@@ -28,7 +28,8 @@ a colleague giving a quick spoken update, not like a log.
   (the PR in a merge question). Links still follow P18. An unavoidable
   technical term gets a few words on what it means for me.
 - **Asks stand out**: what to do, in what order, the exact command or link,
-  and what happens when I do it ("merging deploys").
+  and what happens when I do it ("merging deploys"). Steps I do by hand
+  follow [Steps for me](#steps-for-me).
 - **Real risks only**, one line each. Routine gaps that a check or review
   already covers stay out.
 - **No padding**: no restating my request, no narrating the process, no
@@ -42,14 +43,20 @@ a colleague giving a quick spoken update, not like a log.
 Detail for P9a. A step I have to do by hand is the costliest line in any
 message, so first try not to need it, then make it impossible to miss.
 
-- **Try first.** Run what you can: install, configure, create the label or
-  the repository setting through `gh`, write the config file, start the
-  service. Check the result. A step becomes mine only for a real reason:
-  consent (P9), a secret (P10), root, a sign-in, an approval prompt, or a
-  setting with no command or API. Say the reason in a few words.
+- **Try first.** Run what the work needs inside the repository and on this
+  machine, check the result, and say what you did. Something P9 covers
+  (accounts, repository or host settings, infrastructure, publishing,
+  privileged commands) is a question first (P6b); after my OK you run it
+  yourself rather than handing me the command. A coordinator's file changes
+  still go through a slice (P2b), and a worker reports what it could not
+  run instead of widening its brief.
+- **Mine only for a reason** you name in a few words: a secret you must
+  not see (P10), root, my sign-in, a security dialog or second factor on my
+  device, or a setting with no command or API.
 - **Shrink what is left.** Prepare everything around it: write the script
-  so I run one command, fill the file so I only paste a value, give the
-  direct link to the exact settings page rather than "go to settings".
+  or manifest line so I run one command, fill the file so I only paste a
+  value, give the direct link to the exact settings page rather than "go to
+  settings".
 - **Say it in chat**, numbered, in the order to do it. A README, runbook or
   PR body may also keep a step that must be repeated later, but a step that
   is only there, in a code comment or in thinking is a step I never saw.
@@ -59,19 +66,24 @@ message, so first try not to need it, then make it impossible to miss.
   no placeholders I must invent (name the value and where it comes from
   when one is unavoidable), what I should see when it worked, and what
   happens next: "then tell me" or "the session picks it up by itself".
+  Commands and links do not count toward a message's word budget.
 - **After I do it**, verify it yourself and continue; don't ask me to check.
 
-Before: "You'll need to add the deploy key and enable the workflow."
+Before: "You'll need to add the deploy secret and enable the workflow."
 
-After: "1. On your laptop, add the deploy key (it is a secret I must not
-read), then reply 'done':
+After: "I added the secret to the manifest. 1. In the project folder on
+your laptop, push it (I must not see its value), then reply 'done':
 
 ```bash
-gh secret set DEPLOY_KEY --repo OWNER/REPO < ~/.ssh/deploy_key
+push-secrets --only DEPLOY_TOKEN secrets.manifest
 ```
 
-You should see 'Set Actions secret DEPLOY_KEY'. I enable the workflow and
-start the first run myself."
+You should see one line naming DEPLOY_TOKEN. Then I check the secret
+exists and ask you before the first deploy runs."
+
+Origin: projects of every kind. One-off setup steps were left in READMEs,
+PR bodies and agent reasoning, where they were missed, and some were steps
+the agent could have run itself.
 
 ## Before and after
 

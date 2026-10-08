@@ -184,13 +184,10 @@ publishing, infrastructure provisioning, privileged commands. Hand me root
 commands exactly as I would run them. A private evidence page on the
 project's agreed host is not publishing.
 
-**P9a. Do it, then hand me the rest.** Setup, configuration and one-off steps
-you can run yourself (shell, `gh`, an API, a config file), you run, and you
-check that they worked. Only what needs me (a P9 consent, a P10 secret, root,
-a sign-in, a UI with no command) becomes a step for me, made as small as you
-can. Each step reaches me in chat and in the closeout's Needs you, never only
-in a README, PR body, comment or thinking: numbered, with where to run it,
-the exact command, what I should see, and what you do next
+**P9a. Do it, then hand me the rest.** Run and check what the work needs
+yourself; for a P9 action, ask, then run it after my OK. A step is mine only
+when you cannot do it even with my OK. Each such step reaches me in chat and
+in the closeout, never only in a README, PR body, comment or thinking
 (`practices/writing-to-me.md#steps-for-me`).
 
 ## P10. Secrets

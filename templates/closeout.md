@@ -3,7 +3,7 @@
 <!-- End of session (P15), written with the closeout skill. Lives in the PR
 and chat, not the repo (P17).
 
-Chat gets the part above "Record" only: about 120 words, links aside, read
+Chat gets the part above "Record" only: about 120 words, links and commands aside, read
 in under a minute on a phone. Plain words about what changes for me, my
 users and my customers; no policy numbers, commit hashes, file paths or
 check names unless I have to act on one. Leave out a field marked "only
@@ -22,9 +22,8 @@ line>
 **Full record:** <only when there is a PR: its link>
 
 **Needs you:** <only when something waits on me after you did what you
-could (P9a): numbered steps in the order to do it, each with where, the exact
-command in its own code block, link or choice, what I should see, and what
-happens if I do it (for example "merging deploys")>
+could (P9a): numbered steps in order, as in practices/writing-to-me.md
+"Steps for me"; name an effect a step has (for example "merging deploys")>
 
 **Status:** <🟢 done | 🔵 ready for you | 🟡 partly done | 🔴 blocked |
 ⚪ abandoned> — <one sentence>
