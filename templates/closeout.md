@@ -3,8 +3,8 @@
 <!-- End of session (P15), written with the closeout skill. Lives in the PR
 and chat, not the repo (P17).
 
-Chat gets the part above "Record" only: about 120 words, links and commands aside, read
-in under a minute on a phone. Plain words about what changes for me, my
+Chat gets the part above "Record" only: about 120 words, links and
+commands aside, read in under a minute on a phone. Plain words about what changes for me, my
 users and my customers; no policy numbers, commit hashes, file paths or
 check names unless I have to act on one. Leave out a field marked "only
 when" if it does not apply; never fill it with "none". The summary ends with
