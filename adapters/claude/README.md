@@ -174,7 +174,9 @@ unverified against vendor docs.
   folder, and the move applies when the turn ends (all from the tools' own
   descriptions, 2026-10-07, unverified against vendor docs). Titles leave
   out the project because the Code tab sidebar can group sessions by folder
-  (observed 2026-10-07).
+  (observed 2026-10-07). A session started with a skill kept the title the
+  app took from the command (observed 2026-10-08), so the rename comes
+  before the skill's first step.
 - Proposing sessions (`brief` skill): the rule is in
   [session.md](session.md); the model it names comes from `tiers.json`
   (Sonnet for fast, Opus for standard). Before session.md was

@@ -56,15 +56,16 @@ when nothing else is known:
 | Skill | Title |
 |---|---|
 | `brief next` | `🟡 Decide·S — choose next tasks` |
-| `brief followups` | `🟢 Decide·XS — briefs for follow-ups` |
 | `merge` | `🟢 Land·XS — #N merge` |
 | `cost-review` | `🟡 Research·M — agent spend review` |
-| `project-setup` | `🔵 Chore·M — baseline setup` (audit: `🟢 Research·S — baseline audit`) |
-| `docs-gardening`, `project-visuals` | `🟢 Chore·S — WHAT it consolidates or redraws` |
-| a routine | `⏱ Routine — NAME` |
+| `project-setup` | `🟡 Chore·M — baseline setup` (audit: `🟢 Research·S — baseline audit`) |
+| `docs-gardening` | `🟢 Chore·S — consolidate DOCS` |
+| `project-visuals` | `🟢 Chore·S — redraw VISUAL` |
+| a routine skill run by hand | `🟢 Research·XS — NAME by hand` |
 
 A skill run inside a session already titled, such as `closeout` or
-`acceptance-evidence`, keeps the title.
+`acceptance-evidence`, keeps the title. A scheduled routine is titled
+where it is configured (`⏱ Routine — NAME`).
 
 ## Rest
 
