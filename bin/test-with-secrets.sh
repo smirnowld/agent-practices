@@ -118,13 +118,16 @@ rm "$dir/dt/full-access.env.tpl" "$dir/dt/operator.env.tpl"
 (cd "$dir/dt" && ! "$tool" --full-access --dry-run --template full-access.env.tpl -- true >/dev/null 2>&1)
 
 # Unknown flags print usage and exit 2.
-rc=0; "$tool" --bogus -- true >"$dir/out" 2>&1 || rc=$?
-[ "$rc" = 2 ] || { echo "usage rc $rc"; exit 1; }
-grep -q 'usage: with-secrets \[--full-access\]' "$dir/out" || { echo "no usage line"; exit 1; }
+usage2() {
+  rc=0; "$tool" "$@" >"$dir/out" 2>&1 || rc=$?
+  [ "$rc" = 2 ] || { echo "usage rc $rc for: $*"; exit 1; }
+  grep -q 'usage: with-secrets \[--full-access\]' "$dir/out" || { echo "no usage line for: $*"; exit 1; }
+}
+usage2 --bogus -- true
 # Partial flags and flags with a value are unknown, not the mode switch.
-fails "$tool" --full --dry-run --template "$dir/ops.tpl" -- true
-fails "$tool" --full-access=1 --dry-run --template "$dir/ops.tpl" -- true
-fails "$tool" --operator=1 --dry-run --template "$dir/ops.tpl" -- true
+usage2 --full --dry-run --template "$dir/ops.tpl" -- true
+usage2 --full-access=1 --dry-run --template "$dir/ops.tpl" -- true
+usage2 --operator=1 --dry-run --template "$dir/ops.tpl" -- true
 
 # Agent mode ignores the full-access templates.
 mkdir "$dir/at"
