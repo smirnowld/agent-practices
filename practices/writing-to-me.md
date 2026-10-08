@@ -64,13 +64,13 @@ message, so first try not to need it, then make it impossible to miss.
     Request only the login the step needs, never a card or address, and
     release it when done;
   - hand back to me, even when the OK named it, before opening the page: a
-    page that would show or ask for a secret (creating a token or key, revealing or entering a secret
-    value, P10); a password, card number or one-time code to type; a
-    CAPTCHA; a security setting (second factor, recovery, passkeys); an
-    authorization or access grant (an app or OAuth approval, an invite, a
-    role, a deploy key); terms or consent; payment; a delete, transfer or
-    visibility change; and any confirmation warning of more than the OK
-    named;
+    page that would show or ask for a secret (creating a token or key,
+    revealing or entering a secret value, P10); a password, card number or
+    one-time code to type; a CAPTCHA; a security setting (second factor,
+    recovery, passkeys); an authorization or access grant (an app or OAuth
+    approval, an invite, a role, a deploy key); terms or consent; payment;
+    a delete, transfer or visibility change; and any confirmation warning
+    of more than the OK named;
   - then check the result, by command where one exists, and say what
     changed.
 
