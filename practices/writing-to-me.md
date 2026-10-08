@@ -63,8 +63,8 @@ message, so first try not to need it, then make it impossible to miss.
   - signing in is mine: I sign in, or approve the sign-in the adapter names.
     Request only the login the step needs, never a card or address, and
     release it when done;
-  - hand back to me, even when the OK named it, before opening the page: a
-    page that would show or ask for a secret (creating a token or key,
+  - hand back to me, even when the OK named it: a page that would show or
+    ask for a secret, before opening it (creating a token or key,
     revealing or entering a secret value, P10); a password, card number or
     one-time code to type; a CAPTCHA; a security setting (second factor,
     recovery, passkeys); an authorization or access grant (an app or OAuth
