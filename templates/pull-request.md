@@ -12,6 +12,9 @@
 
 - <check / command> — <result>
 - Acceptance: <card link and my answer, or n/a>
+- ADRs: <each proposed ADR this PR adds or builds: ADR-NNNN accepted, not
+  yet or rejected, with my words quoted | left proposed, exploratory: why |
+  none>  <!-- P11, practices/record-keeping.md#triggers -->
 - Not verified: <item, or "nothing">
 - Seed: <updated: what it gained | not needed: why>  <!-- projects with a staging or demo seed only, practices/project-baseline.md O5 -->
 
