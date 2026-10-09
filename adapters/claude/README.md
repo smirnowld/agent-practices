@@ -289,7 +289,11 @@ unverified against vendor docs.
   found the same way, and a subagent whose `Agent` (or `Task`) result
   starts with "Async agent launched successfully" and names "agentId: ID"
   on a later line (observed 2026-10-08, not documented), counts as a
-  running task until its notification or `TaskStop`. A Bash result must open with
+  running task until its notification or `TaskStop`. A subagent resumed with
+  `SendMessage`, whose result is JSON with `"success": true` and
+  `"resumedAgentId": ID` (observed 2026-10-09, not documented), runs again
+  until a notification or `TaskStop` after the resume; one before it does not
+  end it. A Bash result must open with
   "Command running in background with ID: ID" (only for a call with
   `run_in_background`) or "Command did not finish (or complete) … moved to
   the background (ID: ID)", so output that quotes these lines (a `cat` of

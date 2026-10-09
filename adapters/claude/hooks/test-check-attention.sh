@@ -470,6 +470,34 @@ $launched"
 blocks "$review" '' "$wait"
 agent Agent "$launched" e
 blocks "$review" '' "$wait"
+# A subagent resumed with SendMessage after its notification runs again until
+# a later notification or TaskStop; a failed or unnamed resume reopens nothing.
+done_note='{"type":"user","message":{"content":"<task-notification>\n<task-id>a1b2c3</task-id>\n<status>completed</status>\n</task-notification>"}}'
+resume() {
+  python3 -c '
+import json, sys
+print(json.dumps({"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "sm1",
+    "name": "SendMessage", "input": {"to": "a1b2c3", "message": "fix it"}}]}}))
+print(json.dumps({"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "sm1",
+    "content": [{"type": "text", "text": sys.argv[1]}]}]}}))' "$1" >>"$tmp/t.jsonl"
+}
+agent Agent "$launched"
+printf '%s\n' "$done_note" >>"$tmp/t.jsonl"
+resume '{"success":true,"message":"Resuming agent a1b2c3","resumedAgentId":"a1b2c3"}'
+passes "$review"
+printf '%s\n' "$done_note" >>"$tmp/t.jsonl"
+blocks "$review" '' "$wait"
+agent Agent "$launched"
+printf '%s\n' "$done_note" >>"$tmp/t.jsonl"
+resume '{"success":true,"message":"Resuming agent a1b2c3","resumedAgentId":"a1b2c3"}'
+printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"x1","name":"TaskStop","input":{"task_id":"a1b2c3"}}]}}' >>"$tmp/t.jsonl"
+blocks "$review" '' "$wait"
+for out in '{"success":false,"resumedAgentId":"a1b2c3"}' '{"success":true,"message":"Sent"}' 'Resuming agent a1b2c3'; do
+  agent Agent "$launched"
+  printf '%s\n' "$done_note" >>"$tmp/t.jsonl"
+  resume "$out"
+  blocks "$review" '' "$wait"
+done
 # A true wait on a merge with nothing running is still blocked.
 session u:go "$auto" r
 blocks "I'm waiting for the merge, and it'll wake me." '' "$wait"

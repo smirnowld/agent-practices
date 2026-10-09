@@ -138,6 +138,9 @@ MOVED_ID = re.compile(r"\s*Command did not (?:finish|complete)[^\n]*?moved to th
 # not documented). A synchronous subagent's report that quotes it is no task.
 AGENT_ID = re.compile(r"\s*Async agent launched successfully[^\n]*\n(?:[^\n]*\n)*?\s*agentId: (\w+)")
 AGENTS = {"Agent", "Task"}  # Task: Agent's older name
+# A subagent resumed with SendMessage runs again: its result is JSON with
+# "success": true and "resumedAgentId" (observed 2026-10-09, not documented).
+RESUME = "SendMessage"
 NOTICE = re.compile(r"<task-notification>(.*?)</task-notification>", re.S)
 NOTICE_IDS = re.compile(r"<(task-id|tool-use-id)>\s*([^<\s]+)\s*</\1>")
 STOPS = {"TaskStop": "task_id", "KillShell": "shell_id"}  # KillShell: TaskStop's older name
@@ -291,16 +294,17 @@ def open_tasks(path):
     background subagent ("agent"). A task notification naming its task or
     tool-use id, or a TaskStop of its task, ends it; a notification only
     quoted in a tool result does not. An ending may come before or after the
-    call's result; a call without its background result is not counted."""
-    calls, ids, tasks, ended = {}, {}, {}, set()
-    for entry, content, parts in entries(path):
+    call's result; a call without its background result is not counted. A
+    subagent resumed with SendMessage runs again until an ending after it."""
+    calls, ids, tasks, ended, resumed, sends = {}, {}, {}, {}, {}, set()
+    for seq, (entry, content, parts) in enumerate(entries(path)):
         if entry.get("type") == "assistant":
             for c in parts:
                 inp = c.get("input") or {}
                 if c.get("type") != "tool_use" or not isinstance(inp, dict):
                     continue
                 if c.get("name") in STOPS:
-                    ended.add(str(inp.get(STOPS[c["name"]])))
+                    ended[str(inp.get(STOPS[c["name"]]))] = seq
                 elif c.get("name") == "Bash":
                     steps = steps_of([str(inp.get("command", ""))])
                     kind = ("own" if any(OWN_WAIT.match(s) for s in steps)
@@ -310,6 +314,8 @@ def open_tasks(path):
                 elif c.get("name") in AGENTS:
                     calls[c.get("id")] = ("agent", str(inp.get("description", ""))[:80])
                     ids[c.get("id")] = [AGENT_ID]
+                elif c.get("name") == RESUME:
+                    sends.add(c.get("id"))
             continue
         # A notification is a user message, or, when it lands mid-turn, a
         # queued-command attachment and queue operations (observed 2026-10-06).
@@ -318,14 +324,31 @@ def open_tasks(path):
             c.get("text") for c in parts if c.get("type") == "text"]
         for text in (t for t in texts if isinstance(t, str)):
             for notice in NOTICE.findall(text):
-                ended |= {v for _, v in NOTICE_IDS.findall(notice)}
+                ended.update((v, seq) for _, v in NOTICE_IDS.findall(notice))
         for c in parts:
+            if c.get("type") == "tool_result" and c.get("tool_use_id") in sends and not c.get("is_error"):
+                agent = resumed_agent(result_text(c.get("content")))
+                if agent:
+                    resumed[agent] = seq
             if c.get("type") == "tool_result" and c.get("tool_use_id") in calls and not c.get("is_error"):
                 out = result_text(c.get("content"))
                 found = [m for m in (p.match(out) for p in ids[c["tool_use_id"]]) if m]
                 if found:
                     tasks[c["tool_use_id"]] = found[0].group(1)
-    return [calls[k] for k, t in tasks.items() if k not in ended and t not in ended]
+    def running(k, t):
+        end = max(ended.get(k, -1), ended.get(t, -1))
+        return end < 0 or calls[k][0] == "agent" and resumed.get(t, -1) > end
+    return [calls[k] for k, t in tasks.items() if running(k, t)]
+
+
+def resumed_agent(out):
+    """The agent id a successful SendMessage result says it resumed, if any."""
+    try:
+        data = json.loads(out)
+    except ValueError:
+        return None
+    agent = data.get("resumedAgentId") if isinstance(data, dict) and data.get("success") is True else None
+    return agent if isinstance(agent, str) and agent else None
 
 
 def unheredoc(command):
