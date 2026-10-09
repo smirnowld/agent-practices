@@ -116,9 +116,9 @@ notification with the status (P6b). Ask whichever of these apply, numbered
 in one batch (`templates/question.md`), so one reply answers all:
 
 - **Acceptance or decision** the closeout waits on (P6).
-- **ADR acceptance**: "Accept ADR-NNNN (title)?" for each ADR the
-  [trigger](../../practices/record-keeping.md#triggers) names and not asked
-  earlier, linked at the PR head, with its three options.
+- **ADR acceptance**: "Accept ADR-NNNN (title)?" for each ADR the trigger in
+  `practices/record-keeping.md#triggers` names and I have not answered yet,
+  linked at the PR head, with its three options.
 - **Merge**: a PR that is verified, reviewed and green but left to me to
   merge (P6a or the project's procedure). The question names the PR link
   and which P6a item makes it mine, in plain words; merging is proposed

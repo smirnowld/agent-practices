@@ -56,7 +56,7 @@ Do not report style or wording.
 | Nothing confirmed | One line: "no drift", with the range checked |
 | Only mechanical fixes (links, paths, renamed commands) | Proposed session: small fix session, standard tier |
 | Confirmed drift in docs | Proposed session: docs update session; over-budget records go to `docs-gardening` |
-| A built ADR still Proposed with no ruling (step 1.5) | Proposed session that asks me to rule on it and records the answer |
+| A built ADR still Proposed with no ruling (step 1, item 5) | Proposed session that asks me to rule on it and records the answer |
 | A doc contradicts a decision or code in a way I must settle | Proposed session that asks me first; do not propose a fix |
 
 ## 4. Session brief
