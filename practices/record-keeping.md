@@ -35,9 +35,9 @@ starting points; adjust them from evidence.
   reviewed with the rest; asked later, the status commit gets a delta-only
   confirmation (P4b). On my answer, change only the ADR's status line and
   index row in the same PR; the ADR carries no quote or "decided by" (see
-  below), and the PR's ADR line records my answer (P11). Any of the three answers
-  is a ruling: later PRs that rest on the ADR do not ask again unless the
-  ADR changes. A PR resting on a long-standing proposed ADR without building
+  below), and the PR's ADR line records my answer (P11). Any of the three
+  answers is a ruling: later PRs that rest on the ADR do not ask again unless
+  the ADR changes. A PR resting on a long-standing proposed ADR without building
   its decision does not ask. When the build is deliberately exploratory, the
   session may leave the ADR proposed without asking; the PR and closeout say
   why. Learnt in a product repo, where ADRs written and built in one session
