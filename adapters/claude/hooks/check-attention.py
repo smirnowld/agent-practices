@@ -29,7 +29,10 @@ wake the session, since the app's monitor wakes it only on failures,
 conflicts and review comments. Any running background Bash task or subagent
 excuses this check, since its end wakes the session; a dev server started in
 the background counts as running too, which lets a false wait through. A
-sentence whose wait is on me ("once you accept") is left alone. A turn that
+sentence whose wait is on me ("once you accept") is left alone, and so is one
+that describes a wait: in the third person ("the other session is waiting"),
+in a code span or in quotes. The claim names this session (I, we, this
+session) or opens with the wait ("Waiting on CI."). A turn that
 ends while one of the session's own `wait-for` waits still runs, without
 saying it is waiting, is blocked too: a closeout leaves none running. Both
 read the tasks from the transcript. When my answer to a question is the
@@ -102,6 +105,13 @@ WAITING = re.compile(
     r"|\b(?:when|once) (?:it|ci|the run|the checks?|the build|everything) "
     r"(?:finishes|passes|completes|is green|goes green)\b(?!\s+or\b)", re.I)
 # "when CI passes or fails" lists outcomes: it describes waits, it is not one.
+# A wait is this session's own when the sentence names it (I, we, me, this
+# session) or opens with the waiting phrase ("Waiting on CI.", "Now waiting for
+# the run."); a third-person subject ("Sessions waiting on a run", "The other
+# session is waiting") only describes one. Code spans and quoted text are dropped first: they mention.
+SELF = re.compile(r"\b(?:i(?!\.\w)|we|me|my|us|our|this session)\b", re.I)
+OPENS = re.compile(r"\s*(?:[*_>#-]+\s*)*(?:(?:now|still|just)\s+)?", re.I)
+MENTION = re.compile(r"`[^`\n]*`|\"[^\"\n]*\"|\u201c[^\u201d\n]*\u201d")
 CI_NOUN = re.compile(
     r"\b(?:ci|checks?|runs?|builds?|tests?|lanes?|workflow|pipeline|deploy\w*|release"
     r"|auto-merge|merges?|verifier)\b", re.I)
@@ -439,9 +449,10 @@ def waits_unwatched(text):
 
 
 def waiting(text, noun=None):
-    """Whether a sentence says it waits (on NOUN, if given), and not on me."""
+    """Whether a sentence says this session waits (on NOUN, if given), and not on me."""
     return any(WAITING.search(s) and (noun is None or noun.search(s))
-               for s in SENTENCE.split(text) if not ON_ME.search(s))
+               and (SELF.search(s) or WAITING.match(s, OPENS.match(s).end()))
+               for s in SENTENCE.split(MENTION.sub("", text)) if not ON_ME.search(s))
 
 
 try:
