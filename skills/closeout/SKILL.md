@@ -23,9 +23,10 @@ PR (P17), never in the repository.
 - The agents and models used: role, model, effort, and what each did. Name
   any fallback when a role's agent was unavailable.
 - Anything not verified, deferred review findings, records updated, cleanup
-  done. Records include each proposed ADR this PR added or built: accepted
-  in it (with my words quoted in the PR), or left proposed and why (P11). Cleanup includes your own background waits: none may still be
-  running; stop any left (the adapter names the tool) and say so.
+  done. Records name each proposed ADR this PR added or built and my ruling
+  on it, or why it stays proposed (P11). Cleanup includes your own
+  background waits: none may still be running; stop any left (the adapter
+  names the tool) and say so.
 - Steps addressed to me anywhere: the PR body, changed READMEs and docs,
   workers' reports, your own notes. Run each one you can (P9a; file changes
   through a slice, P2b); the rest go under **Needs you**.
@@ -115,11 +116,9 @@ notification with the status (P6b). Ask whichever of these apply, numbered
 in one batch (`templates/question.md`), so one reply answers all:
 
 - **Acceptance or decision** the closeout waits on (P6).
-- **ADR acceptance**: for each proposed ADR the PR adds or builds and that I
-  have not ruled on, "Accept ADR-NNNN (title)?", accept proposed, with the
-  ADR linked at the PR head (P11). Propose leaving it proposed instead only
-  when its build is exploratory, and say why. On my yes, mark it accepted in
-  the same PR before it merges.
+- **ADR acceptance**: "Accept ADR-NNNN (title)?" for each ADR the
+  [trigger](../../practices/record-keeping.md#triggers) names and not asked
+  earlier, linked at the PR head, with its three options.
 - **Merge**: a PR that is verified, reviewed and green but left to me to
   merge (P6a or the project's procedure). The question names the PR link
   and which P6a item makes it mine, in plain words; merging is proposed

@@ -44,8 +44,8 @@ field appears in the PR; short is fine, "none" where it applies. -->
 **Not verified:** <item and why; or "nothing">
 
 **Records updated:** <docs, ADRs, question register changed in place; each
-proposed ADR this PR added or built: accepted here with my words quoted, or
-still proposed and why; or "none">
+proposed ADR this PR added or built, with my ruling or why it stays
+proposed; or "none">
 
 **Also fixed:** <fixes made on the go and review findings fixed in the PR
 (P6); or "none">

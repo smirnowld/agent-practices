@@ -28,14 +28,19 @@ starting points; adjust them from evidence.
   (baseline C5) catches a superseded status left in place or an archived ADR
   still listed, not an old ADR whose status was never changed. The index
   scheme and check came from a product repo.
-- A PR adds or builds a proposed ADR: ask me to accept it in that PR (P11),
-  in the batch with the merge or acceptance ask, or earlier with the plan.
-  On my yes, set the ADR's status line and its index row to accepted in the
-  same PR and quote my words in the PR. An ADR left proposed is named in the
-  closeout with why: its build is exploratory, or I declined. The weekly
-  `docs-drift-check` flags proposed ADRs whose build has merged. Learnt in a
-  product repo, where ADRs written and built in one session stayed proposed
-  after they shipped because nobody asked.
+- A PR adds a proposed ADR, or builds the decision of one I have not ruled
+  on (P11): ask me "Accept ADR-NNNN?" with three options: accept (proposed),
+  not yet (stays proposed), reject (status rejected, moved to the archive).
+  Ask with the plan or before the final review, so the status change is
+  reviewed with the rest; asked later, the status commit gets a delta-only
+  confirmation (P4b). On my answer, change the ADR's status line and index
+  row in the same PR and quote my words in the PR. Any of the three answers
+  is a ruling: later PRs that rest on the ADR do not ask again unless the
+  ADR changes. A PR resting on a long-standing proposed ADR without building
+  its decision does not ask. When the build is deliberately exploratory, the
+  session may leave the ADR proposed without asking; the PR and closeout say
+  why. Learnt in a product repo, where ADRs written and built in one session
+  stayed proposed after they shipped because nobody asked.
 - A question is answered: resolve it in the same PR.
 
 ## Visual evidence

@@ -208,11 +208,10 @@ section names (none without one). `with-secrets --full-access` and
 Do not invent requirements. Only I accept or overturn decisions; a proposed
 ADR is the working baseline until then: disagree with reasons, never work
 around it. Never change a decision record's status or record a decision as
-mine unless I made it in the session; the PR quotes my words. A PR that adds
-or builds a proposed ADR asks me to accept it, by its merge at the latest
-(proposed default: accept); on my yes the same PR marks it accepted. One left
-proposed, because its build is exploratory or I said no, says why in the PR
-(`practices/record-keeping.md#triggers`). Questions with a proposed default go in the project's register (`docs/questions.md`) and are
+mine unless I made it in the session; the PR quotes my words. The PR that adds
+or builds a proposed ADR I have not ruled on asks me to accept it, and on my
+yes marks it accepted (`practices/record-keeping.md#triggers`). Questions with
+a proposed default go in the project's register (`docs/questions.md`) and are
 never asked twice.
 
 ## P12. Primary sources
