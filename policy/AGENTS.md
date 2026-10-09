@@ -211,8 +211,8 @@ around it. Never change a decision record's status or record a decision as
 mine unless I made it in the session; the PR quotes my words. The PR that adds
 or builds a proposed ADR I have not ruled on asks me to accept it, unless the
 build is exploratory, and on my yes marks it accepted
-(`practices/record-keeping.md#triggers`). Questions with a proposed default go in the project's register (`docs/questions.md`) and are
-never asked twice.
+(`practices/record-keeping.md#triggers`). Questions with a proposed default go
+in the project's register (`docs/questions.md`) and are never asked twice.
 
 ## P12. Primary sources
 
