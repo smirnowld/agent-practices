@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Check a project's ADR records (baseline C5).
 
-Usage: check-adrs.py [DIR]   (default: current directory)
+Usage: check-adrs.py [DIR]                                (default: current directory)
+       check-adrs.py [DIR] --pr-body FILE --changed FILE   (PR mode)
 
 ADR files live at docs/adr/NNNN-kebab-slug.md (in force or proposed) and
 docs/adr/archive/NNNN-kebab-slug.md (superseded or rejected). docs/adr/README.md
@@ -35,6 +36,26 @@ Prints `path:line: reason` for each failure (path relative to DIR; line is
 omitted where there is no specific line). Exits 1 if there are any failures,
 0 and `adrs ok` when clean. Exits 2 if DIR is not a directory or has no
 docs/adr/ directory, so a mistyped path never passes.
+
+PR mode (opt-in; both flags together, either alone exits 2) runs every check
+above, then checks the pull request: each file it adds or edits at
+docs/adr/NNNN-kebab-slug.md (top level only, not archive/, README.md or
+0000-*.md) whose status in DIR is `proposed` must be named as ADR-NNNN in an
+"ADRs:" item of the PR description (practices/record-keeping.md#triggers).
+DIR is the checked-out tree being merged (on GitHub's pull_request checkout,
+the merge result). Only that the item names the ADR is checked, never what it
+says. `--pr-body FILE` is the PR description; `--changed FILE` lists the PR's
+changed paths, one per line, relative to DIR (`-` reads stdin). Paths absent
+from DIR (deleted or moved) and blank lines are ignored. In the body, HTML
+comments are stripped and lines inside ``` or ~~~ fences are ignored; an
+"ADRs:" item is a line starting, after an optional list marker (-, * or +)
+and emphasis, with `ADRs:` (case-insensitive), plus its continuation lines up
+to a blank line, a heading or a list item not indented deeper than the
+item's own marker. Several items count together. A missing or unreadable
+--pr-body or --changed file exits 2.
+
+For how a project's CI runs PR mode, see practices/project-baseline.md
+("ADR ruling line in PRs").
 """
 import fnmatch
 import pathlib
@@ -50,6 +71,11 @@ EMPHASIS_RE = re.compile(r"[*_`]")
 SUPERSEDED_RE = re.compile(r"^superseded by adr-(\d{4})$", re.IGNORECASE)
 LINK_RE = re.compile(r"\]\(([^)]+)\)")
 ACTIVE_STATUSES = {"proposed", "accepted"}
+COMMENT_RE = re.compile(r"<!--.*?(?:-->|\Z)", re.DOTALL)
+ADRS_ITEM_RE = re.compile(r"^\s*(?:[-*+]\s+)?[*_]*ADRs[*_]*\s*:", re.IGNORECASE)
+LIST_ITEM_RE = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s")
+HEADING_RE = re.compile(r"^\s*#")
+USAGE = "usage: check-adrs.py [DIR] [--pr-body FILE --changed FILE]"
 ARCHIVE_STATUSES = {"rejected"}
 
 
@@ -247,8 +273,118 @@ def check_index(root, adr_dir, active_names, archive_names, statuses, failures):
             failures.append(f"{rel_readme}: does not list {name}")
 
 
+FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})(.*)$")
+
+
+def adrs_items(body):
+    """Return the text of every "ADRs:" item in a PR description."""
+    items = []
+    current = None
+    indent = 0
+    fence = None
+    for line in COMMENT_RE.sub("", body).splitlines():
+        m = FENCE_RE.match(line)
+        if fence is not None:
+            if m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence) and not m.group(2).strip():
+                fence = None
+            continue
+        if m:
+            fence = m.group(1)
+            current = None
+            continue
+        line_indent = len(line) - len(line.lstrip())
+        if ADRS_ITEM_RE.match(line):
+            current = [line]
+            indent = line_indent
+            items.append(current)
+        elif current is not None:
+            ends_item = (
+                not line.strip()
+                or HEADING_RE.match(line)
+                or (LIST_ITEM_RE.match(line) and line_indent <= indent)
+            )
+            if ends_item:
+                current = None
+            else:
+                current.append(line)
+    return ["\n".join(item) for item in items]
+
+
+def check_pr(root, body, changed, statuses, failures):
+    text = "\n".join(adrs_items(body))
+    seen = set()
+    for raw in changed.splitlines():
+        rel = raw.strip()
+        if rel.startswith("./"):
+            rel = rel[2:]
+        if not rel or rel in seen:
+            continue
+        seen.add(rel)
+        parent, _, name = rel.rpartition("/")
+        m = NAME_RE.match(name)
+        if parent != "docs/adr" or not m or name.startswith("0000-"):
+            continue
+        if not (root / rel).is_file() or statuses.get(name) != "proposed":
+            continue
+        num = m.group(1)
+        if not re.search(rf"(?<![A-Za-z0-9])ADR-{num}(?![0-9])", text, re.IGNORECASE):
+            failures.append(
+                f"{rel}: proposed ADR changed in this PR; the PR description needs an "
+                f'"ADRs:" line naming ADR-{num} (practices/record-keeping.md#triggers)'
+            )
+
+
+def parse_args(argv):
+    """Return (dir, pr_body, changed) or raise ValueError with a message."""
+    positional = []
+    opts = {}
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        key, eq, value = arg.partition("=")
+        if key in ("--pr-body", "--changed"):
+            if not eq:
+                if i + 1 >= len(argv):
+                    raise ValueError(f"{key} needs a FILE")
+                i += 1
+                value = argv[i]
+            opts[key] = value
+        elif arg.startswith("--"):
+            raise ValueError(f"unknown option {arg}")
+        else:
+            positional.append(arg)
+        i += 1
+    if len(opts) == 1:
+        raise ValueError("--pr-body and --changed go together")
+    if opts and len(positional) > 1:
+        raise ValueError("at most one DIR")
+    return (positional[0] if positional else "."), opts.get("--pr-body"), opts.get("--changed")
+
+
+def read_input(path):
+    if path == "-":
+        return sys.stdin.buffer.read().decode("utf-8")
+    return pathlib.Path(path).read_text(encoding="utf-8")
+
+
 def main():
-    root = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else ".")
+    try:
+        dir_arg, pr_body_path, changed_path = parse_args(sys.argv[1:])
+    except ValueError as e:
+        print(f"error: {e}\n{USAGE}", file=sys.stderr)
+        return 2
+    pr_mode = pr_body_path is not None
+    if pr_mode:
+        if pr_body_path == "-" and changed_path == "-":
+            print("error: only one of --pr-body and --changed can read stdin", file=sys.stderr)
+            return 2
+        try:
+            body = read_input(pr_body_path)
+            changed = read_input(changed_path)
+        except (OSError, UnicodeDecodeError) as e:
+            print(f"error: cannot read PR input: {e}", file=sys.stderr)
+            return 2
+    root = pathlib.Path(dir_arg)
     if not root.is_dir():
         print(f"error: {root} is not a directory", file=sys.stderr)
         return 2
@@ -284,6 +420,8 @@ def main():
     check_numbering(numbered, root, failures)
     check_superseded(superseded, numbered, failures)
     check_index(root, adr_dir, active_names, archive_names, statuses, failures)
+    if pr_mode:
+        check_pr(root, body, changed, statuses, failures)
 
     if failures:
         for f in failures:

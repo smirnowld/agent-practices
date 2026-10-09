@@ -63,6 +63,10 @@ no `docs/adr/`, which makes C5 "n/a: no ADRs" rather than a failure.
 each check; the scripts have no dependencies, so setup copies them into the
 project's `scripts/`. A copy that differs from the
 agent-practices version is "partial: check out of date"; setup replaces it.
+C5 with ADRs also needs the PR-mode job in CI, gated by the aggregate job
+and triggered on `edited`
+([project-baseline.md](../../practices/project-baseline.md#adr-ruling-line-in-prs));
+without it, C5 is "partial: no PR-mode job".
 
 In audit mode, stop here and deliver the report (step 5).
 

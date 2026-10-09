@@ -21,7 +21,7 @@ project elsewhere maps each row to its host's equivalent.
 | C2 | One aggregate job the ruleset requires; lanes skip only when not applicable, never fake green (note below) | ✓ | ✓ | ✓ |
 | C3 | The same checks run locally through one entry point (e.g. `make check`) | ✓ | ✓ | ✓ |
 | C4 | Actions, first-party included, pinned to a commit SHA with a comment ending in the version (`# vX.Y.Z`), enforced by a pin check | ✓ | ✓ | ✓ |
-| C5 | ADR check (`scripts/check-adrs.py`): status lines, numbering without gaps, index (`templates/docs/adr-index.md`) complete, statuses matching, no archived ADR listed | when ADRs | when ADRs | when ADRs |
+| C5 | ADR check (`scripts/check-adrs.py`): status lines, numbering without gaps, index (`templates/docs/adr-index.md`) complete, statuses matching, no archived ADR listed; on PRs, a proposed ADR added or edited is named on the description's "ADRs:" line (note below) | when ADRs | when ADRs | when ADRs |
 | **Dependencies** |||||
 | D1 | Dependabot version updates, weekly, grouped per ecosystem, including GitHub Actions | ✓ | ✓ | ✓ |
 | D2 | Dependabot security updates on | ✓ | ✓ | ✓ |
@@ -42,6 +42,44 @@ project elsewhere maps each row to its host's equivalent.
 | T2 | Daily triage of errors, alerts, uptime and logs (`triage`) | when deployed | ✓ | — |
 | T3 | Baseline audit (`project-setup`, audit mode), monthly | ✓ | ✓ | ✓ |
 | T4 | Open issues reviewed every three days (`issue-review`) | ✓ | ✓ | ✓ |
+
+## ADR ruling line in PRs
+
+C5 runs in PR mode on pull requests: `check-adrs.py . --pr-body FILE
+--changed FILE` fails when the PR adds or edits a proposed ADR in `docs/adr/`
+and its description has no "ADRs:" line naming it as ADR-NNNN
+([pull-request.md](../templates/pull-request.md),
+[record-keeping.md](record-keeping.md#triggers)). It checks that the line
+names the ADR, not what the ruling is.
+
+The job goes in the CI workflow, in the aggregate job's `needs` (C2), so the
+required check fails with it. Editing the description must rerun it, so the
+workflow's `pull_request` trigger adds `edited`; that reruns every lane on an
+edit, which is the cost of keeping one required check. GitHub checks out a
+merge commit, so its first parent gives exactly what the PR changes:
+
+```yaml
+on:  # merge into the CI workflow's existing triggers
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+jobs:
+  adrs:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@SHA # vX.Y.Z
+        with:
+          fetch-depth: 2
+      - run: |
+          jq -r '.pull_request.body // ""' "$GITHUB_EVENT_PATH" > "$RUNNER_TEMP/body.md"
+          git diff --name-only HEAD^1 HEAD > "$RUNNER_TEMP/changed.txt"
+          python3 scripts/check-adrs.py . --pr-body "$RUNNER_TEMP/body.md" --changed "$RUNNER_TEMP/changed.txt"
+```
+
+On pushes the job skips as not applicable (C2), and C5 runs without the
+flags in `make check`.
 
 ## Security scanning cost
 
