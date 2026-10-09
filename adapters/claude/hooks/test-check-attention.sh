@@ -470,6 +470,52 @@ $launched"
 blocks "$review" '' "$wait"
 agent Agent "$launched" e
 blocks "$review" '' "$wait"
+# A subagent resumed with SendMessage after its notification runs again until
+# a later notification or TaskStop; a failed or unnamed resume reopens nothing.
+done_note='{"type":"user","message":{"content":"<task-notification>\n<task-id>a1b2c3</task-id>\n<status>completed</status>\n</task-notification>"}}'
+resume() {
+  python3 -c '
+import json, sys
+print(json.dumps({"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "sm1",
+    "name": "SendMessage", "input": {"to": "a1b2c3", "message": "fix it"}}]}}))
+print(json.dumps({"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "sm1",
+    "content": [{"type": "text", "text": sys.argv[1]}]}]}}))' "$1" >>"$tmp/t.jsonl"
+}
+agent Agent "$launched"
+printf '%s\n' "$done_note" >>"$tmp/t.jsonl"
+resume '{"success":true,"message":"Resuming agent a1b2c3","resumedAgentId":"a1b2c3"}'
+passes "$review"
+printf '%s\n' "$done_note" >>"$tmp/t.jsonl"
+blocks "$review" '' "$wait"
+agent Agent "$launched"
+printf '%s\n' "$done_note" >>"$tmp/t.jsonl"
+resume '{"success":true,"message":"Resuming agent a1b2c3","resumedAgentId":"a1b2c3"}'
+printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"x1","name":"TaskStop","input":{"task_id":"a1b2c3"}}]}}' >>"$tmp/t.jsonl"
+blocks "$review" '' "$wait"
+# A post-resume notification names the agent as task-id and the SendMessage
+# call as tool-use-id (observed 2026-10-09).
+agent Agent "$launched"
+printf '%s\n' "$done_note" >>"$tmp/t.jsonl"
+resume '{"success":true,"message":"Resuming agent a1b2c3","resumedAgentId":"a1b2c3"}'
+printf '%s\n' '{"type":"user","message":{"content":"<task-notification>\n<task-id>a1b2c3</task-id>\n<tool-use-id>sm1</tool-use-id>\n<status>completed</status>\n</task-notification>"}}' >>"$tmp/t.jsonl"
+blocks "$review" '' "$wait"
+# An earlier notification by the original tool-use id does not end the resume.
+agent Agent "$launched"
+printf '%s\n' '{"type":"user","message":{"content":"<task-notification><tool-use-id>ag1</tool-use-id><status>completed</status></task-notification>"}}' >>"$tmp/t.jsonl"
+resume '{"success":true,"message":"Resuming agent a1b2c3","resumedAgentId":"a1b2c3"}'
+passes "$review"
+# A TaskStop after the SendMessage in the same message ends it.
+agent Agent "$launched"
+printf '%s\n' "$done_note" >>"$tmp/t.jsonl"
+printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"sm1","name":"SendMessage","input":{"to":"a1b2c3"}},{"type":"tool_use","id":"x1","name":"TaskStop","input":{"task_id":"a1b2c3"}}]}}' \
+  '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"sm1","content":"{\"success\":true,\"resumedAgentId\":\"a1b2c3\"}"}]}}' >>"$tmp/t.jsonl"
+blocks "$review" '' "$wait"
+for out in '{"success":false,"resumedAgentId":"a1b2c3"}' '{"success":true,"message":"Sent"}' 'Resuming agent a1b2c3'; do
+  agent Agent "$launched"
+  printf '%s\n' "$done_note" >>"$tmp/t.jsonl"
+  resume "$out"
+  blocks "$review" '' "$wait"
+done
 # A true wait on a merge with nothing running is still blocked.
 session u:go "$auto" r
 blocks "I'm waiting for the merge, and it'll wake me." '' "$wait"
@@ -487,8 +533,35 @@ for msg in 'Auto-merge is on; the PR will merge once CI passes.' 'The PR auto-me
   'The branch merges once the build finishes.'; do
   blocks "$msg" '' "$wait"
 done
+# Another session's wait, or a wait only quoted or in code, is a description;
+# naming this session as well makes it a claim.
+for msg in 'Sessions waiting on a background subagent or a local background run (such as `make check`) are no longer told "nothing will wake this session".' \
+  'The other session is waiting for PR 5 to merge, because those changes merge one at a time.' \
+  'The docs session is waiting for PR 5 to merge.' \
+  'Sessions wait for CI, i.e. the run.' 'Waiting on `gh pr checks 5`.' \
+  'The hook now flags `waiting for CI` with nothing running.' \
+  'The reason quotes "I will report when CI finishes" from the closeout.' \
+  'The reason quotes “I will report when CI finishes” from the closeout.'; do
+  passes "$msg"
+done
 blocks "I'll merge it when CI passes." '' "$wait"
 blocks 'Merging once the checks pass is next; I will report when CI is green.' '' "$wait"
+# A clause after ";" with its own wait counts, even after another session's.
+for msg in "I'm waiting for the merge, and it'll wake me." \
+  'The iOS and Android checks are still running in the background, and their exit will wake this session.' \
+  "The light reviewer is checking it now, and I'll push and merge once it passes." \
+  'Waiting on CI.' "I'm waiting for the other session's PR to merge." \
+  'Auto-merge is on; the PR will merge once CI passes, and the session can end here.' \
+  "Waiting on CI for the current session's PR." 'Waiting on CI; the tmux session stays open.' \
+  'The other session is waiting for PR 5; it will merge once CI passes.' \
+  "The run is in the review session's queue; waiting on CI." \
+  'The 5" screen fix is up. Waiting on CI. The "x" lane too.' 'Waiting on CI, i.e. the run for PR 5.'; do
+  blocks "$msg" '' "$wait"
+done
+# The session's own open wait: a third-person wait is not its word of waiting.
+session u:go 'w:wait-for pr-ci 5' "$bg"
+blocks 'The other session is waiting for PR 5 to merge.' '' "$open"
+passes "I'm waiting on the CI run."
 
 # My answer to a question with no text after it leaves the final message the
 # one I answered (#45): it is not checked again.

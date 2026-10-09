@@ -29,7 +29,11 @@ wake the session, since the app's monitor wakes it only on failures,
 conflicts and review comments. Any running background Bash task or subagent
 excuses this check, since its end wakes the session; a dev server started in
 the background counts as running too, which lets a false wait through. A
-sentence whose wait is on me ("once you accept") is left alone. A turn that
+sentence whose wait is on me ("once you accept") is left alone, and so is one
+that describes a wait: another session's ("the other session is waiting"),
+unless the clause also names this one (I, we, me, my, us, our, this/the/the
+current session), or one in a code span or a short quote; a CI word only in
+a code span does not count. A turn that
 ends while one of the session's own `wait-for` waits still runs, without
 saying it is waiting, is blocked too: a closeout leaves none running. Both
 read the tasks from the transcript. When my answer to a question is the
@@ -102,6 +106,15 @@ WAITING = re.compile(
     r"|\b(?:when|once) (?:it|ci|the run|the checks?|the build|everything) "
     r"(?:finishes|passes|completes|is green|goes green)\b(?!\s+or\b)", re.I)
 # "when CI passes or fails" lists outcomes: it describes waits, it is not one.
+# A clause naming another session ("Sessions waiting on a run", "The other
+# session is waiting") describes its wait, unless it also names this one (I,
+# we, me, my, us, our, this/the/the current session). Code spans and short
+# quotes within a sentence are dropped first: they mention, so a CI word only
+# in a code span ("Waiting on `gh pr checks 5`.") does not count either.
+OTHER = re.compile(r"(?<!\bthis )(?<!\bmy )\bsessions?\b", re.I)
+SELF = re.compile(r"\b(?:i(?!\.\w)|we|me|my|us|our|(?:this|the(?: current| same)?) session)\b", re.I)
+MENTION = re.compile(r"`[^`\n]*`|\"[^\"\n.!?]{0,120}\"|\u201c[^\u201d\n.!?]{0,120}\u201d")
+CLAUSE = re.compile(r";")
 CI_NOUN = re.compile(
     r"\b(?:ci|checks?|runs?|builds?|tests?|lanes?|workflow|pipeline|deploy\w*|release"
     r"|auto-merge|merges?|verifier)\b", re.I)
@@ -129,6 +142,9 @@ MOVED_ID = re.compile(r"\s*Command did not (?:finish|complete)[^\n]*?moved to th
 # not documented). A synchronous subagent's report that quotes it is no task.
 AGENT_ID = re.compile(r"\s*Async agent launched successfully[^\n]*\n(?:[^\n]*\n)*?\s*agentId: (\w+)")
 AGENTS = {"Agent", "Task"}  # Task: Agent's older name
+# A subagent resumed with SendMessage runs again: its result is JSON with
+# "success": true and "resumedAgentId" (observed 2026-10-09, not documented).
+RESUME = "SendMessage"
 NOTICE = re.compile(r"<task-notification>(.*?)</task-notification>", re.S)
 NOTICE_IDS = re.compile(r"<(task-id|tool-use-id)>\s*([^<\s]+)\s*</\1>")
 STOPS = {"TaskStop": "task_id", "KillShell": "shell_id"}  # KillShell: TaskStop's older name
@@ -282,16 +298,17 @@ def open_tasks(path):
     background subagent ("agent"). A task notification naming its task or
     tool-use id, or a TaskStop of its task, ends it; a notification only
     quoted in a tool result does not. An ending may come before or after the
-    call's result; a call without its background result is not counted."""
-    calls, ids, tasks, ended = {}, {}, {}, set()
-    for entry, content, parts in entries(path):
+    call's result; a call without its background result is not counted. A
+    subagent resumed with SendMessage runs again until an ending after it."""
+    calls, ids, tasks, ended, resumed, sends = {}, {}, {}, {}, {}, {}
+    for seq, (entry, content, parts) in enumerate(entries(path)):
         if entry.get("type") == "assistant":
-            for c in parts:
+            for i, c in enumerate(parts):
                 inp = c.get("input") or {}
                 if c.get("type") != "tool_use" or not isinstance(inp, dict):
                     continue
                 if c.get("name") in STOPS:
-                    ended.add(str(inp.get(STOPS[c["name"]])))
+                    ended[str(inp.get(STOPS[c["name"]]))] = (seq, i)
                 elif c.get("name") == "Bash":
                     steps = steps_of([str(inp.get("command", ""))])
                     kind = ("own" if any(OWN_WAIT.match(s) for s in steps)
@@ -301,6 +318,8 @@ def open_tasks(path):
                 elif c.get("name") in AGENTS:
                     calls[c.get("id")] = ("agent", str(inp.get("description", ""))[:80])
                     ids[c.get("id")] = [AGENT_ID]
+                elif c.get("name") == RESUME:
+                    sends[c.get("id")] = (seq, i)  # the resume's place, if it succeeds
             continue
         # A notification is a user message, or, when it lands mid-turn, a
         # queued-command attachment and queue operations (observed 2026-10-06).
@@ -309,14 +328,31 @@ def open_tasks(path):
             c.get("text") for c in parts if c.get("type") == "text"]
         for text in (t for t in texts if isinstance(t, str)):
             for notice in NOTICE.findall(text):
-                ended |= {v for _, v in NOTICE_IDS.findall(notice)}
+                ended.update((v, (seq, 0)) for _, v in NOTICE_IDS.findall(notice))
         for c in parts:
+            if c.get("type") == "tool_result" and c.get("tool_use_id") in sends and not c.get("is_error"):
+                agent = resumed_agent(result_text(c.get("content")))
+                if agent:
+                    resumed[agent] = sends[c["tool_use_id"]]
             if c.get("type") == "tool_result" and c.get("tool_use_id") in calls and not c.get("is_error"):
                 out = result_text(c.get("content"))
                 found = [m for m in (p.match(out) for p in ids[c["tool_use_id"]]) if m]
                 if found:
                     tasks[c["tool_use_id"]] = found[0].group(1)
-    return [calls[k] for k, t in tasks.items() if k not in ended and t not in ended]
+    def running(k, t):
+        end = max(ended.get(k, (-1,)), ended.get(t, (-1,)))
+        return end < (0,) or calls[k][0] == "agent" and resumed.get(t, (-1,)) > end
+    return [calls[k] for k, t in tasks.items() if running(k, t)]
+
+
+def resumed_agent(out):
+    """The agent id a successful SendMessage result says it resumed, if any."""
+    try:
+        data = json.loads(out)
+    except ValueError:
+        return None
+    agent = data.get("resumedAgentId") if isinstance(data, dict) and data.get("success") is True else None
+    return agent if isinstance(agent, str) and agent else None
 
 
 def unheredoc(command):
@@ -439,9 +475,12 @@ def waits_unwatched(text):
 
 
 def waiting(text, noun=None):
-    """Whether a sentence says it waits (on NOUN, if given), and not on me."""
+    """Whether a sentence says this session waits (on NOUN, if given), and not
+    on me: one of its waiting clauses does not name only another session."""
     return any(WAITING.search(s) and (noun is None or noun.search(s))
-               for s in SENTENCE.split(text) if not ON_ME.search(s))
+               and any(WAITING.search(c) and not (OTHER.search(c) and not SELF.search(c))
+                       for c in CLAUSE.split(s))
+               for s in SENTENCE.split(MENTION.sub("", text)) if not ON_ME.search(s))
 
 
 try:

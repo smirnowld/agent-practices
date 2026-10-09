@@ -289,7 +289,13 @@ unverified against vendor docs.
   found the same way, and a subagent whose `Agent` (or `Task`) result
   starts with "Async agent launched successfully" and names "agentId: ID"
   on a later line (observed 2026-10-08, not documented), counts as a
-  running task until its notification or `TaskStop`. A Bash result must open with
+  running task until its notification or `TaskStop`. A subagent resumed with
+  `SendMessage`, whose result is JSON with `"success": true` and
+  `"resumedAgentId": ID` (observed 2026-10-09, not documented), runs again
+  until a notification or `TaskStop` after the resume; one before it does not
+  end it. Its later notification names the agent as task id and the
+  `SendMessage` call as tool-use id (observed 2026-10-09). A Bash result must
+  open with
   "Command running in background with ID: ID" (only for a call with
   `run_in_background`) or "Command did not finish (or complete) … moved to
   the background (ID: ID)", so output that quotes these lines (a `cat` of
@@ -297,7 +303,13 @@ unverified against vendor docs.
   It blocks a final message whose sentence pairs a waiting phrase with CI,
   a run, a check or a merge while no background task or subagent runs, unless the wait is on
   me ("once you accept"); a "when CI passes or fails" list of outcomes
-  describes waits and passes. It also blocks a turn that ends while a
+  describes waits and passes. So does a description of another session's
+  wait ("the other session is waiting for PR 5 to merge"), unless that
+  clause (sentences split at ";" too) also names this one (I, we, me, my, us,
+  our, this/the/the current session), and a wait only mentioned in a code
+  span or a short quote within the sentence; a CI word only in a code span
+  ("Waiting on `gh pr checks 5`.") does not count either. Both checks apply
+  this. It also blocks a turn that ends while a
   `wait-for` of its own runs and no sentence pairs a waiting phrase with a
   wait, CI, a run or a merge, asking it to say so or `TaskStop` the wait; a
   closeout leaves none running. It ignores `background_tasks` in the hook
