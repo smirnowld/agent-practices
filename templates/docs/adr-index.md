@@ -13,7 +13,7 @@ One file per lasting decision, format from the shared ADR template.
 **Status meanings.** *Accepted*: decided by the maintainer. *Proposed*:
 recommended by the session that wrote it and used as the working baseline
 until the maintainer rules (P11); build on it, disagree with reasons, never work
-around it. Superseded and rejected ADRs leave this index for
+around it. The PR that builds a proposed ADR asks the maintainer to accept it. Superseded and rejected ADRs leave this index for
 [archive/](archive/) (P17); a changed decision is a new ADR.
 
 | ADR | Decision | Status |

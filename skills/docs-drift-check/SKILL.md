@@ -32,6 +32,9 @@ Since the last run (or 7 days):
    finished package still in `docs/plans/phase-N.md`; a `docs/plan.md` row
    whose status disagrees with its PR (merged but not Done or Engineering
    complete, open but not In review or In progress).
+   An ADR still Proposed in `docs/adr/README.md` whose file came in, or is
+   linked from, a merged PR that also changed code: its build shipped
+   without my ruling (P11); the follow-up asks me to accept it.
 
 No candidates and no mechanical failures: report "no drift" and stop.
 

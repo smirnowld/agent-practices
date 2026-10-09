@@ -28,6 +28,14 @@ starting points; adjust them from evidence.
   (baseline C5) catches a superseded status left in place or an archived ADR
   still listed, not an old ADR whose status was never changed. The index
   scheme and check came from a product repo.
+- A PR adds or builds a proposed ADR: ask me to accept it in that PR (P11),
+  in the batch with the merge or acceptance ask, or earlier with the plan.
+  On my yes, set the ADR's status line and its index row to accepted in the
+  same PR and quote my words in the PR. An ADR left proposed is named in the
+  closeout with why: its build is exploratory, or I declined. The weekly
+  `docs-drift-check` flags proposed ADRs whose build has merged. Learnt in a
+  product repo, where ADRs written and built in one session stayed proposed
+  after they shipped because nobody asked.
 - A question is answered: resolve it in the same PR.
 
 ## Visual evidence
