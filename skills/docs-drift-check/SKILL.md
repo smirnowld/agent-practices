@@ -32,6 +32,9 @@ Since the last run (or 7 days):
    finished package still in `docs/plans/phase-N.md`; a `docs/plan.md` row
    whose status disagrees with its PR (merged but not Done or Engineering
    complete, open but not In review or In progress).
+5. ADRs still Proposed in `docs/adr/README.md` that a PR in the range built
+   (the PR names the ADR and changed code), with no ruling of mine and no
+   exploratory reason in that PR: candidates for an acceptance ask (P11).
 
 No candidates and no mechanical failures: report "no drift" and stop.
 
@@ -53,6 +56,7 @@ Do not report style or wording.
 | Nothing confirmed | One line: "no drift", with the range checked |
 | Only mechanical fixes (links, paths, renamed commands) | Proposed session: small fix session, standard tier |
 | Confirmed drift in docs | Proposed session: docs update session; over-budget records go to `docs-gardening` |
+| A built ADR still Proposed with no ruling (step 1, item 5) | Proposed session that asks me to rule on it and records the answer |
 | A doc contradicts a decision or code in a way I must settle | Proposed session that asks me first; do not propose a fix |
 
 ## 4. Session brief

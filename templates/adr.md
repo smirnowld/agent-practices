@@ -4,7 +4,8 @@
 later. The part above the divider must stand alone: most readers stop there.
 Keep it under ~15 lines. List it in `docs/adr/README.md`
 (`templates/docs/adr-index.md`), which says what proposed and accepted mean.
-Write the status as plain text. -->
+Write the status as plain text. A session writes it proposed, and the PR
+that adds or builds it asks the maintainer to rule on it (P11). -->
 
 **Status:** <proposed | accepted | superseded by ADR-NNNN | rejected>
 **Date:** <YYYY-MM-DD>

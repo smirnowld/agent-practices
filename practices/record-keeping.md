@@ -28,6 +28,20 @@ starting points; adjust them from evidence.
   (baseline C5) catches a superseded status left in place or an archived ADR
   still listed, not an old ADR whose status was never changed. The index
   scheme and check came from a product repo.
+- A PR adds a proposed ADR, or builds the decision of one I have not ruled
+  on (P11): ask me "Accept ADR-NNNN?" with three options: accept (proposed),
+  not yet (stays proposed), reject (status rejected, moved to the archive).
+  Ask with the plan or before the final review, so the status change is
+  reviewed with the rest; asked later, the status commit gets a delta-only
+  confirmation (P4b). On my answer, change only the ADR's status line and
+  index row in the same PR; the ADR carries no quote or "decided by" (see
+  below), and the PR's ADR line records my answer (P11). Any of the three
+  answers is a ruling: later PRs that rest on the ADR do not ask again unless
+  the ADR changes. A PR resting on a long-standing proposed ADR without building
+  its decision does not ask. When the build is deliberately exploratory, the
+  session may leave the ADR proposed without asking; the PR and closeout say
+  why. Learnt in a product repo, where ADRs written and built in one session
+  stayed proposed after they shipped because nobody asked.
 - A question is answered: resolve it in the same PR.
 
 ## Visual evidence

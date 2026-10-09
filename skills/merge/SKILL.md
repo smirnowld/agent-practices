@@ -44,6 +44,11 @@ gh api 'repos/{owner}/{repo}/rules/branches/BRANCH' --jq '.[] | select(.type=="r
 protected only by classic branch protection, which this endpoint does not
 show): do not merge; tell me the PR is ready and that I merge (baseline R4).
 
+A PR that must ask me to accept an ADR (P11,
+`practices/record-keeping.md#triggers`) merges only after my answer is in the
+PR and the status commit is reviewed. One left proposed as exploratory, with
+the reason in the PR, does not hold the merge.
+
 A PR that cannot merge within the rules is handed to me (P6a).
 
 ## 2. Pick the method
