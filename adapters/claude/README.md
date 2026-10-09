@@ -297,11 +297,10 @@ unverified against vendor docs.
   It blocks a final message whose sentence pairs a waiting phrase with CI,
   a run, a check or a merge while no background task or subagent runs, unless the wait is on
   me ("once you accept"); a "when CI passes or fails" list of outcomes
-  describes waits and passes. Only a sentence about this session counts: one
-  with I, we, me, our or "this session", or one that opens with the wait
-  ("Waiting on CI."). A description of waits, in the third person ("the
-  other session is waiting for PR 5 to merge"), in a code span or in quotes,
-  is not a claim and passes; both checks apply this. It also blocks a turn that ends while a
+  describes waits and passes. So does a description of another session's
+  wait ("the other session is waiting for PR 5 to merge"), unless the
+  sentence also names this one (I, we, me, "this session"), and a wait only
+  mentioned in a code span or in quotes; both checks apply this. It also blocks a turn that ends while a
   `wait-for` of its own runs and no sentence pairs a waiting phrase with a
   wait, CI, a run or a merge, asking it to say so or `TaskStop` the wait; a
   closeout leaves none running. It ignores `background_tasks` in the hook

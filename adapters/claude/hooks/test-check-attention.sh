@@ -483,12 +483,15 @@ done
 # A sentence that describes waits, not a wait, passes.
 transcript Bash
 passes 'A wait on CI or a merge now always ends and wakes the session: when CI passes or fails, on a conflict or a new push, and at a time limit.'
-# A third-person sentence, or a wait only quoted or in code, describes a wait;
-# a claim names this session or opens with the wait.
 for msg in 'Auto-merge is on; the PR will merge once CI passes.' 'The PR auto-merges when CI passes.' \
-  'The branch merges once the build finishes.' \
-  'Sessions waiting on a background subagent or a local background run (such as `make check`) are no longer told "nothing will wake this session".' \
+  'The branch merges once the build finishes.'; do
+  blocks "$msg" '' "$wait"
+done
+# Another session's wait, or a wait only quoted or in code, is a description;
+# naming this session as well makes it a claim.
+for msg in 'Sessions waiting on a background subagent or a local background run (such as `make check`) are no longer told "nothing will wake this session".' \
   'The other session is waiting for PR #796 to merge, because contract changes merge one at a time.' \
+  'The WP92b session is waiting for PR #796 to merge.' \
   'The hook now flags `waiting for CI` with nothing running.' \
   'The reason quotes "I will report when CI finishes" from the closeout.' \
   'The reason quotes “I will report when CI finishes” from the closeout.'; do
@@ -499,7 +502,7 @@ blocks 'Merging once the checks pass is next; I will report when CI is green.' '
 for msg in "I'm waiting for the merge, and it'll wake me." \
   'The iOS and Android checks are still running in the background, and their exit will wake this session.' \
   "The light reviewer is checking it now, and I'll push and merge once it passes." \
-  'Waiting on CI.' '**Waiting on CI.**' '- Will report when the run finishes.' 'Now waiting for the scheduled verifier run.'; do
+  'Waiting on CI.' "I'm waiting for the other session's PR to merge."; do
   blocks "$msg" '' "$wait"
 done
 # The session's own open wait: a third-person wait is not its word of waiting.
