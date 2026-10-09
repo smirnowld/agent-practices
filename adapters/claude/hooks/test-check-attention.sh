@@ -492,6 +492,23 @@ printf '%s\n' "$done_note" >>"$tmp/t.jsonl"
 resume '{"success":true,"message":"Resuming agent a1b2c3","resumedAgentId":"a1b2c3"}'
 printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"x1","name":"TaskStop","input":{"task_id":"a1b2c3"}}]}}' >>"$tmp/t.jsonl"
 blocks "$review" '' "$wait"
+# Real post-resume notifications name the agent and the SendMessage call.
+agent Agent "$launched"
+printf '%s\n' "$done_note" >>"$tmp/t.jsonl"
+resume '{"success":true,"message":"Resuming agent a1b2c3","resumedAgentId":"a1b2c3"}'
+printf '%s\n' '{"type":"user","message":{"content":"<task-notification>\n<task-id>a1b2c3</task-id>\n<tool-use-id>sm1</tool-use-id>\n<status>completed</status>\n</task-notification>"}}' >>"$tmp/t.jsonl"
+blocks "$review" '' "$wait"
+# An earlier notification by the original tool-use id does not end the resume.
+agent Agent "$launched"
+printf '%s\n' '{"type":"user","message":{"content":"<task-notification><tool-use-id>ag1</tool-use-id><status>completed</status></task-notification>"}}' >>"$tmp/t.jsonl"
+resume '{"success":true,"message":"Resuming agent a1b2c3","resumedAgentId":"a1b2c3"}'
+passes "$review"
+# A TaskStop after the SendMessage in the same message ends it.
+agent Agent "$launched"
+printf '%s\n' "$done_note" >>"$tmp/t.jsonl"
+printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"sm1","name":"SendMessage","input":{"to":"a1b2c3"}},{"type":"tool_use","id":"x1","name":"TaskStop","input":{"task_id":"a1b2c3"}}]}}' \
+  '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"sm1","content":"{\"success\":true,\"resumedAgentId\":\"a1b2c3\"}"}]}}' >>"$tmp/t.jsonl"
+blocks "$review" '' "$wait"
 for out in '{"success":false,"resumedAgentId":"a1b2c3"}' '{"success":true,"message":"Sent"}' 'Resuming agent a1b2c3'; do
   agent Agent "$launched"
   printf '%s\n' "$done_note" >>"$tmp/t.jsonl"
@@ -518,8 +535,9 @@ done
 # Another session's wait, or a wait only quoted or in code, is a description;
 # naming this session as well makes it a claim.
 for msg in 'Sessions waiting on a background subagent or a local background run (such as `make check`) are no longer told "nothing will wake this session".' \
-  'The other session is waiting for PR #796 to merge, because contract changes merge one at a time.' \
-  'The WP92b session is waiting for PR #796 to merge.' \
+  'The other session is waiting for PR 5 to merge, because those changes merge one at a time.' \
+  'The docs session is waiting for PR 5 to merge.' \
+  'Sessions wait for CI, i.e. the run.' 'Waiting on `gh pr checks 5`.' \
   'The hook now flags `waiting for CI` with nothing running.' \
   'The reason quotes "I will report when CI finishes" from the closeout.' \
   'The reason quotes “I will report when CI finishes” from the closeout.'; do
@@ -530,12 +548,16 @@ blocks 'Merging once the checks pass is next; I will report when CI is green.' '
 for msg in "I'm waiting for the merge, and it'll wake me." \
   'The iOS and Android checks are still running in the background, and their exit will wake this session.' \
   "The light reviewer is checking it now, and I'll push and merge once it passes." \
-  'Waiting on CI.' "I'm waiting for the other session's PR to merge."; do
+  'Waiting on CI.' "I'm waiting for the other session's PR to merge." \
+  'Auto-merge is on; the PR will merge once CI passes, and the session can end here.' \
+  "Waiting on CI for the current session's PR." 'Waiting on CI; the tmux session stays open.' \
+  "The run is in the review session's queue; waiting on CI." \
+  'The 5" screen fix is up. Waiting on CI. The "x" lane too.' 'Waiting on CI, i.e. the run for PR 5.'; do
   blocks "$msg" '' "$wait"
 done
 # The session's own open wait: a third-person wait is not its word of waiting.
 session u:go 'w:wait-for pr-ci 5' "$bg"
-blocks 'The other session is waiting for PR #796 to merge.' '' "$open"
+blocks 'The other session is waiting for PR 5 to merge.' '' "$open"
 passes "I'm waiting on the CI run."
 
 # My answer to a question with no text after it leaves the final message the
