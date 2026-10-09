@@ -293,7 +293,9 @@ unverified against vendor docs.
   `SendMessage`, whose result is JSON with `"success": true` and
   `"resumedAgentId": ID` (observed 2026-10-09, not documented), runs again
   until a notification or `TaskStop` after the resume; one before it does not
-  end it. A Bash result must open with
+  end it. Its later notification names the agent as task id and the
+  `SendMessage` call as tool-use id (observed 2026-10-09). A Bash result must
+  open with
   "Command running in background with ID: ID" (only for a call with
   `run_in_background`) or "Command did not finish (or complete) … moved to
   the background (ID: ID)", so output that quotes these lines (a `cat` of

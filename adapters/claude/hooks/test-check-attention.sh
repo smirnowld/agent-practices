@@ -492,7 +492,8 @@ printf '%s\n' "$done_note" >>"$tmp/t.jsonl"
 resume '{"success":true,"message":"Resuming agent a1b2c3","resumedAgentId":"a1b2c3"}'
 printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"x1","name":"TaskStop","input":{"task_id":"a1b2c3"}}]}}' >>"$tmp/t.jsonl"
 blocks "$review" '' "$wait"
-# Real post-resume notifications name the agent and the SendMessage call.
+# A post-resume notification names the agent as task-id and the SendMessage
+# call as tool-use-id (observed 2026-10-09).
 agent Agent "$launched"
 printf '%s\n' "$done_note" >>"$tmp/t.jsonl"
 resume '{"success":true,"message":"Resuming agent a1b2c3","resumedAgentId":"a1b2c3"}'
@@ -545,12 +546,14 @@ for msg in 'Sessions waiting on a background subagent or a local background run 
 done
 blocks "I'll merge it when CI passes." '' "$wait"
 blocks 'Merging once the checks pass is next; I will report when CI is green.' '' "$wait"
+# A clause after ";" with its own wait counts, even after another session's.
 for msg in "I'm waiting for the merge, and it'll wake me." \
   'The iOS and Android checks are still running in the background, and their exit will wake this session.' \
   "The light reviewer is checking it now, and I'll push and merge once it passes." \
   'Waiting on CI.' "I'm waiting for the other session's PR to merge." \
   'Auto-merge is on; the PR will merge once CI passes, and the session can end here.' \
   "Waiting on CI for the current session's PR." 'Waiting on CI; the tmux session stays open.' \
+  'The other session is waiting for PR 5; it will merge once CI passes.' \
   "The run is in the review session's queue; waiting on CI." \
   'The 5" screen fix is up. Waiting on CI. The "x" lane too.' 'Waiting on CI, i.e. the run for PR 5.'; do
   blocks "$msg" '' "$wait"
