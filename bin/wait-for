@@ -8,9 +8,12 @@
 #   wait-for [-R OWNER/REPO] [--deadline MINUTES] run RUN_ID
 #
 # pr-ci waits on the runs behind the base branch's required checks (the
-# ruleset's GitHub Actions checks) on the PR's current head; pr-merged waits
-# until the PR merges; run waits on one workflow run. One final line on
-# stdout, "STATE: detail", and the exit code:
+# ruleset's GitHub Actions checks) on the PR's current head. A check not yet
+# created is waited for while any workflow run on the head is queued or
+# running, since a check that needs other jobs appears only after them; "CI
+# did not start" means no workflow run at all on the head after the grace
+# period. pr-merged waits until the PR merges; run waits on one workflow run.
+# One final line on stdout, "STATE: detail", and the exit code:
 #   0 done (CI passed, or merged)   1 a check failed      2 PR closed unmerged
 #   3 head moved or auto-merge off  4 merge conflict      5 target unknown
 #   6 deadline reached
@@ -167,6 +170,7 @@ pr-ci)
   runs= grace=$(( $(date +%s) + ${WAIT_FOR_GRACE:-600} ))
   while IFS= read -r check <&3; do
     # Find the check's run on the head; until it starts, keep checking the PR.
+    dones=0
     while :; do
       if url=$(gh api -X GET "repos/{owner}/{repo}/commits/$sha/check-runs" \
           -f check_name="$check" --jq '.check_runs[0].details_url // ""' 2>/dev/null); then
@@ -181,10 +185,25 @@ pr-ci)
         ?*) finish 5 "unknown: check $check on $sha has no Actions run ($url)" ;;
       esac
       check_pr
+      note=
+      # Past the grace period, ask whether any workflow run on the head is
+      # still going: a check that needs other jobs appears only after them.
+      if [ "$(date +%s)" -ge "$grace" ]; then
+        read_gh wf gh api -X GET "repos/{owner}/{repo}/actions/runs" -f head_sha="$sha" -f per_page=100 --jq \
+          'if .total_count == 0 then "none" else ([.workflow_runs[] | select(.status != "completed")] | length | if . == 0 then "done" else "active \(.)" end) end'
+        case $wf in
+          none) finish 5 "unknown: no run for check $check on $sha after 10 min; CI did not start" ;;
+          done)
+            # Once more, for the lag before a needs-all check is created.
+            dones=$((dones + 1))
+            [ "$dones" -lt 2 ] || finish 5 "unknown: workflow runs on $sha completed without check $check"
+            note="; workflow runs completed" ;;
+          active\ *) dones=0; note="; ${wf#active } workflow run(s) still running" ;;
+          *) finish 5 "unknown: workflow runs on $sha answered '$wf'" ;;
+        esac
+      fi
       past_deadline && finish 6 "deadline: no run for check $check on $sha after $deadline min"
-      [ "$(date +%s)" -lt "$grace" ] \
-        || finish 5 "unknown: no run for check $check on $sha after 10 min; CI did not start"
-      log "no run yet for check $check on $sha"
+      log "no run yet for check $check on $sha$note"
       sleep "$poll"
     done
     run=${url#*/actions/runs/}; run=${run%%/*}

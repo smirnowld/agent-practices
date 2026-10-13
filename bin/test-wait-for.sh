@@ -19,6 +19,7 @@ case "\$*" in
   *baseRefName*) key=base ;;
   'pr view'*) key=pr ;;
   *rules/branches*) key=rules ;;
+  *actions/runs*) key=actionruns ;;
   *check-runs*) key=checkruns ;;
   *) echo "fake gh: unexpected \$*" >&2; exit 99 ;;
 esac
@@ -40,6 +41,10 @@ pr() { printf '{"state":"%s","headRefOid":"%s","mergeable":"%s","autoMergeReques
 open=$(pr OPEN aaa MERGEABLE '{"mergeMethod":"SQUASH"}')
 rules='[{"type":"required_status_checks","parameters":{"required_status_checks":[{"context":"check","integration_id":15368}]}}]'
 runs='{"check_runs":[{"name":"check","details_url":"https://github.com/o/r/actions/runs/77/job/1"}]}'
+# Workflow runs on the head: none, one still going, all completed.
+noruns='{"total_count":0,"workflow_runs":[]}'
+active='{"total_count":2,"workflow_runs":[{"status":"in_progress"},{"status":"completed"}]}'
+done='{"total_count":1,"workflow_runs":[{"status":"completed"}]}'
 # queue KEY ANSWER...: what gh answers for KEY, in order.
 queue() { k=$1; shift; printf '%s\n' "$@" > "$dir/q/$k"; }
 reset() { rm -f "$dir/q/"* "$dir/calls"; queue base '{"baseRefName":"main"}'; queue rules "$rules"; }
@@ -65,6 +70,13 @@ expect 0 'passed: CI on PR 5 at aaa' pr-ci 5
 reset; queue pr "$open"; queue checkruns '{"check_runs":[]}' "$runs"; queue watch '0 0'
 queue runview '{"status":"completed","conclusion":"success"}'
 expect 0 'passed:' pr-ci 5
+# Past the grace period, a check created only after other jobs is waited for
+# while a workflow run on the head is still going; a lag after they all
+# completed is waited out once.
+reset; queue pr "$open"; queue checkruns '{"check_runs":[]}' '{"check_runs":[]}' '{"check_runs":[]}' "$runs"
+queue actionruns "$active" "$active" "$done"; queue watch '0 0'
+queue runview '{"status":"completed","conclusion":"success"}'
+WAIT_FOR_GRACE=0 expect 0 'passed: CI on PR 5 at aaa (runs 77)' pr-ci 5
 # 0: merged, and the run form.
 reset; queue pr "$open" "$open" "$(pr MERGED aaa UNKNOWN null)"
 expect 0 'merged: PR 5' pr-merged 5
@@ -129,8 +141,13 @@ reset; queue pr "$open"; queue rules '[]'
 expect 5 'unknown: main requires no' pr-ci 5
 reset; queue pr "$open"; queue checkruns '{"check_runs":[{"name":"check","details_url":"https://ci.example/1"}]}'
 expect 5 'unknown: check check on aaa has no Actions run' pr-ci 5
-reset; queue pr "$open"; queue checkruns '{"check_runs":[]}'
-WAIT_FOR_GRACE=0 expect 5 'unknown: no run for check' pr-ci 5
+reset; queue pr "$open"; queue checkruns '{"check_runs":[]}'; queue actionruns "$noruns"
+WAIT_FOR_GRACE=0 expect 5 'unknown: no run for check check on aaa after 10 min; CI did not start' pr-ci 5
+# Workflow runs on the head all completed, twice, and the check never came;
+# a run still going in between restarts the count.
+reset; queue pr "$open"; queue checkruns '{"check_runs":[]}'; queue actionruns "$done" "$active" "$done" "$done"
+WAIT_FOR_GRACE=0 expect 5 'unknown: workflow runs on aaa completed without check check' pr-ci 5
+[ "$(grep -c '^actionruns' "$dir/calls")" -eq 4 ]
 reset; queue watch '0 0'; queue runview '!EMPTY'
 expect 5 'unknown:' run 77
 reset; queue watch '0 1'; queue runview '{"status":"in_progress","conclusion":""}'
@@ -141,6 +158,10 @@ reset; queue pr "$open"
 expect 6 'deadline: PR 5 not merged' --deadline 0 pr-merged 5
 reset; queue pr "$open"; queue checkruns '{"check_runs":[]}'
 expect 6 'deadline: no run for check' --deadline 0 pr-ci 5
+# A workflow run still going keeps the wait going until the deadline.
+reset; queue pr "$open"; queue checkruns '{"check_runs":[]}'; queue actionruns "$active"
+WAIT_FOR_GRACE=0 expect 6 'deadline: no run for check' --deadline 0 pr-ci 5
+grep -q '^actionruns' "$dir/calls"
 reset; queue watch '5 0'
 expect 6 'deadline: run 77' --deadline 0 run 77
 
