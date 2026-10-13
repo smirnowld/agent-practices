@@ -77,6 +77,7 @@ reset; queue pr "$open"; queue checkruns '{"check_runs":[]}' '{"check_runs":[]}'
 queue actionruns "$active" "$active" "$done"; queue watch '0 0'
 queue runview '{"status":"completed","conclusion":"success"}'
 WAIT_FOR_GRACE=0 expect 0 'passed: CI on PR 5 at aaa (runs 77)' pr-ci 5
+[ "$(grep -c '^actionruns' "$dir/calls")" -eq 3 ]
 # 0: merged, and the run form.
 reset; queue pr "$open" "$open" "$(pr MERGED aaa UNKNOWN null)"
 expect 0 'merged: PR 5' pr-merged 5
@@ -142,12 +143,15 @@ expect 5 'unknown: main requires no' pr-ci 5
 reset; queue pr "$open"; queue checkruns '{"check_runs":[{"name":"check","details_url":"https://ci.example/1"}]}'
 expect 5 'unknown: check check on aaa has no Actions run' pr-ci 5
 reset; queue pr "$open"; queue checkruns '{"check_runs":[]}'; queue actionruns "$noruns"
-WAIT_FOR_GRACE=0 expect 5 'unknown: no run for check check on aaa after 10 min; CI did not start' pr-ci 5
+WAIT_FOR_GRACE=0 expect 5 'unknown: no run for check check on aaa after 0 min; CI did not start' pr-ci 5
 # Workflow runs on the head all completed, twice, and the check never came;
 # a run still going in between restarts the count.
 reset; queue pr "$open"; queue checkruns '{"check_runs":[]}'; queue actionruns "$done" "$active" "$done" "$done"
 WAIT_FOR_GRACE=0 expect 5 'unknown: workflow runs on aaa completed without check check' pr-ci 5
 [ "$(grep -c '^actionruns' "$dir/calls")" -eq 4 ]
+# Workflow runs on the head that cannot be read, twice.
+reset; queue pr "$open"; queue checkruns '{"check_runs":[]}'; queue actionruns '!ERR'
+WAIT_FOR_GRACE=0 expect 5 'unknown: no readable answer from: gh api -X GET repos/{owner}/{repo}/actions/runs' pr-ci 5
 reset; queue watch '0 0'; queue runview '!EMPTY'
 expect 5 'unknown:' run 77
 reset; queue watch '0 1'; queue runview '{"status":"in_progress","conclusion":""}'
@@ -158,10 +162,9 @@ reset; queue pr "$open"
 expect 6 'deadline: PR 5 not merged' --deadline 0 pr-merged 5
 reset; queue pr "$open"; queue checkruns '{"check_runs":[]}'
 expect 6 'deadline: no run for check' --deadline 0 pr-ci 5
-# A workflow run still going keeps the wait going until the deadline.
-reset; queue pr "$open"; queue checkruns '{"check_runs":[]}'; queue actionruns "$active"
+# Past the grace period the deadline still wins over "CI did not start".
+reset; queue pr "$open"; queue checkruns '{"check_runs":[]}'; queue actionruns "$noruns"
 WAIT_FOR_GRACE=0 expect 6 'deadline: no run for check' --deadline 0 pr-ci 5
-grep -q '^actionruns' "$dir/calls"
 reset; queue watch '5 0'
 expect 6 'deadline: run 77' --deadline 0 run 77
 

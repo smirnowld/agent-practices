@@ -9,18 +9,21 @@
 #
 # pr-ci waits on the runs behind the base branch's required checks (the
 # ruleset's GitHub Actions checks) on the PR's current head. A check not yet
-# created is waited for while any workflow run on the head is queued or
-# running, since a check that needs other jobs appears only after them; "CI
-# did not start" means no workflow run at all on the head after the grace
-# period. pr-merged waits until the PR merges; run waits on one workflow run.
+# created is waited for while any workflow run on the head is not completed
+# (queued, waiting, in progress), since a check that needs other jobs appears
+# only after them; "CI did not start" means no workflow run at all on the
+# head after the grace period. pr-merged waits until the PR merges; run waits on one workflow run.
 # One final line on stdout, "STATE: detail", and the exit code:
 #   0 done (CI passed, or merged)   1 a check failed      2 PR closed unmerged
 #   3 head moved or auto-merge off  4 merge conflict      5 target unknown
 #   6 deadline reached
+# Exit 5 also covers workflow runs on the head that completed without the
+# required check.
 # Unknown means empty or null output, or a gh error, twice in a row; it never
 # means "keep waiting". Each poll writes one timestamped line to stderr.
-# WAIT_FOR_POLL (seconds, default 30) and WAIT_FOR_GRACE (seconds a required
-# check may take to start, default 600) exist for the self-test only.
+# WAIT_FOR_POLL (seconds, default 30) and WAIT_FOR_GRACE (seconds before
+# pr-ci starts asking whether any workflow run on the head exists, default
+# 600) exist for the self-test only.
 set -u
 
 usage() {
@@ -167,7 +170,8 @@ pr-ci)
   read_gh checks gh api "repos/{owner}/{repo}/rules/branches/$base" --jq \
     '[.[] | select(.type=="required_status_checks") | .parameters.required_status_checks[] | select(.integration_id==15368) | .context] | if length == 0 then "none" else join("\n") end'
   [ "$checks" != none ] || finish 5 "unknown: $base requires no GitHub Actions check to wait on"
-  runs= grace=$(( $(date +%s) + ${WAIT_FOR_GRACE:-600} ))
+  grace_s=${WAIT_FOR_GRACE:-600}
+  runs= grace=$(( $(date +%s) + grace_s ))
   while IFS= read -r check <&3; do
     # Find the check's run on the head; until it starts, keep checking the PR.
     dones=0
@@ -185,6 +189,7 @@ pr-ci)
         ?*) finish 5 "unknown: check $check on $sha has no Actions run ($url)" ;;
       esac
       check_pr
+      past_deadline && finish 6 "deadline: no run for check $check on $sha after $deadline min"
       note=
       # Past the grace period, ask whether any workflow run on the head is
       # still going: a check that needs other jobs appears only after them.
@@ -192,7 +197,7 @@ pr-ci)
         read_gh wf gh api -X GET "repos/{owner}/{repo}/actions/runs" -f head_sha="$sha" -f per_page=100 --jq \
           'if .total_count == 0 then "none" else ([.workflow_runs[] | select(.status != "completed")] | length | if . == 0 then "done" else "active \(.)" end) end'
         case $wf in
-          none) finish 5 "unknown: no run for check $check on $sha after 10 min; CI did not start" ;;
+          none) finish 5 "unknown: no run for check $check on $sha after $((grace_s / 60)) min; CI did not start" ;;
           done)
             # Once more, for the lag before a needs-all check is created.
             dones=$((dones + 1))
@@ -202,7 +207,6 @@ pr-ci)
           *) finish 5 "unknown: workflow runs on $sha answered '$wf'" ;;
         esac
       fi
-      past_deadline && finish 6 "deadline: no run for check $check on $sha after $deadline min"
       log "no run yet for check $check on $sha$note"
       sleep "$poll"
     done

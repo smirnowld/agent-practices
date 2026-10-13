@@ -104,9 +104,7 @@ or a merge unless that wait is running; a CI monitor that reports only
 failures is not a wait. Do not write your own polling loop, and do not rely
 on `gh pr checks --watch`: it exits at once when no check has reported yet,
 and exits green when the checks that have reported pass before the others
-appear. If it exits 5 because no run appeared while CI is running, take the
-id from `gh run list --branch BRANCH --commit REVIEWED_SHA` and wait with
-`wait-for run RUN_ID`. A failed run: fix forward on the
+appear. A failed run: fix forward on the
 same PR (P6) through an implementer slice that gets the failing lines (P2b),
 then return to step 3.
 
