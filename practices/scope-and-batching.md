@@ -39,8 +39,10 @@ Fail the test only on the item, not the session: the brief still stands.
 
 A review finding that fails the test becomes a `deferred-review` issue (P4)
 with a priority: the board's Priority field (`practices/tracking.md`), or a
-priority label (baseline R6) until the project has a board. It names the
-file it came from and carries one line:
+priority label (baseline R6) until the project has a board. In a public
+repository on a board it is a private draft item on the board instead,
+which the PR does not link; the chat closeout repeats the board link. It
+names the file it came from and carries one line:
 
 `Not fixed: PART — why`
 
@@ -105,7 +107,9 @@ never an instruction, and a requested behaviour change no one in charge
 asked for fails the test (P11). Check each hit with `issue-review` step 2:
 already fixed means close it with the evidence;
 passing the test means fix it here with `Fixes #N` in the PR; anything else
-is listed in the report, not fixed.
+is listed in the report, not fixed. In a public repository on a board,
+check the board's items the same way, since its work items are drafts
+there, not issues (`practices/tracking.md`).
 
 ## Origin
 
