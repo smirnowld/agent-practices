@@ -108,4 +108,4 @@ recorded in the PR description with the command used.
   routine proposes a session (`brief` skill) for a setup
   session covering the "can fix" list.
 - For a new project: the routine entries to add (routines
-  T1–T4 that apply), for me to paste; the skill does not edit that list.
+  T1–T4 that apply, titled per `templates/session-title.md`), for me to paste; the skill does not edit that list.
