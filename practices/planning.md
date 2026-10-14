@@ -42,8 +42,11 @@ a board (P19b), the board; each owns one thing.
 - **`docs/plans/phase-N.md`** owns scope as above and carries no status.
   Parking is recorded only here.
 
-Package IDs are the only IDs: a package's issue is titled "ID · outcome",
-and `plan.md` rows name outcomes and map to IDs in a Packages column.
+Package IDs are the only IDs: a package's issue is titled "ID · outcome".
+On a board, `plan.md`'s order diagram names outcomes, each phase-plan
+package names the outcome it delivers on an "Outcome:" line, and package
+order lives in the issues' blocked-by links. Not yet on a board, `plan.md`
+rows name outcomes and map to IDs in a Packages column.
 
 **When a package leaves.** The pull request that finishes a package removes
 its section from the phase plan and closes its issue with `Fixes #N` (on a
