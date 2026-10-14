@@ -105,8 +105,10 @@ Sort gaps into:
   `scripts/ensure-labels.sh <owner/repo>`, which is idempotent. The board
   (R7) is created with `scripts/ensure-board.sh create <owner> "<title>"
   <template-owner> <template-number> --repo <owner/repo>`, adding
-  `--with-kind` for a board that holds draft items (it adds Kind and a
-  Drafts by kind view). Templates exist in organisations only; a user's
+  `--with-kind` for a board that holds draft items (it adds Kind, Area and
+  a Drafts by kind view; Area's options are the board's own and reruns
+  never change them). When a public repository's work moves to the shared
+  board, add the repository's name as an Area option there. Templates exist in organisations only; a user's
   board is copied across owners from the organisation's template. Then `scripts/migrate-priority.sh <owner/repo> <owner>
   <number>` copies p1–p3 labels into Priority (it never removes a label or
   overwrites a field), and `--verify` must come back clean. Both scripts

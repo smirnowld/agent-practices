@@ -201,7 +201,8 @@ run create o 'Project board' o 1 --repo o/r --with-kind
 [ "$(cat "$S/2/title")" = 'Project board' ]
 grep -q '^project link 2 --owner o --repo o/r$' "$S/log"
 grep -q '|Kind|SINGLE_SELECT|o[0-9]*~Work package~BLUE~' "$S/2/fields"
-grep -q '|Drafts by kind|table|is:draft|Kind|||' "$S/2/views"
+grep -q '|Area|SINGLE_SELECT|o[0-9]*~General~GRAY~No one repository or theme$' "$S/2/fields"
+grep -q '|Drafts by kind|table|is:draft|Kind|||Area,Assignees,Priority,Status,Title$' "$S/2/views"
 grep -q 'is:issue -label:initiative' "$dir/out"
 grep -q 'No access' "$dir/out"
 grep -q 'Description: link' "$dir/out"
@@ -211,9 +212,12 @@ grep -q 'linked to o/r' "$dir/out"
 [ "$(boards)" -eq 2 ]
 
 # Kind on an existing board: own options stay, missing ones are added.
-sed 's/~Idea~GRAY~Not planned yet/~Someday~PINK~Ours/' "$S/2/fields" > "$dir/f"; cp "$dir/f" "$S/2/fields"
+# Area's options are the board's own: a rerun neither removes nor adds any.
+sed 's/~Idea~GRAY~Not planned yet/~Someday~PINK~Ours/; s/|Area|SINGLE_SELECT|.*/|Area|SINGLE_SELECT|a1~repo-a~BLUE~;a2~repo-b~RED~/' \
+  "$S/2/fields" > "$dir/f"; cp "$dir/f" "$S/2/fields"
 run create o 'Project board' o 1 --with-kind
 grep -q '~Maintainer step~PURPLE~[^;]*;[a-z0-9]*~Someday~PINK~Ours;o[0-9]*~Idea~GRAY~Not planned yet$' "$S/2/fields"
+grep -q '|Area|SINGLE_SELECT|a1~repo-a~BLUE~;a2~repo-b~RED~$' "$S/2/fields"
 
 # Only the template is copied: a plain board or a missing one stops the run.
 fails 2 create o 'Other' o 2

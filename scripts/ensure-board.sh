@@ -6,7 +6,8 @@
 #     and mark it a template (GitHub allows templates in organisations only).
 #   ensure-board.sh create OWNER TITLE TEMPLATE_OWNER TEMPLATE_NUMBER [--repo OWNER/REPO] [--with-kind]
 #     Copy the template into a board under OWNER (a user or an organisation),
-#     link the repository, add the Kind field and a Drafts by kind view.
+#     link the repository; --with-kind adds the Kind and Area fields and a
+#     Drafts by kind view.
 #   ensure-board.sh --check OWNER NUMBER TEMPLATE_OWNER TEMPLATE_NUMBER
 #     Read-only: compare a board with the template. Exit 1 lists the
 #     differences; exit 2 means a board could not be read.
@@ -36,6 +37,9 @@ KIND_OPTIONS='Work package|BLUE|A package in a phase plan|
 Finding|ORANGE|A review finding|
 Maintainer step|PURPLE|A step only the maintainer can take|
 Idea|GRAY|Not planned yet|'
+# Area: which repository or theme a draft belongs to. Its options are each
+# board's own, so a new field gets one placeholder and reruns never touch it.
+AREA_OPTIONS='General|GRAY|No one repository or theme|'
 
 # Views: name|layout|filter|group by|columns|sort|visible fields.
 # A roadmap ignores the visible fields it is given, so they are not compared.
@@ -48,7 +52,7 @@ Long-lead|roadmap|label:long-lead|||Target:ASC|Title,Status,Assignees,Target,Wai
 Initiatives|table|label:initiative||||Title,Status,Sub-issues progress,Repository'
 # Drafts carry no labels, and a filter cannot OR a label with a field, so a
 # board with drafts gets one more view instead of changed filters.
-KIND_VIEW='Drafts by kind|table|is:draft|Kind|||Title,Status,Priority,Assignees,Kind'
+KIND_VIEW='Drafts by kind|table|is:draft|Kind|||Title,Status,Priority,Assignees,Area'
 
 # One GraphQL read per board, flattened to lines:
 #   P|id|template|title
@@ -171,7 +175,10 @@ ensure_field() { # NUMBER FILE NAME TYPE [SPEC [add]]
   elif [ "$(printf '%s\n' "$line" | cut -d'|' -f5)" != "$4" ]; then
     die "field $3 exists with another type; change or delete it in the UI"
   fi
-  if [ "$4" = SINGLE_SELECT ]; then sync_options "$2" "$3" "$5" "${6:-}"; fi
+  case ${6:-} in
+    keep) ;;   # an existing field keeps its own options untouched
+    *) if [ "$4" = SINGLE_SELECT ]; then sync_options "$2" "$3" "$5" "${6:-}"; fi ;;
+  esac
 }
 
 delete_view() { # VIEW_ID
@@ -300,6 +307,7 @@ create_mode() {
   fi
   if [ "$kind" -eq 1 ]; then
     ensure_field "$number" "$b" Kind SINGLE_SELECT "$KIND_OPTIONS" add
+    ensure_field "$number" "$b" Area SINGLE_SELECT "$AREA_OPTIONS" keep
     read_board "$number" "$b"
     ensure_views "$number" "$b" "$KIND_VIEW"
   fi
@@ -340,7 +348,7 @@ check_mode() {
       echo "field $name: is $got, template has $type|$opts" >> "$tmp/diff"
     fi
   done < "$tmp/tf"
-  awk -F'|' 'NR == FNR {t[$1] = 1; next} !($1 in t) && $1 != "Kind" {print "field " $1 ": not in the template"}' \
+  awk -F'|' 'NR == FNR {t[$1] = 1; next} !($1 in t) && $1 != "Kind" && $1 != "Area" {print "field " $1 ": not in the template"}' \
     "$tmp/tf" "$tmp/bf" >> "$tmp/diff"
   awk -F'|' '$1 == "V" {print $3 "|" $4 "|" $5 "|" $6 "|" $7 "|" $8 "|" $9}' "$tmp/tpl" > "$tmp/tv"
   while IFS='|' read -r name rest_of; do
