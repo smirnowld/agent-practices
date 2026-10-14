@@ -19,6 +19,10 @@ Two modes, same checklist: `practices/project-baseline.md`.
   `docs/adr/`; has a staging or demo environment, and how its data is reset.
 - Languages and package ecosystems, for Dependabot and scanners.
 - Existing CI entry point and aggregate check name.
+- The project's board (R7): linked from `AGENTS.md`, or for a public
+  repository named in my own agent configuration; and the template board's
+  owner and number, from my own agent configuration. Missing: ask me. Never
+  write a board's owner, number or URL into agent-practices.
 
 These decide which rows apply. Record them at the top of the output.
 
@@ -54,6 +58,19 @@ current.
 For R6, run `scripts/ensure-labels.sh --check <owner/repo>` (read-only; exit
 1 names each label missing or different). Any gap is "partial" or "missing".
 
+For R7, run `scripts/ensure-board.sh --check <owner> <number> <template>`
+(read-only). Exit 1 lists each field, option, view or workflow that differs
+from the template, or a workflow that is missing or disabled; any line makes
+R7 "partial". Workflow settings, the auto-add filter and the base role have
+no API: they stay "unknown" unless I confirm them or they are read in my
+browser. No board at all is "missing". While the project still has p1–p3
+labels, `scripts/migrate-priority.sh <owner/repo> <owner> <number> --verify`
+lists open issues missing from the board or whose label and Priority
+disagree; report them under R7. R7 also needs the work-package issue
+template at `.github/ISSUE_TEMPLATE/work-package.md`, matching
+`templates/github/work-package-issue.md`; missing or different is
+"partial".
+
 For C4 and C5, run `scripts/check-action-pins.py <project>` and
 `scripts/check-adrs.py <project>` from a local agent-practices clone. Exit 1
 names each failing line (an unpinned `uses:`; an ADR status, numbering or
@@ -75,12 +92,25 @@ In audit mode, stop here and deliver the report (step 5).
 Sort gaps into:
 
 - **Can fix in the repo:** files (`AGENTS.md` type line and policy block,
-  docs from `templates/docs/`, `SECURITY.md`, Dependabot config, CI lanes,
+  docs from `templates/docs/`, the work-package issue template
+  (`templates/github/work-package-issue.md` copied to
+  `.github/ISSUE_TEMPLATE/work-package.md`), `SECURITY.md`, Dependabot config, CI lanes,
   pinned actions and the pin check, the ADR check, scanners, `make check`).
 - **Can fix through the host's API:** auto-merge, branch deletion, ruleset,
   security features, issue labels (R6). These change settings: list them and
   get my OK first (P9). Labels are applied with
-  `scripts/ensure-labels.sh <owner/repo>`, which is idempotent.
+  `scripts/ensure-labels.sh <owner/repo>`, which is idempotent. The board
+  (R7) is created with `scripts/ensure-board.sh create <owner> "<title>"
+  <template> --repo <owner/repo>`, adding `--with-kind` for a board that
+  holds draft items; then `scripts/migrate-priority.sh <owner/repo> <owner>
+  <number>` copies p1–p3 labels into Priority (it never removes a label or
+  overwrites a field), and `--verify` must come back clean. Both scripts
+  are idempotent. The board link goes into `AGENTS.md` by the per-project
+  switch in `practices/tracking.md`.
+- **Needs the board's settings page:** the steps `ensure-board.sh` prints
+  (auto-add from the repository with `is:issue -label:initiative`, base
+  role No access, workflows that differ). Where the adapter names a browser
+  I am signed in to, offer to do them there; otherwise list them for me.
 - **Needs me:** accounts, paid plans, secrets, choosing a monitoring or
   hosting tool (then an ADR, P11).
 
