@@ -6,7 +6,7 @@ keeps history (P17). Budget: 20 KB. Phase health and dates of the current
 phase are status and live on the board (practices/tracking.md); a public
 repository leaves the board link out. -->
 
-**Now:** Phase <N>, <name> — [plan](plan.md) · status on the [board](<board link>) · **Updated:** <YYYY-MM-DD>
+**Now:** Phase <N>, <name> — [plan](plan.md) · status on the [board](<board link; left out in a public repository>) · **Updated:** <YYYY-MM-DD>
 
 ## Vision
 

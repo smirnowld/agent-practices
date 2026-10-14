@@ -7,9 +7,12 @@ progress, which the board owns. Changes only when the goal or scope changes
 outcomes, not package IDs. Replaced when the phase ends, after its outcomes
 move to the roadmap and docs. Budget: practices/record-keeping.md.
 
-A project not yet on a board keeps its current plan.md, with status, until
-the PR that switches it to a board (practices/tracking.md, "The per-project
-switch"); the earlier shape of this template is in git history. -->
+Projects not yet on a board keep their current plan.md, with status, until
+the PR that switches them to a board (practices/tracking.md, "The
+per-project switch"); the previous template shape is
+`git show 9e26a8a:templates/docs/plan.md`. Such a project writing a new
+phase plan moves Acceptance, Not in this phase and Risks out of its plan.md
+into the phase plan, so they are not held twice. -->
 
 **Goal:** <what the user can see or do when this phase ends>
 **Board:** <link to the project's board, Phase view; left out in a public repository>

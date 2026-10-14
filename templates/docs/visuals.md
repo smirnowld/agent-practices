@@ -2,9 +2,9 @@
 
 <!-- Spec for docs/visuals/<doc>.html: one-page visual views of roadmap.md,
 plan.md, architecture.md and tech-stack.md, for people. The Markdown doc is
-the source of truth; a visual never says anything its source does not. For
-a project on a board, the plan visual's status comes from the board
-(practices/tracking.md), never from merged PRs or the Markdown docs. -->
+the source of truth; a visual never says anything its source does not.
+Committed visuals carry no status: for a project on a board, live status is
+the board's views (practices/tracking.md), which the plan visual links. -->
 
 ## Files
 
@@ -27,7 +27,7 @@ The same meaning has the same look in every visual of a project.
 | Green | Apps and surfaces people touch |
 | Violet | A service we rent |
 | Neutral | Open source we build on |
-| Amber | A milestone or something waiting on the maintainer |
+| Amber | A milestone, or work only the maintainer can do (the roadmap's parallel track); never a status |
 | Dashed outline | A boundary, or something not yet built or confirmed |
 
 Every visual carries a legend for the encodings it uses.
@@ -44,6 +44,6 @@ Every visual carries a legend for the encodings it uses.
 | Visual | Shape |
 |---|---|
 | Roadmap | Phases in order as cards: name, size, deliverables in user terms, "Done when". Milestone flags. A parallel track for work outside engineering. No dates unless the source commits to them. |
-| Plan | The current phase: goal up top, with health from the board's status update when it has one; the order of outcomes from plan.md as a diagram with nodes coloured by their packages' status on the board (done; waiting, with engineering complete marked; active; planned or ready; parked, dashed); a progress count from the board; amber for what waits on the maintainer, taken from items assigned to the maintainer. |
+| Plan | The current phase: goal up top; the order of outcomes from plan.md as a diagram; scope from the phase plan (what each outcome covers, what is not in the phase). Outcomes, order and scope only: no status colours, progress count, health or "waiting on the maintainer" highlight. A link to the board's views for live status, left out in a public repository. |
 | Architecture | Boxes grouped by boundary (clients, our system, rented services), arrows for who calls whom, a caption saying so; principles below as short cards. |
 | Tech stack | One band per layer with its one-line intent; each choice tagged by kind (write, build on, rent, unconfirmed). |

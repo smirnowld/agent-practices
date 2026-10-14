@@ -28,7 +28,7 @@ fields. Using the template is mandatory; empty sections may be omitted.
 | `docs/operations.md` | Where it runs, health, alerts, observability manifest (P20) | Project `docs/` |
 | `docs/inventory.md` | What runs where, for infrastructure (P19) | Project `docs/` |
 | `docs/recovery.md` | Backup and recovery procedures, last test (P19) | Project `docs/` |
-| `github/work-package-issue.md` | Issue for one work package on the board, linking its phase-plan section (P19b) | Project `.github/ISSUE_TEMPLATE/work-package.md` |
+| `github/work-package-issue.md` | Issue for one work package on the board: links its phase-plan section at a commit SHA, never copies the criteria; order is set as issue dependencies (P19b, practices/tracking.md) | Project `.github/ISSUE_TEMPLATE/work-package.md`, installed by `project-setup` |
 
 Every link a template asks for follows P18: a full GitHub URL (commit SHA for
 files, not a branch) or an attached file, never only a local path.
