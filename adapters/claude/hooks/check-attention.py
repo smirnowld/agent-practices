@@ -12,7 +12,8 @@ written an hour later. When the turn began with my dismissing a question, it
 is waiting on me and the rule does not fire for a question or card. The
 "Waiting on the maintainer:" line is docs/plan.md's; a project whose AGENTS.md
 links a board (P19b) has no such line, so it is not a marker there. The board
-test reads AGENTS.md from the session's directory or its git root, offline.
+test reads, offline, each AGENTS.md from the session's directory up to its
+git root, never above; outside a repository, only the directory's own.
 
 It also holds the closeout to its template (P15): a chat closeout missing a
 required summary field of templates/closeout.md (Status, TL;DR) is blocked,
@@ -470,22 +471,32 @@ def main():
 
 
 def on_board(cwd):
-    """Whether the project's AGENTS.md links a board (P19b), read from CWD or
-    the nearest folder above it holding .git. No network; any error means no
-    board, which keeps the plan.md check."""
+    """Whether the project's AGENTS.md links a board (P19b). Reads each
+    AGENTS.md from CWD (else CLAUDE_PROJECT_DIR) up to its git root, the
+    nearest folder holding .git, and never above it; outside a repository,
+    only CWD's own. No network; any error means no board, which keeps the
+    plan.md check."""
     try:
         start = cwd or os.environ.get("CLAUDE_PROJECT_DIR")
-        d = os.path.realpath(start) if start else ""
-        while d:
+        if not start:
+            return False
+        d = os.path.realpath(start)
+        dirs = []
+        while True:
+            dirs.append(d)
+            if os.path.exists(os.path.join(d, ".git")):
+                break
+            up = os.path.dirname(d)
+            if up == d:
+                dirs = dirs[:1]  # no git root: the session's folder only
+                break
+            d = up
+        for d in dirs:
             f = os.path.join(d, "AGENTS.md")
             if os.path.isfile(f):
                 with open(f, encoding="utf-8", errors="replace") as h:
                     if BOARD_LINK.search(h.read()):
                         return True
-            if os.path.exists(os.path.join(d, ".git")):
-                return False
-            up = os.path.dirname(d)
-            d = "" if up == d else up
     except Exception:
         pass
     return False

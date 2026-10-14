@@ -35,8 +35,12 @@ when ToolSearch cannot find it either, and the report says so.
   and option IDs. File an assigned item: `gh issue create --assignee @me
   --label maintainer-step`, then `gh project item-add`; in a public
   repository a draft with `gh project item-create`, assigned with `gh api
-  graphql`. No board access (`gh auth status` lacks the `project` scope):
-  say so and put the step in chat.
+  graphql`, with its Kind and Area set. No board access (`gh auth status`
+  lacks the `project` scope) in a repository with issues: still file a
+  step with `gh issue create --assignee @me --label maintainer-step` and a
+  finding with `gh issue create --label deferred-review`, the priority in
+  the issue text; the board's auto-add picks them up. Only in a public repository, where no
+  issue can be filed, say so and put the step or finding in chat.
 - **Delegate a role** (P2, P2b): the Agent tool with `subagent_type`
   `agent-practices:ROLE` (explorer, implementer, light-reviewer, reviewer,
   critical-reviewer, critical-reviewer-strongest); `model` sets a slice's

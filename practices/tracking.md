@@ -55,6 +55,7 @@ exceptions mirror a scope fact, and the drift check keeps each pair in step:
 | Target | Date | Only for long-lead items and outside deadlines |
 | Assignees | Built-in | The person who must act next. Empty for agent work, since agents act as my account and would flood my list; set to me only for a step only I can take |
 | Kind | Single select | Only on a board that holds draft items, which cannot carry labels |
+| Area | Single select | Only on a board that holds draft items: the repository (by name) or theme a draft belongs to |
 
 Phase health and the expected end date are status too: they go in the
 board's project status update where available, otherwise in the phase
@@ -159,6 +160,9 @@ link, never the closeout in the PR.
 Drafts take a title, body, assignees and the board's fields, but:
 
 - no labels, so a board holding drafts has a Kind field instead;
+- no repository, so a board holding drafts has an Area field naming the
+  repository or theme each belongs to; sessions for a public repository
+  work only the items whose Area is its name;
 - no notification for an assignment or mention;
 - no place in GitHub's assigned-to-me list, only in the board's view;
 - no closing by a PR: the session that finishes the work sets Done itself.

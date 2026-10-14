@@ -8,6 +8,8 @@
 # closeout written without the closeout skill, and an auto-merge that landed
 # without its closeout.
 set -eu
+# The board test falls back to it; the session running this must not leak in.
+unset CLAUDE_PROJECT_DIR
 dir=$(dirname "$0")
 hook="$dir/check-attention.py"
 tmp=$(mktemp -d)
@@ -65,6 +67,19 @@ passes '**Waiting on the maintainer:** acceptance of phase 2' "{\"cwd\":\"$tmp/b
 blocks '**Waiting on me:** acceptance of phase 2' "{\"cwd\":\"$tmp/boarded\"}" 'PushNotification'
 blocks '**Waiting on the maintainer:** acceptance of phase 2' "{\"cwd\":\"$tmp/plain\"}" 'PushNotification'
 blocks '**Waiting on the maintainer:** acceptance of phase 2' "{\"cwd\":\"$tmp/missing\"}" 'PushNotification'
+# A board link above the git root is another project's: ignored.
+mkdir -p "$tmp/outer/repo/.git"
+cp "$tmp/boarded/AGENTS.md" "$tmp/outer/AGENTS.md"
+blocks '**Waiting on the maintainer:** acceptance of phase 2' "{\"cwd\":\"$tmp/outer/repo\"}" 'PushNotification'
+# Outside a repository only the session's own folder counts.
+mkdir -p "$tmp/norepo/sub"
+cp "$tmp/boarded/AGENTS.md" "$tmp/norepo/AGENTS.md"
+passes '**Waiting on the maintainer:** acceptance of phase 2' "{\"cwd\":\"$tmp/norepo\"}"
+blocks '**Waiting on the maintainer:** acceptance of phase 2' "{\"cwd\":\"$tmp/norepo/sub\"}" 'PushNotification'
+# Without a cwd in the input, CLAUDE_PROJECT_DIR names the project.
+export CLAUDE_PROJECT_DIR="$tmp/boarded"
+passes '**Waiting on the maintainer:** acceptance of phase 2'
+unset CLAUDE_PROJECT_DIR
 passes 'Here is the answer: 42.'
 passes "$card" '{"stop_hook_active":true}'
 # Running background tasks in the hook input excuse nothing.

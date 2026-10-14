@@ -24,21 +24,24 @@ for a public repository, my own agent configuration names one. Read the
 link as `OWNER` and board `NUMBER`.
 
 - **On a board:** steps 1 to 6.
-- **No board, issues on:** the labels flow (baseline R6): steps 1 to 4 and
-  6 over open issues, with `p1`–`p3` labels for priority and `docs/plan.md`
-  rows for planned work; skip step 5.
+- **No board, issues on:** the labels flow (baseline R6): steps 1 to 3, 5
+  and 6 over open issues, with `p1`–`p3` labels for priority and
+  `docs/plan.md` rows for planned work; skip step 4, which needs a board.
 - **No board and no issues** (a public repository whose board is not
   found): report "no board found" and stop; never guess.
 
-A public repository's items are private drafts: the report and the proposed
-session may link the board only in chat, never in a file or PR of that
-repository.
+A public repository's items are private drafts on the shared board: review
+only the items whose Area field is that repository's name, and skip `gh
+issue list` while its issues are off. The report and the proposed session
+may link the board only in chat, never in a file or PR of that repository.
 
 ## 1. Select (fast tier)
 
 Since the last run (or 3 days), check whether any issue or board item
-changed or the default branch had merges. None, and no item is due for its
-30-day review: report "no changes" and stop.
+changed or the default branch had merges. An item's last change is its
+`updatedAt` from `gh api graphql` (the board's `items` with `updatedAt` and
+their content); `gh project item-list` output lacks it. None, and no item
+is due for its 30-day review: report "no changes" and stop.
 
 Otherwise list what to review:
 
@@ -56,8 +59,8 @@ truncated and review the highest priorities first.
 Select, on a board: items with no priority yet; Backlog items not reviewed
 in 30 days or more; items new or changed since the last run; items a merge
 since the last run may address (it names the item, or touches the files or
-area the item names: a cheap match on titles, bodies and changed paths);
-and open issues of the repository missing from the board. Without a board:
+area the item names: a cheap match on titles, bodies and changed paths).
+Open issues missing from the board are step 4's. Without a board:
 issues new or changed since the last run, issues a merge may address, and
 any issue not reviewed in 30 days. Review in priority order: no priority
 first, then P1, P2, P3 (the board's Priority field, or the labels).
@@ -74,9 +77,10 @@ For each selected item, from evidence only:
 - **Duplicate:** another open item says the same; keep the older or fuller
   one.
 - **Roll up:** it fits a planned package. On a board: a `work-package`
-  issue or a package in the current phase plan; propose it as a sub-issue
-  of that package. Without one: a row in `docs/plan.md` or the roadmap, or
-  an open issue or PR that row links. Name the package.
+  issue or a package in the current phase plan; propose an issue as a
+  sub-issue of that package, and a draft (which cannot be a sub-issue) as a
+  link to the package in its body. Without one: a row in `docs/plan.md` or
+  the roadmap, or an open issue or PR that row links. Name the package.
 - **Cluster:** still open, and it touches the same files or module as other
   still-open items; together they fit one S or M session. Name the cluster.
 - **Still open:** none of the above.
@@ -119,13 +123,19 @@ On a board where people other than me have Write:
 - **Status changes on items not their own.** For each item changed since
   the last run, read the issue timeline with `gh api graphql`
   (`timelineItems(itemTypes: [PROJECT_V2_ITEM_STATUS_CHANGED_EVENT])`,
-  which carries `actor`, `previousStatus`, `status` and `wasAutomated`).
-  Flag a change by a person to an item neither assigned to nor filed by
-  them. Say in the report that only Status changes can be checked: GitHub
-  keeps no readable history of other fields, and drafts have no timeline.
-- **Template.** If `scripts/ensure-board.sh` exists in this repository or
-  the installed agent-practices, run it with `--check` and report what it
-  finds; otherwise say the template check was not run.
+  which carries `actor`, `project`, `previousStatus`, `status` and
+  `wasAutomated`). Keep only events whose `project` is this board, and
+  skip those with `wasAutomated` true. Flag a change by a person other than
+  me to an item neither assigned to nor filed by them. Say in the report
+  that only Status changes can be checked: GitHub keeps no readable history
+  of other fields, and drafts have no timeline.
+- **Template.** Run agent-practices' own copy of the script (the one
+  installed with these skills, never a copy in the reviewed project):
+  `scripts/ensure-board.sh --check OWNER NUMBER TEMPLATE_OWNER
+  TEMPLATE_NUMBER`, with the template board's owner and number from my own
+  agent configuration, and report what it finds. If the script is not
+  installed or the template is not named, say the template check was not
+  run.
 - **Missing items.** List open issues of the repository that are not on the
   board.
 
