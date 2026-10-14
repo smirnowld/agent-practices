@@ -369,7 +369,12 @@ item closed
 item reopened
 auto-archive items'
   # Auto-add needs a linked repository; the shared board may have none.
-  if [ "$(awk -F'|' '$1 == "R" {print $2}' "$tmp/board")" -gt 0 ]; then
+  # "Linked" stands in for "should auto-add": a board linked only for display is still asked.
+  repos=$(awk -F'|' '$1 == "R" {print $2}' "$tmp/board")
+  case $repos in
+    ''|*[!0-9]*) die "cannot read linked repositories of board $number" ;;
+  esac
+  if [ "$repos" -gt 0 ]; then
     wanted="$wanted
 auto-add to project"
   else

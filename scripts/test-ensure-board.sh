@@ -69,7 +69,8 @@ case "$1 $2" in
         d="$S/$n"
         echo "P|PVT_$n|$(cat "$d/template")|$(cat "$d/title")"
         cat "$d/fields" "$d/views" "$d/workflows"
-        if [ -f "$S/linked_$n" ]; then echo 'R|1'; else echo 'R|0'; fi ;;
+        if [ -f "$S/bad_repos" ]; then echo 'R|null'
+        elif [ -f "$S/linked_$n" ]; then echo 'R|1'; else echo 'R|0'; fi ;;
       *) echo "fake gh: unexpected query $query" >&2; exit 1 ;;
     esac ;;
   "api -X")
@@ -258,6 +259,10 @@ touch "$S/fail_read"
 fails 2 --check o 2 o 1
 grep -q 'cannot read board 2 of o' "$dir/out"
 rm "$S/fail_read"
+touch "$S/bad_repos"                     # an unreadable repository count is not "none"
+fails 2 --check o 2 o 1
+grep -q 'cannot read linked repositories of board 2' "$dir/out"
+rm "$S/bad_repos"
 
 # Drift is reported, one line each.
 sed 's/;[a-z0-9]*~P3 later~GREEN~When convenient//; s/|Target|DATE|/|Target|TEXT|/' "$S/2/fields" > "$dir/f"; cp "$dir/f" "$S/2/fields"
