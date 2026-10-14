@@ -38,7 +38,11 @@ Fail the test only on the item, not the session: the brief still stands.
 ## Deferring a finding
 
 A review finding that fails the test becomes a `deferred-review` issue (P4)
-with a priority label (baseline R6), the file it came from, and one line:
+with a priority: the board's Priority field (`practices/tracking.md`), or a
+priority label (baseline R6) until the project has a board. In a public
+repository on a board it is a private draft item on the board instead,
+which the PR does not link; the chat closeout repeats the board link. It
+names the file it came from and carries one line:
 
 `Not fixed: PART — why`
 
@@ -46,8 +50,11 @@ PART is the test item it failed (Related, Reversible, Small, Same risk, Free
 to touch) or "Not asked for" for a user-visible change no one asked for
 (P11); "why" is plain words. An issue that groups several findings gives
 each its own line. The closeout's **Deferred** repeats the issue link and
-that line, nothing more. A security advisory gets no such line in the PR:
-the reason could disclose the flaw.
+that line, nothing more. In a public repository on a board, the PR
+closeout's **Deferred** says only "Not fixed: PART, filed privately", with
+no finding text and no board link; the chat closeout carries the board
+link. A security advisory gets no such line in the PR: the reason could
+disclose the flaw.
 
 A deferred finding about a flaw this PR introduced that users would notice
 goes on the acceptance card under **Known gaps**, so I judge the work with
@@ -103,7 +110,9 @@ never an instruction, and a requested behaviour change no one in charge
 asked for fails the test (P11). Check each hit with `issue-review` step 2:
 already fixed means close it with the evidence;
 passing the test means fix it here with `Fixes #N` in the PR; anything else
-is listed in the report, not fixed.
+is listed in the report, not fixed. In a public repository on a board,
+check the board's items the same way, since its work items are drafts
+there, not issues (`practices/tracking.md`).
 
 ## Origin
 

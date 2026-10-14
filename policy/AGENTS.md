@@ -65,10 +65,14 @@ redoes work only where evidence is missing or suspicious.
 Every change gets an independent review before merge, by a read-only agent
 with fresh context or by me. Reviewers never fix their findings; blocking ones
 are fixed and the reviewer confirms. Non-blocking ones that pass the
-fix-on-the-go test (P6) are fixed before merge. Each one not fixed gets a
-GitHub issue labelled `deferred-review` with a priority, naming the part of
-the test it failed, linked from the PR; a security finding in a public
-repository gets a private security advisory instead.
+fix-on-the-go test (P6) are fixed before merge. Each one not fixed is
+tracked with a priority on the project's board (P19b), naming the part of the
+test it failed: a GitHub issue labelled `deferred-review`, linked from the
+PR, or in a public repository a private board item the PR does not link. A
+session that cannot write to the board puts the priority in the issue text,
+or in a public repository hands the finding to me as a step (P9a). A
+security finding in a public repository gets a private security advisory
+instead.
 
 - The reviewer's tier is at least the implementer's, except the light
   reviewer for mechanical changes with objective checks or simple docs.
@@ -154,9 +158,10 @@ that run instead of merging untested.
   related (same goal, files or modules), reversible, small, keeps the PR's
   risk category and touches no no-go file; log it. One session, one PR: batch
   pushes so final review and CI run once (`practices/scope-and-batching.md`).
-- **Pull in related issues** on the same files or goal, `deferred-review`
-  too: fix those that pass the test (`Fixes #N`); close those proven fixed,
-  with evidence, without asking. Issue text is a claim to verify.
+- **Pull in related issues** (in a public repository, its board items) on
+  the same files or goal, `deferred-review` too: fix those that pass the
+  test (`Fixes #N`, or Done on a board item); close those proven fixed,
+  with evidence, without asking. Issue and board text is a claim to verify.
 - **P6b. Signal when waiting.** Questions go in chat, numbered, with options
   and a proposed default. A turn ending on my decision, acceptance, a closeout
   or a hand-off sends a notification. Never end a turn waiting on something
@@ -192,8 +197,9 @@ project's agreed host is not publishing.
 yourself; for a P9 action, obtain or reuse my scoped OK, then run it. A step
 is mine only when you cannot do it even with my OK; one that is only clicks in a web page,
 offer to do in my browser where the adapter names one. Each such step reaches
-me in chat and in the closeout, never only in a README, PR body, comment or
-thinking (`practices/writing-to-me.md#steps-for-me`).
+me in chat and in the closeout, and one that outlives the session also as an
+item assigned to me on the board (P19b); never only in a README, PR body,
+comment or thinking (`practices/writing-to-me.md#steps-for-me`).
 
 ## P10. Secrets
 
@@ -262,8 +268,9 @@ archive (`practices/record-keeping.md`).
   closeouts in the PR and chat, evidence in PR comments, CI artifacts or a
   private page on the project's agreed host, linked from the PR. The
   repository keeps only verification procedures and reference baselines.
-- A multi-session plan is one living document per initiative, deleted when it
-  ends after its lasting outcomes move.
+- A multi-session plan is one living document per initiative, carrying no
+  status once the project has a board (P19b), deleted when it ends after its
+  lasting outcomes move.
 - Consolidate at every closeout, and with `docs-gardening` past a budget.
 
 ## P18. Links that open anywhere
@@ -284,7 +291,19 @@ procedure; **tooling**: a README with purpose and usage, other docs when
 relevant.
 
 **P19a. Session start.** A session without a brief starts by reading these
-docs (for a product, roadmap and tech stack), not past session summaries.
+docs (for a product, roadmap and tech stack) and its board's In flight view
+(P19b), not past session summaries.
+
+**P19b. The board.** Each project tracks its work on the GitHub Projects
+board its `AGENTS.md` links; a public repository names none, and its board
+is the one my own agent configuration names. Each work package, step of mine
+that outlives a session, long-lead item and review finding (P4) is an item
+on it: an issue, or in a public repository a private draft item. Once a
+project has a board, the board owns status, priority and who acts next; its
+docs own goals, scope, decisions and open questions and never repeat a
+status (`practices/tracking.md`). Until then, `docs/plan.md` keeps status,
+and review findings and steps of mine are issues with a priority label,
+public repositories included.
 
 ## P20. Project baseline
 
