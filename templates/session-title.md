@@ -3,7 +3,7 @@
 <!-- The title every session carries, proposed or started by me (P2a). It
 lets me see from the session list what a session does and whether it waits
 on me. The project is not in the title: where sessions are listed, they are
-grouped by project. -->
+grouped by project. Scheduled routines are the exception (see below). -->
 
 ```
 AUTONOMY Type·Size — REF what it does
@@ -26,7 +26,7 @@ that applies wins. The estimate comes from the brief or from sizing the task
 | ⏱ | Routine | Nothing: scheduled and read-only, it only proposes sessions. |
 
 ⏱ goes only with the Routine type and no size:
-`⏱ Routine — PROJECT: daily triage of errors, alerts and uptime`.
+`⏱ Routine — PROJECT: triage of errors, alerts and uptime, daily 07:00 UTC`.
 
 ## Type
 
@@ -62,7 +62,7 @@ when nothing else is known:
 | `project-setup` | `🟡 Chore·M — baseline setup` (audit: `🟢 Research·S — baseline audit`) |
 | `docs-gardening` | `🟢 Chore·S — consolidate DOCS` |
 | `project-visuals` | `🟢 Chore·S — redraw VISUAL` |
-| a routine skill run by hand | `🟢 Research·XS — NAME by hand` |
+| a routine skill run by hand | `🟢 Research·XS — WHAT IT CHECKS by hand` |
 
 A skill run inside a session already titled, such as `closeout` or
 `acceptance-evidence`, keeps the title. A scheduled routine is titled

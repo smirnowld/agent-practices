@@ -48,10 +48,13 @@ For each selected issue, from evidence only:
   item.
 - **Cluster:** still open, and it touches the same files or module as other
   still-open issues; together they fit one S or M session. Name the cluster.
-- **Retitle:** still open, but the title is vague, says only the mechanism, or
-  no longer matches the issue (naming rule:
-  `practices/writing-to-me.md#names`). Propose a clearer title.
 - **Still open:** none of the above.
+
+Separately, any issue that stays open (not Addressed, Obsolete or Duplicate)
+may also get a proposed clearer title: flag a title that is vague, says only
+the mechanism, or no longer matches the issue (naming rule:
+`practices/writing-to-me.md#names`). An old issue's title is checked when it
+is next selected.
 
 Cite the evidence for each verdict (PR, commit or file link, P18). Unsure
 means "still open", with the question.
