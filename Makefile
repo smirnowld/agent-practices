@@ -24,6 +24,7 @@ check:
 	sh -n adapters/claude/hooks/test-check-chip-brief.sh
 	sh -n adapters/claude/hooks/test-check-coordinator-edit.sh
 	sh -n adapters/claude/hooks/test-check-attention.sh
+	sh -n adapters/claude/hooks/test-check-session-title.sh
 	sh scripts/test-sync.sh
 	sh scripts/test-push-policy-sync.sh
 	sh scripts/test-ensure-labels.sh
@@ -36,6 +37,7 @@ check:
 	sh adapters/claude/hooks/test-check-chip-brief.sh
 	sh adapters/claude/hooks/test-check-coordinator-edit.sh
 	sh adapters/claude/hooks/test-check-attention.sh
+	sh adapters/claude/hooks/test-check-session-title.sh
 	sh bin/test-with-secrets.sh
 	sh bin/test-push-secrets.sh
 	sh bin/test-wait-for.sh

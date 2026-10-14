@@ -176,7 +176,19 @@ unverified against vendor docs.
   out the project because the Code tab sidebar can group sessions by folder
   (observed 2026-10-07). A session started with a skill kept the title the
   app took from the command (observed 2026-10-08), so the rename comes
-  before the skill's first step.
+  before the skill's first step. With the rule as instruction only, sessions
+  that answered without formally sizing the task kept the app's title
+  (observed 2026-10-14), so a `Stop` hook
+  ([`hooks/check-session-title.py`](hooks/check-session-title.py)) blocks a
+  turn end once while the title is not in the template's form and the
+  session never called the rename. No hook input carries the desktop app's
+  title: `session_title` reaches only `SessionStart` and `UserPromptSubmit`,
+  and only for a custom title (https://code.claude.com/docs/en/hooks,
+  checked 2026-10-14). The hook reads the transcript instead: every rename
+  appends a `custom-title` line holding the new title, and deferred tools
+  are listed in `deferred_tools_delta` attachments (observed 2026-10-14,
+  undocumented). It acts only where the rename tool is listed, so CLI and
+  cloud sessions pass.
 - Proposing sessions (`brief` skill): the rule is in
   [session.md](session.md); the model it names comes from `tiers.json`
   (Sonnet for fast, Opus for standard). Before session.md was
@@ -435,6 +447,7 @@ skills enabled on the claude.ai account (same page, "What carries over").
 #!/bin/bash
 root=/opt/agent-practices
 line="agent-practices root (templates, practices, policy): $root"
+title="Session title (P2a): format in $root/templates/session-title.md. No rename tool here, so the first reply opens with 'Title: TITLE' for /rename."
 {
   echo "pwd: $(pwd) HOME: $HOME"
   rm -rf "$root"
@@ -442,7 +455,9 @@ line="agent-practices root (templates, practices, policy): $root"
     && mkdir -p "$HOME/.claude/skills" "$HOME/.claude/agents" \
     && cp -R "$root/skills/." "$HOME/.claude/skills/" \
     && cp "$root"/adapters/claude/agents/*.md "$HOME/.claude/agents/" \
-    && { grep -qxF "$line" "$HOME/.claude/CLAUDE.md" 2>/dev/null || echo "$line" >> "$HOME/.claude/CLAUDE.md"; } \
+    && for l in "$line" "$title"; do
+         grep -qxF "$l" "$HOME/.claude/CLAUDE.md" 2>/dev/null || echo "$l" >> "$HOME/.claude/CLAUDE.md"
+       done \
     && echo "copied: $(ls "$HOME/.claude/skills" | tr '\n' ' ')"
 } >/tmp/setup.log 2>&1
 exit 0
@@ -458,6 +473,13 @@ exit 0
   `$HOME/.claude/skills/` and the line in `$HOME/.claude/CLAUDE.md` load in
   the session.
 - The policy still comes from the project's synced `AGENTS.md`.
+- **Titles.** Without the plugin, a cloud session gets neither
+  [session.md](session.md) nor the title hook. The vendor documents `/rename
+  NAME` for me in cloud sessions but no rename tool for the agent
+  (https://code.claude.com/docs/en/claude-code-on-the-web, "Manage context",
+  checked 2026-10-14); that none exists is unverified. The setup script's
+  title line points to the template and has the session open its first reply
+  with the title, ready for me to `/rename`.
 
 ## Transcript facts the cost scanner relies on
 
