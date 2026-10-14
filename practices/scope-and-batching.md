@@ -51,9 +51,10 @@ to touch) or "Not asked for" for a user-visible change no one asked for
 (P11); "why" is plain words. An issue that groups several findings gives
 each its own line. The closeout's **Deferred** repeats the issue link and
 that line, nothing more. In a public repository on a board, the PR
-closeout's **Deferred** keeps the "Not fixed:" line with the finding's text
-and no board link; the chat closeout carries the board link. A security advisory gets no such line in the PR:
-the reason could disclose the flaw.
+closeout's **Deferred** says only "Not fixed: PART, filed privately", with
+no finding text and no board link; the chat closeout carries the board
+link. A security advisory gets no such line in the PR: the reason could
+disclose the flaw.
 
 A deferred finding about a flaw this PR introduced that users would notice
 goes on the acceptance card under **Known gaps**, so I judge the work with

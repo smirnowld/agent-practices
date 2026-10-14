@@ -139,10 +139,12 @@ changes.
 - **Review findings** (P4) are `deferred-review` issues, auto-added in
   Backlog and given a priority. A session that cannot write to the board
   puts the priority in the issue text. In a public repository a finding is a
-  private draft item the PR does not link; a session that cannot write to
-  the board puts the finding's text and priority, without a board link, in
-  the PR's closeout, and the next session with board access files it. A finding pulled into a package
-  becomes a sub-issue of it, and the package's PR closes it with `Fixes`.
+  private draft item the PR does not link; a session without board access
+  lists the finding, text and priority, under "Needs you" in its chat
+  closeout as a step for me (P9a). Either way the PR closeout's Deferred
+  says only "Not fixed: PART, filed privately", with no finding text and no
+  board link. A finding pulled into a package becomes a sub-issue of it,
+  and the package's PR closes it with `Fixes`.
 - **Issues filed by CI** are auto-added like any issue and reach Done when
   CI closes them.
 

@@ -70,9 +70,8 @@ tracked with a priority on the project's board (P19b), naming the part of the
 test it failed: a GitHub issue labelled `deferred-review`, linked from the
 PR, or in a public repository a private board item the PR does not link. A
 session that cannot write to the board puts the priority in the issue text,
-or in a public repository the finding's text and priority, without a board
-link, in the PR's closeout for the next session with board access to file.
-A security finding in a public repository gets a private security advisory
+or in a public repository hands the finding to me as a step (P9a). A
+security finding in a public repository gets a private security advisory
 instead.
 
 - The reviewer's tier is at least the implementer's, except the light
