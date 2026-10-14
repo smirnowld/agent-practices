@@ -302,3 +302,13 @@ Write to me in plain words, for the person running the project rather than a
 code reviewer: result first, effects over mechanisms, asks and real risks
 easy to spot, no internal labels unless I must act on one. Templates set the
 structure (`practices/writing-to-me.md`).
+
+**P21a. Names I read.** A name I see without opening what it names
+(such as workflows, jobs, runs, schedules, issues, PRs, labels,
+environments, variables and secrets) says
+in plain words what it is for: something that acts, what it does, to what
+and where, and when if scheduled; anything else, what it marks or holds
+and for what. Brief only where a UI cuts it off, with the distinguishing
+words first. Code identifiers follow their codebase. A rename keeps
+everything that matches the old name working
+(`practices/writing-to-me.md#names`).
