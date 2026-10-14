@@ -61,7 +61,11 @@ as already fixed with the evidence link; or "none">
 advisory links for security findings (P4), and other follow-ups with where
 they are tracked; only work that failed the fix-on-the-go test, each with
 the reason, for a review finding its `Not fixed: PART — why` line
-(practices/scope-and-batching.md), never for an advisory; or "none">
+(practices/scope-and-batching.md), never for an advisory; or "none". In a
+public repository a review finding reads only "Not fixed: PART, tracked
+privately", with no finding text and no board link; one the session could
+not file goes under "Needs you" in the chat closeout (practices/tracking.md,
+"Other items")>
 
 **Blocked on:** <each blocker or decision and who resolves it, decisions in
 the question register (P11), other blockers where tracked; or "none">
