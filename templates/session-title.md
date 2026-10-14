@@ -25,7 +25,8 @@ that applies wins. The estimate comes from the brief or from sizing the task
 | 🔴 | With me | Throughout: decisions I own (P11), rulings, steering research, or steps I do by hand. |
 | ⏱ | Routine | Nothing: scheduled and read-only, it only proposes sessions. |
 
-⏱ goes only with the Routine type and no size: `⏱ Routine — daily triage`.
+⏱ goes only with the Routine type and no size:
+`⏱ Routine — PROJECT: daily triage of errors, alerts and uptime`.
 
 ## Type
 
@@ -65,7 +66,10 @@ when nothing else is known:
 
 A skill run inside a session already titled, such as `closeout` or
 `acceptance-evidence`, keeps the title. A scheduled routine is titled
-where it is configured (`⏱ Routine — NAME`).
+where it is configured (`⏱ Routine — PROJECT: WHAT IT CHECKS, WHEN`). Unlike
+other sessions, a routine names its project: routines are listed in one
+place across projects, so the title must say whose it is. The name says what
+it is for ([naming rule](../practices/writing-to-me.md#names)).
 
 ## Rest
 

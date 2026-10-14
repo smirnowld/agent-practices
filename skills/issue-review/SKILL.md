@@ -48,6 +48,9 @@ For each selected issue, from evidence only:
   item.
 - **Cluster:** still open, and it touches the same files or module as other
   still-open issues; together they fit one S or M session. Name the cluster.
+- **Retitle:** still open, but the title is vague, says only the mechanism, or
+  no longer matches the issue (naming rule:
+  `practices/writing-to-me.md#names`). Propose a clearer title.
 - **Still open:** none of the above.
 
 Cite the evidence for each verdict (PR, commit or file link, P18). Unsure
@@ -66,7 +69,7 @@ prioritised like any other.
 |---|---|
 | Nothing to change | One line: "issues current", with counts by priority |
 | Closures of addressed issues only | Proposed session that closes them with the evidence link and reports, fast tier; no question |
-| Roll-ups, duplicates or label changes | Proposed session: apply them after my OK, fast tier |
+| Roll-ups, duplicates, label changes or retitles | Proposed session: apply them after my OK, fast tier; list each retitle as "retitle #N to ..." |
 | Clusters | One proposed session per cluster that fixes its issues in one PR (`Fixes #N` each), written with `brief`; issues that fail the fix-on-the-go test (`practices/scope-and-batching.md`) stay open |
 | Open `p1` issue not in planned work | Proposed session that asks me first whether to plan or start it |
 | A verdict needs my decision (scope, requirement, overturning a decision) | Proposed session that asks me first and records the question (P11); do not propose the change |
