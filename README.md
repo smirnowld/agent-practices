@@ -34,6 +34,7 @@ Makefile                `make check`: the same checks CI runs
 | A delegated agent's job | `roles/` | Is it a kind of worker the parent hands work to? |
 | The shape of an output | `templates/` | Does it describe *what* a result looks like? |
 | Anything naming a vendor's file format, key or event | `adapters/<vendor>/` | Would it change if the vendor changed? |
+| A project's status, priority and who acts next | The project's GitHub Projects board, not this repository or the project's docs ([practices/tracking.md](practices/tracking.md)) | Would it be out of date once the work moves? |
 | A helper projects run from their own checkout | `bin/` | Does a project session call it, not this repo's CI? |
 
 Policy stays short because it loads into every session and some agents cap

@@ -38,7 +38,9 @@ Fail the test only on the item, not the session: the brief still stands.
 ## Deferring a finding
 
 A review finding that fails the test becomes a `deferred-review` issue (P4)
-with a priority label (baseline R6), the file it came from, and one line:
+with a priority: the board's Priority field (`practices/tracking.md`), or a
+priority label (baseline R6) until the project has a board. It names the
+file it came from and carries one line:
 
 `Not fixed: PART — why`
 

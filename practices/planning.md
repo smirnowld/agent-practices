@@ -18,26 +18,42 @@ Cross-project lesson.
 
 ## Two files per phase
 
-A product's current phase plan (P19) is two files, each owning one thing:
+A product's current phase plan (P19) is two files and, once the project has
+a board (P19b), the board; each owns one thing.
 
-- **`docs/plan.md`** (`templates/docs/plan.md`) owns status. It is a
-  current-state doc: every change of a package's status is made here and
-  nowhere else.
+**On a board** (`practices/tracking.md`):
+
+- **`docs/plan.md`** (`templates/docs/plan.md`) holds the phase goal, the
+  order diagram of outcomes without status colours, and the board link. It
+  changes only when the goal or scope changes.
 - **`docs/plans/phase-N.md`** (`templates/docs/phase-plan.md`) owns scope:
-  the open packages' criteria, the rules for running them, pending inputs,
-  parked packages and the estimate. It is the phase's living plan (P17) and
-  carries no status. Parking is a scope decision, recorded only here.
+  the open packages' criteria, acceptance, what is not in the phase, risks,
+  the rules for running packages, pending inputs, parked packages and the
+  estimate. It is the phase's living plan (P17) and carries no status.
+  Parking is a scope decision, recorded here and mirrored by Parked on the
+  board.
+- **The board** owns status: one `work-package` issue per package, linking
+  its phase-plan section at a commit SHA.
 
-Package IDs are the only IDs; `plan.md` rows name outcomes and map to them in
-a Packages column.
+**Not yet on a board:**
 
-**When a package leaves.** The pull request that finishes a package sets its
-`plan.md` row and removes its section from the phase plan. If the project
+- **`docs/plan.md`** owns status. It is a current-state doc: every change of
+  a package's status is made here and nowhere else.
+- **`docs/plans/phase-N.md`** owns scope as above and carries no status.
+  Parking is recorded only here.
+
+Package IDs are the only IDs: a package's issue is titled "ID · outcome",
+and `plan.md` rows name outcomes and map to IDs in a Packages column.
+
+**When a package leaves.** The pull request that finishes a package removes
+its section from the phase plan and closes its issue with `Fixes #N` (on a
+board) or sets its `plan.md` row (not yet on a board). If the project
 keeps docs out of that pull request (a separate docs lane), its `AGENTS.md`
 names who does it; the closeout checks it happened. A package merged as
 engineering complete but externally blocked (P5) stays, reduced to its
 blocked criteria, until it is finished; the session that notices the input
-arrived (or its closeout) then sets Done and removes it.
+arrived (or its closeout) then sets Done and removes it. On a board, its PR
+says `Refs #N` and the issue waits as Waiting (`practices/tracking.md`).
 
 **At the end of the phase:** compare the result with the estimate (kept as
 accepted), move lasting outcomes into the roadmap and current-state docs,
