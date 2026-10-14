@@ -29,6 +29,10 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/adapters/claude/hooks/check-attention.py\""
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/adapters/claude/hooks/check-session-title.py\""
           }
         ]
       }
