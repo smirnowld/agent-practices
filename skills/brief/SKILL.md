@@ -34,8 +34,8 @@ Before any candidate, list what is already being worked on: open PRs,
 pushed branches without a PR, running sessions on this project and
 proposed sessions I have not started (the adapter's `session.md` names how
 to see them), and on a board its In progress and In review items (without
-one, the in-progress and in-review rows in `docs/plan.md`). A candidate these already cover is
-dropped and named in the report. Stale PRs (step 2) are the one exception.
+one, the in-progress and in-review rows in `docs/plan.md`). A candidate
+these already cover is dropped and named in the report. Stale PRs (step 2) are the one exception.
 The check is best effort: proposed sessions the agent cannot see may still
 exist, so the report says what it could not check.
 
