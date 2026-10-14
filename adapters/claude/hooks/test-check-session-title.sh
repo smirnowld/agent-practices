@@ -41,7 +41,7 @@ blocks 'The current title is \"Fix the login bug\"'
 
 for t in '🟢 Fix·XS — login redirect loop' '🔵 Build·M — WP12 checkout contract for guest orders' \
   '🟡 Decide·S — choose next tasks' '🔴 Research·M — cache eviction under load' \
-  '🔵️ Land·XS — #12 merge' '⏱ Routine — PROJECT: triage, daily 07:00 UTC' '⏱️ Routine — issue review'; do
+  '🔵️ Land·XS — #12 merge' '⏱ Routine — PROJECT: triage, daily 07:00 UTC' '⏱️ Routine — board review'; do
   transcript "$avail" "$(title "$t")"; passes
 done
 for t in '🔵 Build·M - WP12 hyphen' '🔵 Fix-M — wrong separator' '🔵 Build·L — too big' \

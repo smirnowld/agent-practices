@@ -9,7 +9,10 @@ block the stop once and ask for a PushNotification; the questions stay in the
 chat message. My last words are my last typed message or my last answer to
 AskUserQuestion, so an early notification does not cover a card or closeout
 written an hour later. When the turn began with my dismissing a question, it
-is waiting on me and the rule does not fire for a question or card.
+is waiting on me and the rule does not fire for a question or card. The
+"Waiting on the maintainer:" line is docs/plan.md's; a project whose AGENTS.md
+links a board (P19b) has no such line, so it is not a marker there. The board
+test reads AGENTS.md from the session's directory or its git root, offline.
 
 It also holds the closeout to its template (P15): a chat closeout missing a
 required summary field of templates/closeout.md (Status, TL;DR) is blocked,
@@ -54,8 +57,14 @@ ASK = [
     (r"^\s*# Question: \S", "a question"),
     (r"^\s*(?:\*\*)?Q\d+[.:)]", "a question"),
     (r"^\s*\*\*Decision needed:\*\* \S", "a decision"),
-    (r"^\s*\*\*Waiting on (?:me|the maintainer):\*\* (?![\"'`*_]*(?i:nothing|none|n/a)(?![a-z]))\S", "a 'Waiting on me' line"),
+    (r"^\s*\*\*Waiting on me:\*\* (?![\"'`*_]*(?i:nothing|none|n/a)(?![a-z]))\S", "a 'Waiting on me' line"),
 ]
+# docs/plan.md's line, a marker only for a project not on a board (P19b).
+PLAN_ASK = [
+    (r"^\s*\*\*Waiting on the maintainer:\*\* (?![\"'`*_]*(?i:nothing|none|n/a)(?![a-z]))\S", "a 'Waiting on me' line"),
+]
+# A board link in AGENTS.md: a GitHub Projects board of an org or a user.
+BOARD_LINK = re.compile(r"https://github\.com/(?:orgs|users)/[\w.-]+/projects/\d+")
 NOTIFY = [(r"^\s*# Closeout: \S", "a closeout")]
 FENCE = re.compile(r"^\s*(```|~~~).*?^\s*\1", re.M | re.S)
 # Shell commands split into simple commands; a merge or body edit must be one.
@@ -437,6 +446,8 @@ def main():
     text = "" if stale else FENCE.sub("", final)
     found = lambda rules: [what for pattern, what in rules if re.search(pattern, text, re.M)]
     ask, notify = found(ASK), found(NOTIFY)
+    if not ask and not on_board(data.get("cwd")):
+        ask = found(PLAN_ASK)
     gaps = merge_gaps(calls, earlier or bool(notify), skill, landed)
     if notify and not skill and not gaps:
         gaps.append("load the closeout skill (Skill `agent-practices:closeout`) and write the "
@@ -456,6 +467,28 @@ def main():
         reasons.append(OPEN_REASON.format("; ".join("`" + c + "`" for c in own), LOAD.format("TaskStop")))
     if reasons:
         json.dump({"decision": "block", "reason": " ".join(reasons)}, sys.stdout)
+
+
+def on_board(cwd):
+    """Whether the project's AGENTS.md links a board (P19b), read from CWD or
+    the nearest folder above it holding .git. No network; any error means no
+    board, which keeps the plan.md check."""
+    try:
+        start = cwd or os.environ.get("CLAUDE_PROJECT_DIR")
+        d = os.path.realpath(start) if start else ""
+        while d:
+            f = os.path.join(d, "AGENTS.md")
+            if os.path.isfile(f):
+                with open(f, encoding="utf-8", errors="replace") as h:
+                    if BOARD_LINK.search(h.read()):
+                        return True
+            if os.path.exists(os.path.join(d, ".git")):
+                return False
+            up = os.path.dirname(d)
+            d = "" if up == d else up
+    except Exception:
+        pass
+    return False
 
 
 def signal_reason(ask):

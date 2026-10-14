@@ -12,11 +12,14 @@ description: Create or regenerate the one-page HTML visuals in docs/visuals/ fro
 3. **Build to the spec** in `templates/docs/visuals.md`: shared encoding,
    legend, eyebrow and headline, the shape for that doc, light and dark.
    Reuse the project's existing visual CSS so all its visuals look alike.
-   For the plan: group work packages into 10–15 deliverables named by what
-   they deliver; draw only direct dependencies (dashed for "best after") and
-   list the rest under "Needs" in the table; take status from merged or open
-   PRs and mark anything without evidence "unknown", never guessed; put work
-   carried from earlier phases in a "beside the phase" panel.
+   For the plan: show outcomes, order and scope only. Group work into
+   10–15 outcomes named by what they deliver, taken from the `docs/plan.md`
+   order diagram and the phase plan; draw only direct dependencies (dashed
+   for "best after") and list the rest under "Needs" in the table; put work
+   carried from earlier phases in a "beside the phase" panel. A committed
+   visual carries no status, progress or health: link the board's views
+   for live status instead, except in a public repository, whose board is
+   never linked from its files.
 4. **Check.** Open it in a browser in light and dark; every item in the
    source's main sections appears; no internal IDs; links resolve.
 5. **Deliver** in the same PR as the source change when possible. Update

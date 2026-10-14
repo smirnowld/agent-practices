@@ -55,6 +55,16 @@ blocks "$card" '{"background_tasks":[]}' '"decision": "block"'
 passes '**Waiting on me:** nothing'
 passes '**Waiting on me:** "Nothing"'
 passes '**Waiting on the maintainer:** nothing'
+# The plan.md line is no marker for a project whose AGENTS.md links a board
+# (P19b), read from the session's directory up to its git root; "Waiting on
+# me" still is.
+mkdir -p "$tmp/boarded/.git" "$tmp/boarded/sub" "$tmp/plain/.git"
+printf 'Board: https://github.com/orgs/example/projects/7\n' >"$tmp/boarded/AGENTS.md"
+printf 'No board yet.\n' >"$tmp/plain/AGENTS.md"
+passes '**Waiting on the maintainer:** acceptance of phase 2' "{\"cwd\":\"$tmp/boarded/sub\"}"
+blocks '**Waiting on me:** acceptance of phase 2' "{\"cwd\":\"$tmp/boarded\"}" 'PushNotification'
+blocks '**Waiting on the maintainer:** acceptance of phase 2' "{\"cwd\":\"$tmp/plain\"}" 'PushNotification'
+blocks '**Waiting on the maintainer:** acceptance of phase 2' "{\"cwd\":\"$tmp/missing\"}" 'PushNotification'
 passes 'Here is the answer: 42.'
 passes "$card" '{"stop_hook_active":true}'
 # Running background tasks in the hook input excuse nothing.

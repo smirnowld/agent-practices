@@ -42,7 +42,7 @@ project elsewhere maps each row to its host's equivalent.
 | T1 | Weekly docs drift check (`docs-drift-check`) | ✓ | ✓ | when docs beyond README |
 | T2 | Daily triage of errors, alerts, uptime and logs (`triage`) | when deployed | ✓ | — |
 | T3 | Baseline audit (`project-setup`, audit mode), monthly | ✓ | ✓ | ✓ |
-| T4 | Open issues reviewed every three days (`issue-review`) | ✓ | ✓ | ✓ |
+| T4 | Board and open issues reviewed every three days (`board-review`) | ✓ | ✓ | ✓ |
 
 ## ADR ruling line in PRs
 

@@ -142,7 +142,7 @@ changes.
   private draft item the PR does not link; a session without board access
   lists the finding, text and priority, under "Needs you" in its chat
   closeout as a step for me (P9a). Either way the PR closeout's Deferred
-  says only "Not fixed: PART, filed privately", with no finding text and no
+  says only "Not fixed: PART, tracked privately", with no finding text and no
   board link. A finding pulled into a package becomes a sub-issue of it,
   and the package's PR closes it with `Fixes`.
 - **Issues filed by CI** are auto-added like any issue and reach Done when
@@ -203,8 +203,9 @@ it and never guesses.
   - Waiting for naming a question no longer in the register;
   - an issue on more than one board;
   - Parked or Phase on the board disagreeing with the phase plan.
-- **The board review** works the No priority yet view, stale Backlog items
-  and the drift checks, and flags Waiting items whose Target has passed. On
+- **The board review** (`skills/board-review/SKILL.md`) works the No
+  priority yet view, stale Backlog items and the drift checks, and flags
+  Waiting items whose Target has passed. On
   a board where others have Write, it also flags their changes to items not
   their own, checks fields, options and views against the template, and
   lists open issues missing from the board. It stays read-only and proposes
