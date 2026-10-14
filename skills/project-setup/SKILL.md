@@ -58,15 +58,18 @@ current.
 For R6, run `scripts/ensure-labels.sh --check <owner/repo>` (read-only; exit
 1 names each label missing or different). Any gap is "partial" or "missing".
 
-For R7, run `scripts/ensure-board.sh --check <owner> <number> <template>`
-(read-only). Exit 1 lists each field, option, view or workflow that differs
-from the template, or a workflow that is missing or disabled; any line makes
-R7 "partial". Workflow settings, the auto-add filter and the base role have
-no API: they stay "unknown" unless I confirm them or they are read in my
-browser. No board at all is "missing". While the project still has p1–p3
-labels, `scripts/migrate-priority.sh <owner/repo> <owner> <number> --verify`
-lists open issues missing from the board or whose label and Priority
-disagree; report them under R7. R7 also needs the work-package issue
+For R7, run `scripts/ensure-board.sh --check <owner> <number>
+<template-owner> <template-number>` (read-only). Exit 1 lists each field,
+option, view or workflow that differs from the template, or a workflow that
+is missing or disabled: R7 is "partial". Exit 2 means a board could not be
+read or the template number is not the template: R7 is "missing" when the
+project has no board, otherwise report the error. Workflow settings, the
+auto-add filter, the description and the base role have no API: they stay
+"unknown" unless I confirm them or they are read in my browser. While the
+project still has p1–p3 labels, `scripts/migrate-priority.sh <owner/repo>
+<owner> <number> --verify` lists open issues (initiatives aside) missing
+from the board or whose label and Priority disagree (exit 1, "partial";
+exit 2, an error); report them under R7. R7 also needs the work-package issue
 template at `.github/ISSUE_TEMPLATE/work-package.md`, matching
 `templates/github/work-package-issue.md`; missing or different is
 "partial".
@@ -101,15 +104,18 @@ Sort gaps into:
   get my OK first (P9). Labels are applied with
   `scripts/ensure-labels.sh <owner/repo>`, which is idempotent. The board
   (R7) is created with `scripts/ensure-board.sh create <owner> "<title>"
-  <template> --repo <owner/repo>`, adding `--with-kind` for a board that
-  holds draft items; then `scripts/migrate-priority.sh <owner/repo> <owner>
+  <template-owner> <template-number> --repo <owner/repo>`, adding
+  `--with-kind` for a board that holds draft items (it adds Kind and a
+  Drafts by kind view). Templates exist in organisations only; a user's
+  board is copied across owners from the organisation's template. Then `scripts/migrate-priority.sh <owner/repo> <owner>
   <number>` copies p1–p3 labels into Priority (it never removes a label or
   overwrites a field), and `--verify` must come back clean. Both scripts
   are idempotent. The board link goes into `AGENTS.md` by the per-project
   switch in `practices/tracking.md`.
 - **Needs the board's settings page:** the steps `ensure-board.sh` prints
   (auto-add from the repository with `is:issue -label:initiative`, base
-  role No access, workflows that differ). Where the adapter names a browser
+  role No access, the description linking the Assigned to me view and
+  `docs/questions.md`, workflows that differ). Where the adapter names a browser
   I am signed in to, offer to do them there; otherwise list them for me.
 - **Needs me:** accounts, paid plans, secrets, choosing a monitoring or
   hosting tool (then an ADR, P11).

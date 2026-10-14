@@ -13,6 +13,7 @@ cat > "$S/issues" <<'EOF'
 3|https://x/o/r/issues/3|p3
 4|https://x/o/r/issues/4|
 5|https://x/o/r/issues/5|p3,p2
+6|https://x/o/r/issues/6|Initiative,p1
 EOF
 cat > "$S/items" <<'EOF'
 https://x/o/r/issues/1|I1|
@@ -25,7 +26,7 @@ printf '%s\n' "$*" >> "$S/log"
 case "$1 $2" in
   "api users/"*) echo Organization ;;
   "issue list") cat "$S/issues" ;;
-  "api graphql") cat "$S/items" ;;
+  "api graphql") [ ! -f "$S/fail_read" ] || exit 1; cat "$S/items" ;;
   "project view") echo PVT_1 ;;
   "project field-list") printf 'F|op1|P1 now\nF|op2|P2 soon\nF|op3|P3 later\n' ;;
   "project item-add")
@@ -68,4 +69,13 @@ sh scripts/migrate-priority.sh o/r o 1 > /dev/null
 cmp "$S/items" "$dir/first"
 if sh scripts/migrate-priority.sh o/r o 1 --verify > "$dir/out"; then echo "verify missed #3"; exit 1; fi
 [ "$(cat "$dir/out")" = '#3: label p3, Priority P1 now' ]
+if grep -q 'issues/6' "$S/items"; then echo "initiative added to the board"; exit 1; fi
+
+# A board that cannot be read is exit 2 in both modes, never a difference.
+touch "$S/fail_read"
+for mode in '' --verify; do
+  # shellcheck disable=SC2086
+  if sh scripts/migrate-priority.sh o/r o 1 $mode > /dev/null 2>&1; then code=0; else code=$?; fi
+  [ "$code" -eq 2 ] || { echo "unreadable board ($mode): exit $code, want 2"; exit 1; }
+done
 echo "migrate-priority self-test passed"

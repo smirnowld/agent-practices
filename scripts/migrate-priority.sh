@@ -3,9 +3,10 @@
 # (baseline R6, practices/tracking.md).
 # Copy each open issue's p1/p2/p3 label into the board's Priority field.
 # Usage: migrate-priority.sh OWNER/REPO OWNER PROJECT_NUMBER [--verify]
-# Adds every open issue to the board and sets Priority only where it is empty;
-# never removes a label or overwrites a field. --verify is read-only: exits 1
-# listing open issues missing from the board or whose label and field disagree.
+# Adds every open issue except initiatives to the board and sets Priority only
+# where it is empty; never removes a label or overwrites a field. --verify is
+# read-only: exits 1 listing open issues missing from the board or whose label
+# and field disagree. Exit 2: the repository or board could not be read.
 set -eu
 
 if [ $# -lt 3 ] || [ $# -gt 4 ] || { [ $# -eq 4 ] && [ "$4" != --verify ]; }; then
@@ -18,28 +19,42 @@ if [ $# -eq 4 ]; then verify=1; fi
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
-case $(gh api "users/$owner" --jq .type) in
+# Exit 2 when something cannot be read; exit 1 is kept for differences.
+die() { echo "migrate-priority: $*" >&2; exit 2; }
+
+type=$(gh api "users/$owner" --jq .type) || die "cannot read owner $owner"
+case $type in
   Organization) key=organization ;;
   *) key=user ;;
 esac
 
 # number|url|labels, comma-separated
-gh issue list -R "$repo" --state open --limit 1000 --json number,url,labels \
-  --jq '.[] | "\(.number)|\(.url)|\([.labels[].name] | join(","))"' > "$tmp/issues"
+limit=5000
+gh issue list -R "$repo" --state open --limit "$limit" --json number,url,labels \
+  --jq '.[] | "\(.number)|\(.url)|\([.labels[].name] | join(","))"' > "$tmp/issues" ||
+  die "cannot list the issues of $repo"
+if [ "$(wc -l < "$tmp/issues")" -ge "$limit" ]; then
+  echo "warning: $limit open issues read, the limit; later ones were skipped" >&2
+fi
 # url|item id|priority
 gh api graphql --paginate -f query="query(\$o:String!,\$n:Int!,\$endCursor:String){$key(login:\$o){projectV2(number:\$n){items(first:100,after:\$endCursor){pageInfo{hasNextPage endCursor}nodes{id content{...on Issue{url}}fieldValueByName(name:\"Priority\"){...on ProjectV2ItemFieldSingleSelectValue{name}}}}}}}" \
   -f o="$owner" -F n="$number" \
-  --jq '.data[].projectV2.items.nodes[] | select(.content.url != null) | "\(.content.url)|\(.id)|\(.fieldValueByName.name // "")"' > "$tmp/items"
+  --jq '.data[].projectV2.items.nodes[] | select(.content.url != null) | "\(.content.url)|\(.id)|\(.fieldValueByName.name // "")"' > "$tmp/items" ||
+  die "cannot read board $number of $owner"
 if [ "$verify" -eq 0 ]; then
-  pid=$(gh project view "$number" --owner "$owner" --format json --jq .id)
+  pid=$(gh project view "$number" --owner "$owner" --format json --jq .id) ||
+    die "cannot read board $number of $owner"
   # field id|option id|option name
-  gh project field-list "$number" --owner "$owner" --format json \
-    --jq '.fields[] | select(.name == "Priority") | .id as $f | .options[] | "\($f)|\(.id)|\(.name)"' > "$tmp/options"
-  [ -s "$tmp/options" ] || { echo "board $number has no Priority field" >&2; exit 2; }
+  gh project field-list "$number" --owner "$owner" --limit 100 --format json \
+    --jq '.fields[] | select(.name == "Priority") | .id as $f | .options[] | "\($f)|\(.id)|\(.name)"' > "$tmp/options" ||
+    die "cannot read the fields of board $number"
+  [ -s "$tmp/options" ] || die "board $number has no Priority field"
 fi
 
 status=0
 while IFS='|' read -r num url labels; do
+  # An initiative belongs on the shared board only (one board per issue).
+  if printf '%s\n' "$labels" | tr ',' '\n' | grep -qix initiative; then continue; fi
   # The highest of p1-p3, either case; "P1 now", "P2 soon" or "P3 later" by prefix.
   level=$(printf '%s\n' "$labels" | tr ',' '\n' | tr 'P' 'p' | grep -x 'p[123]' | sort | head -n 1 || true)
   want=$(printf '%s' "$level" | tr 'p' 'P')
