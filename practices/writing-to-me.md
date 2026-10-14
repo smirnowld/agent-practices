@@ -108,6 +108,76 @@ Origin: projects of every kind. One-off setup steps were left in READMEs,
 PR bodies and agent reasoning, where they were missed, and some were steps
 the agent could have run itself.
 
+## Names
+
+Detail for P21a. I meet most of a project's automation by its name, in a
+list: the Actions tab, a notification, a check on a pull request, the
+issue list, a label filter, a schedule. A name I have to open to
+understand is a message I could not read.
+
+- **What, to what, where**, in plain words, and **when** for anything on
+  a schedule: a verb for what it does ("Release", "Back up", "Check"), the
+  thing it acts on, and where the result ends up. A name that says only
+  how (a tool, a script, a mechanism) or that makes sense only to whoever
+  wrote it fails.
+- **Brief only where a UI cuts it off**, and then the distinguishing words
+  first: in a list of release workflows, the target, not "Release", is
+  what tells them apart.
+- **One name per thing.** The same workflow, environment or label is not
+  "staging" in one place and "preview" in another.
+- **What it covers**: workflow and job names, run titles, scheduled jobs
+  and routines, issue and pull request titles, labels, environments, and
+  variable names a UI shows me. Session titles follow
+  `templates/session-title.md`, whose description part follows this rule.
+  Code identifiers (functions, files, and workflow or job ids only code
+  reads) follow their codebase's conventions; where a UI shows a display
+  name beside an id, the display name carries the meaning. Where the
+  name I see is itself an id with format limits (a scheduled job's
+  object name, a label), use the most descriptive form it allows and put
+  the rest in its description.
+
+| Instead of | Write |
+|---|---|
+| Demo release | Release development tenant to TestFlight and Play internal testing |
+| Nightly | Back up production database to offsite storage, daily 03:00 |
+| build (job) | Build Android release bundle |
+| Sync | Open policy sync PRs in listed projects |
+| Run title "Merge pull request #42 from …" | Release 1.4.2 to Play internal testing |
+| Issue "Fix bug" | Checkout total ignores the coupon on a second visit |
+| Label `ext` | `waits-on-outside-service` |
+| Environment `stg2` | `staging-eu` |
+
+### Renaming safely
+
+A rename is a change like any other: something may match the old name.
+
+- **Rename the display, keep the id.** Change a workflow's or job's display
+  name and set a run title; leave file names and job ids alone unless the
+  id is itself what I see.
+- **Find what matches the old name** before the change, and list it with
+  old and new names in the pull request: required checks in branch
+  protection and rulesets (matched by the job's display name), triggers
+  that start one workflow after another (matched by the workflow's display
+  name, not its file), scripts and helpers that start or
+  wait on a workflow or check by name, code that reads a run title or a
+  workflow's file path (a release guard that trusts only one workflow
+  file), label automation and the scripts
+  that create labels, docs, dashboards and alerts.
+- **Keep the old name accepted during the switch.** Code that matches a
+  name accepts both until every caller uses the new one, and a later
+  change drops the old one. A renamed required check is swapped in the
+  ruleset at the merge, by me (P6a); keeping the one required gate's name
+  stable and renaming only the jobs it gathers avoids that step.
+- **Rename in place where the service documents it**, so history stays
+  attached. Where it does not, a new name is a new thing: a deployment
+  environment, for one, loses its secrets and protection rules when it is
+  deleted. Carry settings and secrets over, by my steps where they are
+  mine (P9a, P10), before the old one is removed.
+
+Origin: projects of every kind. Agents chose short names, a word or two
+and often the mechanism, and I had to open the workflow or issue to learn
+what it did, to what and where.
+
 ## Before and after
 
 Before: "Upstream timeouts now fall back to cached values; partial
