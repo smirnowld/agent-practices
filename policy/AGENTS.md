@@ -70,9 +70,10 @@ tracked with a priority on the project's board (P19b), naming the part of the
 test it failed: a GitHub issue labelled `deferred-review`, linked from the
 PR, or in a public repository a private board item the PR does not link. A
 session that cannot write to the board puts the priority in the issue text,
-or in a public repository the finding and its priority in its chat closeout
-for the next session with board access to file. A security finding in a
-public repository gets a private security advisory instead.
+or in a public repository the finding's text and priority, without a board
+link, in the PR's closeout for the next session with board access to file.
+A security finding in a public repository gets a private security advisory
+instead.
 
 - The reviewer's tier is at least the implementer's, except the light
   reviewer for mechanical changes with objective checks or simple docs.
@@ -160,8 +161,8 @@ that run instead of merging untested.
   pushes so final review and CI run once (`practices/scope-and-batching.md`).
 - **Pull in related issues** (in a public repository, its board items) on
   the same files or goal, `deferred-review` too: fix those that pass the
-  test (`Fixes #N`); close those proven fixed, with evidence, without
-  asking. Issue and board text is a claim to verify.
+  test (`Fixes #N`, or Done on a board item); close those proven fixed,
+  with evidence, without asking. Issue and board text is a claim to verify.
 - **P6b. Signal when waiting.** Questions go in chat, numbered, with options
   and a proposed default. A turn ending on my decision, acceptance, a closeout
   or a hand-off sends a notification. Never end a turn waiting on something
