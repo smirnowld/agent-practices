@@ -43,9 +43,10 @@ marketplace (`.claude-plugin/marketplace.json`, plugin source `"."`), so
   `python3`; without it the hook fails and chips go through unchecked.
   `Stop` runs `check-attention.py` (see Waiting on me below) and
   `check-session-title.py` (see Session titles below); they block with
-  top-level `decision: "block"` and a `reason`, reads the final text from
-  `last_assistant_message` and skips when `stop_hook_active` is true
-  (hooks.md, "Stop", checked 2026-09-29). It ignores `background_tasks`
+  top-level `decision: "block"` and a `reason` and skip when
+  `stop_hook_active` is true (hooks.md, "Stop", checked 2026-09-29).
+  `check-attention.py` reads the final text from `last_assistant_message`,
+  ignores `background_tasks`
   and reads the session's waits from the transcript instead (Waiting on CI
   below).
 

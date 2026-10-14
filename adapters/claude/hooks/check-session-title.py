@@ -6,10 +6,10 @@ Every session carries a title in the format of templates/session-title.md,
 rename tool is available (the desktop app; CLI and cloud sessions lack it),
 a stop whose current title does not match is blocked once and asked to rename
 the session. The current title is the latest custom-title line in the
-transcript. A session that already called the rename tool, or searched for it
-with ToolSearch, passes even if the title still does not match: a declined or
-unloadable rename is not retried. A scheduled routine (its first user message
-starts with `<scheduled-task`) passes. A repeat stop always ends the turn.
+transcript. A session that already called the rename tool passes even if the
+title still does not match: a declined rename is not retried. A scheduled
+routine (a text of its first user message starts with `<scheduled-task`)
+passes. A repeat stop always ends the turn.
 Any error lets the turn end with a note on stderr; a broken check must not
 trap a session.
 """
@@ -51,21 +51,18 @@ def scan(path):
             elif kind == "user" and first:
                 first = False
                 content = (entry.get("message") or {}).get("content")
-                if isinstance(content, list):
-                    content = next((i.get("text") for i in content
-                                    if isinstance(i, dict) and i.get("type") == "text"), "")
-                routine = isinstance(content, str) and content.lstrip().startswith("<scheduled-task")
+                texts = [content] if isinstance(content, str) else [
+                    i.get("text") for i in content or []
+                    if isinstance(i, dict) and i.get("type") == "text"]
+                routine = any(isinstance(t, str) and t.lstrip().startswith("<scheduled-task")
+                              for t in texts)
             elif kind == "assistant":
                 content = (entry.get("message") or {}).get("content")
                 if isinstance(content, list):
                     for item in content:
-                        if not (isinstance(item, dict) and item.get("type") == "tool_use"):
-                            continue
-                        if item.get("name") == TOOL:
+                        if (isinstance(item, dict) and item.get("type") == "tool_use"
+                                and item.get("name") == TOOL):
                             available = called = True
-                        elif item.get("name") == "ToolSearch" and "set_session_title" in str(
-                                (item.get("input") or {}).get("query", "")):
-                            called = True
     return title, available, called, routine
 
 
