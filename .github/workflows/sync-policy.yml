@@ -1,4 +1,4 @@
-name: sync-policy
+name: Sync the policy block into the listed projects (opens or updates sync PRs)
 
 # Keeps the policy block current in every project listed in the Actions
 # variable POLICY_SYNC_REPOS (space-separated OWNER/REPO): one sync PR per
@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   sync:
-    name: sync
+    name: Open or update the policy sync PR in each listed project
     # main only: a dispatch on another ref would push unreviewed policy.
     if: vars.POLICY_SYNC_REPOS != '' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest

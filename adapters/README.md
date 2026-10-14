@@ -41,7 +41,7 @@ same approach is unverified.
   later policy change updates that PR instead of opening another, and the
   next run closes it if the default branch caught up another way. The
   workflow also runs weekly, retrying failures; to run it at once, `gh
-  workflow run sync-policy`.
+  workflow run sync-policy.yml`.
 - Re-check vendor facts when an adapter misbehaves or at the monthly audit.
 
 Details: [claude/README.md](claude/README.md), [codex/README.md](codex/README.md).

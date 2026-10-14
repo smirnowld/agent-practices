@@ -15,7 +15,7 @@ is in [policy/AGENTS.md](policy/AGENTS.md).
 - A policy change is a pull request that states which sessions it affects and
   is reviewed before merge. On merge the `sync-policy` workflow opens or
   updates one sync PR per listed project (`scripts/push-policy-sync.sh`); if
-  it failed, rerun it (`gh workflow run sync-policy`). After changing `roles/` or a `tiers.json`, run
+  it failed, rerun it (`gh workflow run sync-policy.yml`). After changing `roles/` or a `tiers.json`, run
   `python3 scripts/build-adapters.py`; never edit generated agents.
 - This repo is the policy source: it links [policy/AGENTS.md](policy/AGENTS.md)
   instead of carrying the synced block, and is not in `POLICY_SYNC_REPOS`.
