@@ -41,7 +41,8 @@ marketplace (`.claude-plugin/marketplace.json`, plugin source `"."`), so
   `hookSpecificOutput.permissionDecision: "deny"`, and on its own errors
   exits 0 so the call proceeds (hooks.md, checked 2026-09-29). It needs
   `python3`; without it the hook fails and chips go through unchecked.
-  `Stop` runs `check-attention.py` (see Waiting on me below); it blocks with
+  `Stop` runs `check-attention.py` (see Waiting on me below) and
+  `check-session-title.py` (see Session titles below); they block with
   top-level `decision: "block"` and a `reason`, reads the final text from
   `last_assistant_message` and skips when `stop_hook_active` is true
   (hooks.md, "Stop", checked 2026-09-29). It ignores `background_tasks`
@@ -188,7 +189,9 @@ unverified against vendor docs.
   appends a `custom-title` line holding the new title, and deferred tools
   are listed in `deferred_tools_delta` attachments (observed 2026-10-14,
   undocumented). It acts only where the rename tool is listed, so CLI and
-  cloud sessions pass.
+  cloud sessions pass, and skips scheduled routines, titled where they are
+  configured. A title I set by hand that is not in the form is replaced too,
+  after the tool asks me to approve it.
 - Proposing sessions (`brief` skill): the rule is in
   [session.md](session.md); the model it names comes from `tiers.json`
   (Sonnet for fast, Opus for standard). Before session.md was
@@ -447,7 +450,7 @@ skills enabled on the claude.ai account (same page, "What carries over").
 #!/bin/bash
 root=/opt/agent-practices
 line="agent-practices root (templates, practices, policy): $root"
-title="Session title (P2a): format in $root/templates/session-title.md. No rename tool here, so the first reply opens with 'Title: TITLE' for /rename."
+title="Session title (P2a): format in $root/templates/session-title.md. No rename tool here, so once the task is sized, the next reply opens with 'Title: TITLE' for /rename."
 {
   echo "pwd: $(pwd) HOME: $HOME"
   rm -rf "$root"
@@ -479,7 +482,7 @@ exit 0
   (https://code.claude.com/docs/en/claude-code-on-the-web, "Manage context",
   checked 2026-10-14); that none exists is unverified. The setup script's
   title line points to the template and has the session open its first reply
-  with the title, ready for me to `/rename`.
+  after sizing with the title, ready for me to `/rename`.
 
 ## Transcript facts the cost scanner relies on
 
