@@ -9,11 +9,25 @@ Budget: practices/record-keeping.md. -->
 package is one agent and one pull request (or a small series), with criteria
 a reviewer can check. Package IDs are `WP` plus a number that continues
 across phases and is never reused. Size per `practices/model-sizing.md`; an L
-package is split before it is briefed. Status: [plan.md](../plan.md).
+package is split before it is briefed. Status: on the [board](<board link,
+Phase view; left out in a public repository>). Order of outcomes:
+[plan.md](../plan.md).
 
 **Goal:** <what the user can see or do when this phase ends>
 
-**Not in this phase:** <what is deliberately left out, and where it goes>
+## Acceptance
+
+<What the maintainer checks to accept the phase, as the user would
+experience it. Evidence per the acceptance-evidence skill.>
+
+## Not in this phase
+
+- <item> — <which phase or "later">
+
+## Risks
+
+<!-- Only live ones. Omit if none. -->
+- <risk> — <mitigation>
 
 ## Order and dependencies
 
@@ -45,9 +59,13 @@ The phase is **engineering complete** when <...>. It is **finished** when <...>.
 ## Open packages
 
 <!-- A package merged as engineering complete stays here, reduced to its
-externally blocked criteria, until it is finished. -->
+externally blocked criteria, until it is finished. Each package links its
+work-package issue, which in turn links this section at a commit SHA and
+never copies the criteria (practices/tracking.md). -->
 
 ### WP<N>: <what it delivers> (<area, if any>; <size>; <ADR link, if any>)
+
+Issue: <#N, or the board item in a public repository>
 
 <Scope in a few sentences: what it builds, where the logic lives, what it
 must not do. Name the decision or question it rests on.>
@@ -57,9 +75,11 @@ Done when: <criteria a reviewer can check>.
 ## Parked packages
 
 <!-- Omit if none. Parking is a scope decision of mine and is recorded only
-here; plan.md shows "Parked" and links this section. -->
+here; the board mirrors it as Parked. -->
 
 ### WP<N>: <what it would deliver> (<area, if any>; <size>)
+
+Issue: <#N, or the board item in a public repository>
 
 Briefed only if <condition> (<the maintainer's decision, date, link>).
 <Scope and "Done when", kept so it can be briefed without replanning.>
@@ -68,7 +88,12 @@ Briefed only if <condition> (<the maintainer's decision, date, link>).
 
 <!-- As accepted; not updated as packages leave, so the end-of-phase review
 can compare (practices/planning.md). A package added later is added with
-its source, so the review can tell the two apart. -->
+its source, so the review can tell the two apart. Phase health and the
+expected end date go in the board's project status update; where the board
+has none, the expected end date is kept here (practices/tracking.md,
+"Fields"). -->
 
 <Packages by size, the longest chain of dependent packages, and the calendar
 range with what it leaves out (acceptance, review rounds, outside inputs).>
+
+**Expected end:** <date range>  <!-- only when the board has no status update -->

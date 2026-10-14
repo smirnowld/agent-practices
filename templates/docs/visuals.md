@@ -2,7 +2,9 @@
 
 <!-- Spec for docs/visuals/<doc>.html: one-page visual views of roadmap.md,
 plan.md, architecture.md and tech-stack.md, for people. The Markdown doc is
-the source of truth; a visual never says anything its source does not. -->
+the source of truth; a visual never says anything its source does not. For
+a project on a board, the plan visual's status comes from the board
+(practices/tracking.md), never from merged PRs or the Markdown docs. -->
 
 ## Files
 
@@ -42,6 +44,6 @@ Every visual carries a legend for the encodings it uses.
 | Visual | Shape |
 |---|---|
 | Roadmap | Phases in order as cards: name, size, deliverables in user terms, "Done when". Milestone flags. A parallel track for work outside engineering. No dates unless the source commits to them. |
-| Plan | The current phase: goal and status up top; the dependency order as a diagram with nodes coloured by status (done, including engineering complete with a marker; active; blocked; not started; parked, dashed); a progress count; what waits on the maintainer highlighted. |
+| Plan | The current phase: goal up top, with health from the board's status update when it has one; the order of outcomes from plan.md as a diagram with nodes coloured by their packages' status on the board (done; waiting, with engineering complete marked; active; planned or ready; parked, dashed); a progress count from the board; amber for what waits on the maintainer, taken from items assigned to the maintainer. |
 | Architecture | Boxes grouped by boundary (clients, our system, rented services), arrows for who calls whom, a caption saying so; principles below as short cards. |
 | Tech stack | One band per layer with its one-line intent; each choice tagged by kind (write, build on, rent, unconfirmed). |

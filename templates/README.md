@@ -20,14 +20,15 @@ fields. Using the template is mandatory; empty sections may be omitted.
 | `docs/spec.md` | Current-state description of a feature | Project `docs/` |
 | `docs/runbook.md` | Repeatable operational procedure | Project `docs/` |
 | `docs/roadmap.md` | Product direction by phase (P19) | Project `docs/` |
-| `docs/plan.md` | Current phase at a glance, with its status (P19) | Project `docs/` |
-| `docs/phase-plan.md` | The current phase's open work packages (P19) | Project `docs/plans/phase-N.md` |
+| `docs/plan.md` | Current phase at a glance: goal, order of outcomes, board link; status is on the board (P19, P19b) | Project `docs/` |
+| `docs/phase-plan.md` | The current phase's scope: open work packages, acceptance, what is left out, risks, estimate (P19) | Project `docs/plans/phase-N.md` |
 | `docs/architecture.md` | How the system fits together (P19) | Project `docs/` |
 | `docs/tech-stack.md` | Choices, version policy, decisions (P19) | Project `docs/` |
 | `docs/visuals.md` | Spec for the HTML visuals of those four docs | Project `docs/visuals/` |
 | `docs/operations.md` | Where it runs, health, alerts, observability manifest (P20) | Project `docs/` |
 | `docs/inventory.md` | What runs where, for infrastructure (P19) | Project `docs/` |
 | `docs/recovery.md` | Backup and recovery procedures, last test (P19) | Project `docs/` |
+| `github/work-package-issue.md` | Issue for one work package on the board, linking its phase-plan section (P19b) | Project `.github/ISSUE_TEMPLATE/work-package.md` |
 
 Every link a template asks for follows P18: a full GitHub URL (commit SHA for
 files, not a branch) or an attached file, never only a local path.

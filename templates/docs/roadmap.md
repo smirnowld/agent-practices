@@ -2,9 +2,11 @@
 
 <!-- Product repos (P19). Where the product is going, readable in two
 minutes. Outcomes, not tasks: tasks live in the phase plan. Current state only; git
-keeps history (P17). Budget: 20 KB. -->
+keeps history (P17). Budget: 20 KB. Phase health and dates of the current
+phase are status and live on the board (practices/tracking.md); a public
+repository leaves the board link out. -->
 
-**Status:** Phase <N>, <name> — <on track | at risk: why> · **Updated:** <YYYY-MM-DD>
+**Now:** Phase <N>, <name> — [plan](plan.md) · status on the [board](<board link>) · **Updated:** <YYYY-MM-DD>
 
 ## Vision
 
@@ -44,11 +46,13 @@ ranges; re-estimate from measured throughput and say when. -->
 ## Parallel track: outside engineering
 
 <!-- Runs alongside from day one: accounts, contracts, content, legal,
-decisions only I can make. Omit if none. -->
+decisions only I can make. Long-lead items only; omit if none. No status
+here: each item is a `long-lead` issue on the board with its Target and,
+when it is my move, me assigned (practices/tracking.md, "Other items"). -->
 
-| Item | Blocks | Owner | Status |
-|---|---|---|---|
-| <item> | Phase <N> | the maintainer | <waiting since date / done> |
+| Item | Blocks | Why on the critical path |
+|---|---|---|
+| <item, linking its issue> | Phase <N> | <the lead time and what waits on it> |
 
 ## Later, unscheduled
 
