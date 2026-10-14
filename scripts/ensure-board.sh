@@ -59,6 +59,7 @@ KIND_VIEW='Drafts by kind|table|is:draft|Kind|||Title,Status,Priority,Assignees,
 #   F|id|databaseId|name|dataType|optionId~name~colour~description;...
 #   V|id|name|layout|filter|group by|columns|field:direction|visible fields, sorted
 #   W|name|enabled
+#   R|number of linked repositories
 BOARD_QUERY='projectV2(number:$n){id title template
 fields(first:50){nodes{...on ProjectV2FieldCommon{id databaseId name dataType}
 ...on ProjectV2SingleSelectField{options{id name color description}}}}
@@ -67,12 +68,14 @@ fields(first:50){nodes{...on ProjectV2FieldCommon{name}}}
 groupByFields(first:5){nodes{...on ProjectV2FieldCommon{name}}}
 verticalGroupByFields(first:5){nodes{...on ProjectV2FieldCommon{name}}}
 sortByFields(first:5){nodes{direction field{...on ProjectV2FieldCommon{name}}}}}}
-workflows(first:50){nodes{name enabled}}}'
+workflows(first:50){nodes{name enabled}}
+repositories(first:1){totalCount}}'
 BOARD_JQ='.data[].projectV2 |
 "P|\(.id)|\(.template)|\(.title)",
 (.fields.nodes[] | "F|\(.id)|\(.databaseId)|\(.name)|\(.dataType)|\((.options // []) | map("\(.id)~\(.name)~\(.color)~\(.description)") | join(";"))"),
 (.views.nodes[] | "V|\(.id)|\(.name)|\(.layout | sub("_LAYOUT$"; "") | ascii_downcase)|\(.filter // "")|\([.groupByFields.nodes[].name] | join(","))|\([.verticalGroupByFields.nodes[].name] | join(","))|\([.sortByFields.nodes[] | "\(.field.name):\(.direction)"] | join(","))|\([.fields.nodes[].name] | sort | join(","))"),
-(.workflows.nodes[] | "W|\(.name)|\(.enabled)")'
+(.workflows.nodes[] | "W|\(.name)|\(.enabled)"),
+"R|\(.repositories.totalCount)"'
 
 die() { echo "ensure-board: $*" >&2; exit 2; }
 usage() { sed -n '/^# Usage:/,/^# Workflows/p' "$0" | sed '$d; s/^# \{0,1\}//' >&2; exit 2; }
@@ -365,8 +368,13 @@ check_mode() {
 item closed
 item reopened
 auto-archive items'
-  if [ "$owner|$number" != "$towner|$tpl" ]; then wanted="$wanted
-auto-add to project"; fi
+  # Auto-add needs a linked repository; the shared board may have none.
+  if [ "$(awk -F'|' '$1 == "R" {print $2}' "$tmp/board")" -gt 0 ]; then
+    wanted="$wanted
+auto-add to project"
+  else
+    echo "board $number: no linked repository, auto-add not needed"
+  fi
   while IFS= read -r wf; do
     state=$(awk -F'|' -v n="$wf" '$1 == "W" && tolower($2) == n {print $3; exit}' "$tmp/board")
     case $state in

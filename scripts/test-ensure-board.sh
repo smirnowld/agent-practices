@@ -68,7 +68,8 @@ case "$1 $2" in
         [ ! -f "$S/fail_read" ] && [ -d "$S/$n" ] || { echo "Could not resolve to a ProjectV2" >&2; exit 1; }
         d="$S/$n"
         echo "P|PVT_$n|$(cat "$d/template")|$(cat "$d/title")"
-        cat "$d/fields" "$d/views" "$d/workflows" ;;
+        cat "$d/fields" "$d/views" "$d/workflows"
+        if [ -f "$S/linked_$n" ]; then echo 'R|1'; else echo 'R|0'; fi ;;
       *) echo "fake gh: unexpected query $query" >&2; exit 1 ;;
     esac ;;
   "api -X")
@@ -231,9 +232,14 @@ grep -q 'u is not an organisation' "$dir/out"
 # A user's board is copied across owners from the organisation's template.
 run create u 'Mine' o 1
 grep -q '^project copy 1 --source-owner o --target-owner u --title Mine' "$S/log"
+
+# Auto-add is required only once the board has a linked repository.
 mark
-fails 1 --check u 3 o 1
+run --check u 3 o 1
 no_writes
+grep -q 'board 3: no linked repository, auto-add not needed' "$dir/out"
+touch "$S/linked_3"
+fails 1 --check u 3 o 1
 grep -q 'workflow auto-add to project: not set up' "$dir/out"
 [ "$(grep -c '^- ' "$dir/out")" -eq 1 ]
 
