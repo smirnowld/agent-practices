@@ -70,8 +70,8 @@ when ToolSearch cannot find it either, and the report says so.
   `set_session_effort`, replies
   "Switched; continue with the brief." and does nothing else that turn. The
   model id is one the app's picker offers; a wrong id makes the tool list
-  the valid ones. Switching its own child to a cheaper model needs no
-  approval from me. With
+  the valid ones. It switches its own child to a cheaper model or lower
+  effort without asking me; a switch to a costlier one waits for my OK. With
   no parent, ask me to switch with `/model` and `/effort` and stop.
 - **Ask me, or wait on me** (P6b): questions and acceptance cards are chat
   text, numbered Q1, Q2 with options and a proposed default, answered in one

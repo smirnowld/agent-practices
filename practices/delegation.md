@@ -54,6 +54,12 @@ brief's Model line is the coordinator's.
   reports progress; the coordinator splits the rest. The brief's Size still
   counts every implementer response ([model-sizing.md](model-sizing.md#size-in-responses)).
 
+## No model per subagent
+
+Where an agent tool cannot set a model per subagent, the roles still apply
+on the model it has: delegate by role as usual and state the fallback in the
+report.
+
 ## Enforcement
 
 An adapter hook may deny the coordinator's source edits and point it to the
@@ -61,10 +67,6 @@ implementer; the adapter README says what its hook covers. A hook keys on
 whether the call comes from a subagent and fails open on any error. Shell
 writes and reading are not covered by any hook; they fall under the rule
 alone. Where an adapter has no such hook, the whole rule is wording.
-
-Where an agent tool cannot set a model per subagent, the roles still apply
-on the model it has: delegate by role as usual and state the fallback in the
-report.
 
 ## Lanes
 

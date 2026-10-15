@@ -174,7 +174,9 @@ holds the evidence behind them and the rules sessions do not need at start.
 Tool names there were observed in desktop-app sessions (2026-09-30),
 unverified against vendor docs.
 
-- Model check (P2d): the rule is in [session.md](session.md).
+- Model check (P2d): the rule is in [session.md](session.md). That a wrong
+  model id makes `set_session_model` list the valid ones is recorded
+  2026-10-15, unverified against vendor docs.
 - Chips (P2c): a session I am offered as a desktop-app chip, whether from
   `spawn_task` or a scheduled routine (below), is a brief. Its prompt is filled
   from [`templates/brief.md`](../../templates/brief.md), heading and Model line
@@ -184,8 +186,8 @@ unverified against vendor docs.
   the Model line's model and effort for me to pick when I start it, and the
   started session runs the model check above. A session started from a chip
   or by another session runs on its starter's model and effort, not the
-  settings default (unverified against vendor docs), which is why the model
-  check is its first action. A `PreToolUse` hook
+  settings default (recorded 2026-10-15, unverified against vendor docs),
+  which is why the model check is its first action. A `PreToolUse` hook
   ([`hooks/check-chip-brief.py`](hooks/check-chip-brief.py)) denies a
   `spawn_task` prompt without the brief's heading, Model line, Goal and Proof,
   or whose Model line names a tier without its `tiers.json` model (sessions
