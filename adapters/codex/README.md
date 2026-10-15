@@ -300,7 +300,8 @@ is performed by this repository's checks.
   settings; terms such as “routine” and “routine entry” mean scheduled tasks
   and are not Codex configuration terms.
 - `skills/docs-drift-check/SKILL.md`, `skills/triage/SKILL.md`,
-  `skills/board-review/SKILL.md` and `skills/project-setup/SKILL.md` (audit
+  `skills/board-review/SKILL.md`, `skills/today/SKILL.md`,
+  `skills/weekly-review/SKILL.md` and `skills/project-setup/SKILL.md` (audit
   mode) describe recurring routines. Codex scheduled tasks can run these
   workflows, but setup of their schedule, project list, and notification behavior remains a
   manual task unless one is explicitly created.
