@@ -50,7 +50,11 @@ when ToolSearch cannot find it either, and the report says so.
   step with `gh issue create --assignee @me --label maintainer-step` and a
   finding with `gh issue create --label deferred-review`, the priority in
   the issue text; the board's auto-add picks them up. Only in a public repository, where no
-  issue can be filed, say so and put the step or finding in chat.
+  issue can be filed, say so and put the step or finding in chat. A cloud
+  session cannot reach boards at all (no GraphQL, no organisation paths):
+  board reads and writes, a thread's Next step at closeout included, need a
+  local session, so a cloud session hands its board update to me as a step
+  under **Needs you**.
 - **Delegate a role** (P2, P2b): the Agent tool with `subagent_type`
   `agent-practices:ROLE` (explorer, implementer, light-reviewer, reviewer,
   critical-reviewer, critical-reviewer-strongest); `model` sets a slice's

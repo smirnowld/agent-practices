@@ -230,6 +230,12 @@ unverified against vendor docs.
   sessions to load `artifact-design` and run its design pass before any
   page, which invites restyling a fixed format; the skill's precedence line
   overrides that pass, not the page contract.
+- Boards from cloud sessions: the rule is in [session.md](session.md),
+  Board actions. In a cloud session the GitHub proxy refused GraphQL ("not
+  available from Claude Code sessions") and every organisation-level REST
+  path, since sessions are bound to their configured repositories
+  (observed 2026-10-15 in a cloud session), so `gh project` and
+  `ensure-board.sh` cannot run there.
 - Thread groups (`practices/tracking.md`, Threads): the rule is in
   [session.md](session.md). The desktop app's sidebar groups sessions into
   named groups that sessions manage with `mcp__ccd_sidebar__list_groups`,
