@@ -75,7 +75,7 @@ are fine.
   a copy.
 - Agents archive items, never delete them. Deleting is mine.
 - Moving an item to another vault is mine, or an agent's with my go for
-  that item, since it deletes the original. It is one sitting and one PR:
+  that item. It is one sitting and one PR:
   move the item, repoint every reference to it (templates, Operator item paths,
   docs) and update the docs that name its vault. A move copies the item
   and deletes the original, so the item gets a new ID

@@ -197,7 +197,9 @@ public issue.
 of its parent issue, never in a repository document; a product's phase
 plans ([planning.md](planning.md#two-files-per-phase)) are the only plans
 kept as files. A multi-session plan inside one repository works the same
-way, its parent a plain issue on that project's board. The body holds:
+way: in a product its parent is the package's `work-package` issue;
+otherwise the parent is labelled `initiative` like a thread's, which keeps
+it off the project board. The body holds:
 
 - **Goal** and **Done when**: the outcome, and how anyone can tell it is
   reached.
