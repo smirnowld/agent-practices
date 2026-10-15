@@ -18,10 +18,8 @@ Cross-project lesson.
 
 ## Two files per phase
 
-A product's current phase plan (P19) is two files and, once the project has
-a board (P19b), the board; each owns one thing.
-
-**On a board** (`practices/tracking.md`):
+A product's current phase plan (P19) is two files and the board (P19b,
+`practices/tracking.md`); each owns one thing.
 
 - **`docs/plan.md`** (`templates/docs/plan.md`) holds the phase goal, the
   order diagram of outcomes without status colours, and the board link. It
@@ -35,27 +33,18 @@ a board (P19b), the board; each owns one thing.
 - **The board** owns status: one `work-package` issue per package, linking
   its phase-plan section at a commit SHA.
 
-**Not yet on a board:**
-
-- **`docs/plan.md`** owns status. It is a current-state doc: every change of
-  a package's status is made here and nowhere else.
-- **`docs/plans/phase-N.md`** owns scope as above and carries no status.
-  Parking is recorded only here.
-
 Package IDs are the only IDs: a package's issue is titled "ID · outcome".
-On a board, `plan.md`'s order diagram names outcomes, each phase-plan
-package names the outcome it delivers on an "Outcome:" line, and package
-order lives in the issues' blocked-by links. Not yet on a board, `plan.md`
-rows name outcomes and map to IDs in a Packages column.
+`plan.md`'s order diagram names outcomes, each phase-plan package names the
+outcome it delivers on an "Outcome:" line, and package order lives in the
+issues' blocked-by links.
 
 **When a package leaves.** The pull request that finishes a package removes
-its section from the phase plan and closes its issue with `Fixes #N` (on a
-board) or sets its `plan.md` row (not yet on a board). If the project
+its section from the phase plan and closes its issue with `Fixes #N`. If the project
 keeps docs out of that pull request (a separate docs lane), its `AGENTS.md`
 names who does it; the closeout checks it happened. A package merged as
 engineering complete but externally blocked (P5) stays, reduced to its
 blocked criteria, until it is finished; the session that notices the input
-arrived (or its closeout) then sets Done and removes it. On a board, its PR
+arrived (or its closeout) then sets Done and removes it. Its PR
 says `Refs #N` and the issue waits as Waiting (`practices/tracking.md`).
 
 **At the end of the phase:** compare the result with the estimate (kept as

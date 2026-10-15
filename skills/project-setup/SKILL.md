@@ -66,12 +66,11 @@ is missing or disabled: R7 is "partial". Exit 2 means a board could not be
 read or the template number is not the template: R7 is "missing" when the
 project has no board, otherwise report the error. Workflow settings, the
 auto-add filter, the description and the base role have no API: they stay
-"unknown" unless I confirm them or they are read in my browser. While the
-project still has p1–p3 labels, `scripts/migrate-priority.sh <owner/repo>
-<owner> <number> --verify` lists open issues (initiatives aside) missing
-from the board or whose label and Priority disagree (exit 1, "partial";
-exit 2, an error); report them under R7. R7 also needs the work-package issue
-template at `.github/ISSUE_TEMPLATE/work-package.md`, matching
+"unknown" unless I confirm them or they are read in my browser. Missing
+fields, options or views (the template changed after the copy) are fixable
+by `--sync` in setup mode (below). R7 also needs the work-package issue
+template at
+`.github/ISSUE_TEMPLATE/work-package.md`, matching
 `templates/github/work-package-issue.md`; missing or different is
 "partial".
 
@@ -110,13 +109,16 @@ Sort gaps into:
   a Drafts by kind view; Area's options are the board's own and reruns
   never change them). When a public repository's work moves to the shared
   board, add the repository's name as an Area option there. The shared
-  board also takes `--threads` (Focus, Rank, Next step and the two
-  Threads views, `practices/tracking.md`, Threads); no other board does. Templates exist in organisations only; a user's
-  board is copied across owners from the organisation's template. Then `scripts/migrate-priority.sh <owner/repo> <owner>
-  <number>` copies p1–p3 labels into Priority (it never removes a label or
-  overwrites a field), and `--verify` must come back clean. Both scripts
-  are idempotent. The board link goes into `AGENTS.md` by the per-project
-  switch in `practices/tracking.md`.
+  board also takes `--threads` (Focus, Rank, Next step and the two Threads
+  views, `practices/tracking.md`, Threads); no other board does. Templates exist
+  in organisations only; a user's board is copied across owners from the
+  organisation's template. A board copied before the template changed is
+  brought up to it with `scripts/ensure-board.sh --sync <owner> <number>
+  <template-owner> <template-number>`: show me its `--dry-run` output first.
+  It only adds what is missing, never deletes or renames, and reports the
+  rest. The script is idempotent. The board link goes into `AGENTS.md`, except for a
+  public repository, whose board is named in my own agent configuration
+  instead (`practices/tracking.md`, "Finding the board").
 - **Needs the board's settings page:** the steps `ensure-board.sh` prints
   (auto-add from the repository with `is:issue -label:initiative`, base
   role No access, the description linking the Assigned to me view and

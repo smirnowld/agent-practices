@@ -33,8 +33,8 @@ when ToolSearch cannot find it either, and the report says so.
   and an unattended session skips this. Desktop-app sessions only: cloud
   sessions have no sidebar tools; their thread is the brief's Thread line.
 - **Work in flight** (`brief` step 1): `mcp__ccd_session_mgmt__list_sessions`,
-  plus this session's own `spawn_task` calls, and for a project on a board
-  its In progress and In review items (Board actions below). Chips not yet
+  plus this session's own `spawn_task` calls, and the board's
+  In progress and In review items (Board actions below). Chips not yet
   started from other sessions or routines are invisible; say so.
 - **Board actions** (P19b, `brief`, `closeout`, `board-review`): `gh
   project` through the shell, with `gh api graphql` for what it lacks (issue
