@@ -190,11 +190,13 @@ pull requests, so nothing appears twice.
 A thread is one stream of work I am pursuing, such as a product goal or a
 change to my tooling, that outlives a session and may span repositories.
 
-- **Where it lives.** A thread is a parent item on the shared board: an
-  issue, or a private draft for work in a public repository. Its work items
-  are sub-issues in the project repositories, on their own boards, as for an
-  initiative (above); a thread spanning repositories is labelled
-  `initiative` too.
+- **Where it lives.** A thread is a parent item on the shared board. As an
+  issue it is labelled `initiative`, even when its work sits in one
+  repository, since that label keeps it off the project boards' auto-add;
+  its work items are sub-issues in the project repositories, on their own
+  boards, as for an initiative (above). For work in a public repository it
+  is a private draft, which can hold no sub-issues: its body lists its
+  items, and it shows no sub-issue progress.
 - **Only my "go" creates one.** A session that finds work belonging to no
   thread proposes a thread, or files the item under an existing one; it
   never creates a thread on its own.
@@ -211,14 +213,16 @@ change to my tooling, that outlives a session and may span repositories.
   flight. Any of these is a trigger to review what is in flight before
   starting more:
   - items waiting on me pile up (Assigned to me, Waiting for naming me);
-  - a thread's Next step has not changed in about a week;
+  - a thread's item has not been updated in about a week (the board keeps
+    no date per field; closeout updates Next step each session);
   - sessions whose titles show 🔴 or 🟡 (`templates/session-title.md`),
     since those hold my attention.
 - **Session groups.** Where the agent's app can group sessions, there is
   one group per thread, named with the thread's short name, plus "Other"
   for sessions in no thread. Agents create, fill and remove groups; I do
   not touch them. A session files itself once it is titled and its thread
-  is known, and the closeout removes a group whose thread closed. The
+  is known. A group whose thread closed is removed by a later session that
+  finds it empty, where the adapter names a tool for that. The
   adapter's `session.md` names the tools; my own agent configuration names
   the shared board and any naming convention per machine.
 

@@ -59,7 +59,8 @@ For R6, run `scripts/ensure-labels.sh --check <owner/repo>` (read-only; exit
 1 names each label missing or different). Any gap is "partial" or "missing".
 
 For R7, run `scripts/ensure-board.sh --check <owner> <number>
-<template-owner> <template-number>` (read-only). Exit 1 lists each field,
+<template-owner> <template-number>` (read-only), adding `--threads` for the
+shared board. Exit 1 lists each field,
 option, view or workflow that differs from the template, or a workflow that
 is missing or disabled: R7 is "partial". Exit 2 means a board could not be
 read or the template number is not the template: R7 is "missing" when the

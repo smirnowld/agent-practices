@@ -28,8 +28,8 @@ when ToolSearch cannot find it either, and the report says so.
   `mcp__ccd_sidebar__list_groups`; if none carries the thread's short name
   (or the name my own agent configuration gives it), `create_group` it;
   then `move_sessions` this session into it. No thread: the group "Other".
-  Closeout removes a closed thread's empty group. Only agents manage
-  groups; a declined call is not retried, and an unattended session skips
+  No group-removal tool is verified, so groups of closed threads stay
+  until one is. Only agents manage groups; a declined call is not retried, and an unattended session skips
   this. Desktop-app sessions only: cloud sessions have no sidebar tools, and
   the board shows their thread.
 - **Work in flight** (`brief` step 1): `mcp__ccd_session_mgmt__list_sessions`,

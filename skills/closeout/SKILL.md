@@ -32,9 +32,7 @@ PR (P17), never in the repository.
   Threads): set its Next step on the shared board to the next concrete
   action in plain words, and Waiting for to what it waits on (me assigned
   when the move is mine), or clear it. With nothing left in the thread,
-  propose closing it under **Needs you**; closing is mine. If its session
-  group is now empty and the thread closed, remove the group (the
-  adapter's `session.md` names the tools).
+  propose closing it under **Needs you**; closing is mine.
 - The files a reader needs to see, pinned to that SHA (or the PR head SHA if
   not merged).
 - Proof: the checks on the final commit, with the CI run URL.
