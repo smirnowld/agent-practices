@@ -22,9 +22,19 @@ when ToolSearch cannot find it either, and the report says so.
   `mcp__ccd_directory__change_directory`; the move applies when the turn ends.
   A declined rename or move is not retried, and an unattended session does
   not move.
+- **File into a thread group** (`practices/tracking.md`, Threads): once
+  titled and the thread is known (the brief's Thread line, else the board
+  item the work belongs to), list the sidebar groups with
+  `mcp__ccd_sidebar__list_groups`; if none carries the thread's short name
+  (or the name my own agent configuration gives it), `create_group` it;
+  then `move_sessions` this session into it. No thread: the group "Other".
+  No group-removal tool is verified, so groups of closed threads stay
+  until one is. Only agents manage groups; a declined call is not retried,
+  and an unattended session skips this. Desktop-app sessions only: cloud
+  sessions have no sidebar tools; their thread is the brief's Thread line.
 - **Work in flight** (`brief` step 1): `mcp__ccd_session_mgmt__list_sessions`,
-  plus this session's own `spawn_task` calls, and for a project on a board
-  its In progress and In review items (Board actions below). Chips not yet
+  plus this session's own `spawn_task` calls, and the board's
+  In progress and In review items (Board actions below). Chips not yet
   started from other sessions or routines are invisible; say so.
 - **Board actions** (P19b, `brief`, `closeout`, `board-review`, `idea`,
   `today`, `weekly-review`): `gh
@@ -41,7 +51,13 @@ when ToolSearch cannot find it either, and the report says so.
   step with `gh issue create --assignee @me --label maintainer-step` and a
   finding with `gh issue create --label deferred-review`, the priority in
   the issue text; the board's auto-add picks them up. Only in a public repository, where no
-  issue can be filed, say so and put the step or finding in chat.
+  issue can be filed, say so and put the step or finding in chat. A cloud
+  session cannot reach boards at all (no GraphQL, no organisation paths):
+  board reads and writes, a thread's Next step at closeout included, need a
+  local session, so a cloud session hands its board update to me as a step
+  under **Needs you**, and a brief written there says `Thread: unknown,
+  ask me` unless I named it. Whether `gh issue create` works there is
+  unverified; if it fails, the step or finding goes in chat.
 - **Delegate a role** (P2, P2b): the Agent tool with `subagent_type`
   `agent-practices:ROLE` (explorer, implementer, light-reviewer, reviewer,
   critical-reviewer, critical-reviewer-strongest); `model` sets a slice's

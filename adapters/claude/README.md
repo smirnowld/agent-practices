@@ -230,6 +230,20 @@ unverified against vendor docs.
   sessions to load `artifact-design` and run its design pass before any
   page, which invites restyling a fixed format; the skill's precedence line
   overrides that pass, not the page contract.
+- Boards from cloud sessions: the rule is in [session.md](session.md),
+  Board actions. In a cloud session the GitHub proxy refused GraphQL ("not
+  available from Claude Code sessions") and every organisation-level REST
+  path, since sessions are bound to their configured repositories
+  (observed 2026-10-15 in a cloud session), so `gh project` and
+  `ensure-board.sh` cannot run there.
+- Thread groups (`practices/tracking.md`, Threads): the rule is in
+  [session.md](session.md). The desktop app's sidebar groups sessions into
+  named groups that sessions manage with `mcp__ccd_sidebar__list_groups`,
+  `create_group` and `move_sessions`; a session filing itself was observed
+  working in a desktop-app session (2026-10-15). Cloud sessions have no
+  sidebar tools (observed 2026-10-15), so the binding applies to local
+  sessions only. The tools' parameters, and whether a group can be removed
+  through them, are unverified against vendor docs (no public page found).
 - Proposing sessions (`brief` skill): the rule is in
   [session.md](session.md); the model it names comes from `tiers.json`
   (Sonnet for fast, Opus for standard). Before session.md was
@@ -275,20 +289,14 @@ unverified against vendor docs.
   now blocks a turn once, all reasons in one block, when:
   - its final message, outside code fences, holds an acceptance card, a
     question (heading, "Decision needed", or a numbered Q1 line), a
-    "Waiting on me" line or, for a project not on a board (no board link
-    in an `AGENTS.md` from the session's folder up to its git root, never
-    above it, read offline; P19b), `docs/plan.md`'s "Waiting on the
-    maintainer" line, other than "nothing", "none" or "n/a", or a closeout
-    heading, and neither
+    "Waiting on me" line, other than "nothing", "none" or "n/a", or a
+    closeout heading, and neither
     `PushNotification` nor `AskUserQuestion` was called since my last
     message. It finds that boundary in the transcript by entry shape
     (observed, not documented). A turn that starts with my dismissing a
     question is waiting on me and is not blocked for this. When my answer
     to a question is the turn's last entry and no text follows it, a final
-    message equal to the text I answered is not checked again. A public
-    repository's board, named only in my own configuration, is not seen
-    by the hook, so the `plan.md` check still applies there; that is
-    harmless, since such a project's `plan.md` has no waiting line;
+    message equal to the text I answered is not checked again;
   - it says it is waiting on CI, a run or a merge while none of the
     session's background tasks or subagents is running (any running one
     wakes the session when it ends, so it excuses the claim, a background

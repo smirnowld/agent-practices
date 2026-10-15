@@ -9,6 +9,7 @@ follows templates/session-title.md and is the proposed session's title. -->
 **Size:** <XS | S | M>  <!-- response budget: practices/model-sizing.md, "Size in responses" -->
 **Autonomy:** <Auto | Sign-off | Ask | With me>  <!-- what the session needs from me: templates/session-title.md -->
 **Repo / branch / worktree:** <path>, <branch from base>
+**Thread:** <thread short name, board item link | none>  <!-- the shared board's thread this work serves (practices/tracking.md, Threads); a session files itself into its group; never a new thread without my go -->
 
 ## Goal
 
@@ -47,7 +48,7 @@ in a public repository its board item, which the session sets Done itself
 (practices/tracking.md). Then open issues (deferred-review too) on the core
 files or goal. Fix each that passes the fix-on-the-go test in this PR
 (Fixes #N); report the rest. -->
-- <work package: #N: ID · outcome | board item link | no board yet>
+- <work package: #N: ID · outcome | board item link>
 - <#N: title | none found>
 
 ## Already verified

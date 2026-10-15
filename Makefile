@@ -12,8 +12,6 @@ check:
 	sh -n scripts/test-ensure-labels.sh
 	sh -n scripts/ensure-board.sh
 	sh -n scripts/test-ensure-board.sh
-	sh -n scripts/migrate-priority.sh
-	sh -n scripts/test-migrate-priority.sh
 	sh -n scripts/test-check-action-pins.sh
 	sh -n scripts/test-check-adrs.sh
 	sh -n scripts/test-cost-review.sh
@@ -37,7 +35,6 @@ check:
 	sh scripts/test-push-policy-sync.sh
 	sh scripts/test-ensure-labels.sh
 	sh scripts/test-ensure-board.sh
-	sh scripts/test-migrate-priority.sh
 	sh scripts/test-check-links.sh
 	sh scripts/test-check-action-pins.sh
 	python3 scripts/check-action-pins.py .

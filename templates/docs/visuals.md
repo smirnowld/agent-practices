@@ -3,7 +3,7 @@
 <!-- Spec for docs/visuals/<doc>.html: one-page visual views of roadmap.md,
 plan.md, architecture.md and tech-stack.md, for people. The Markdown doc is
 the source of truth; a visual never says anything its source does not.
-Committed visuals carry no status: for a project on a board, live status is
+Committed visuals carry no status: live status is
 the board's views (practices/tracking.md), which the plan visual links. -->
 
 ## Files

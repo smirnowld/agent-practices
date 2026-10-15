@@ -1,6 +1,6 @@
 ---
 name: board-review
-description: Routine every three days (baseline T4). Reviews a project's board (P19b) - items with no priority yet, stale Backlog items and the drift checks of practices/tracking.md - and its open issues, checking whether each is still relevant, already addressed or a duplicate and where it belongs. Falls back to open issues with priority labels for a project without a board. Read-only; proposes one session with the actions to apply.
+description: Routine every three days (baseline T4). Reviews a project's board (P19b) - items with no priority yet, stale Backlog items and the drift checks of practices/tracking.md - and its open issues, checking whether each is still relevant, already addressed or a duplicate and where it belongs. Read-only; proposes one session with the actions to apply.
 ---
 
 # Board review
@@ -24,11 +24,7 @@ for a public repository, my own agent configuration names one. Read the
 link as `OWNER` and board `NUMBER`.
 
 - **On a board:** steps 1 to 6.
-- **No board, issues on:** the labels flow (baseline R6): steps 1 to 3, 5
-  and 6 over open issues, with `p1`–`p3` labels for priority and
-  `docs/plan.md` rows for planned work; skip step 4, which needs a board.
-- **No board and no issues** (a public repository whose board is not
-  found): report "no board found" and stop; never guess.
+- **Board not found:** report "no board found" and stop; never guess.
 
 A public repository's items are private drafts on the shared board: review
 only the items whose Area field is that repository's name, and skip `gh
@@ -56,14 +52,12 @@ Narrow with the board's own filter syntax where a view's filter is wanted
 "status:Backlog"` for Backlog). If a list comes back full, say it was
 truncated and review the highest priorities first.
 
-Select, on a board: items with no priority yet; Backlog items not reviewed
+Select: items with no priority yet; Backlog items not reviewed
 in 30 days or more; items new or changed since the last run; items a merge
 since the last run may address (it names the item, or touches the files or
 area the item names: a cheap match on titles, bodies and changed paths).
-Open issues missing from the board are step 4's. Without a board:
-issues new or changed since the last run, issues a merge may address, and
-any issue not reviewed in 30 days. Review in priority order: no priority
-first, then P1, P2, P3 (the board's Priority field, or the labels).
+Open issues missing from the board are step 4's. Review in priority order:
+no priority first, then P1, P2, P3 (the board's Priority field).
 
 ## 2. Check relevance (standard tier)
 
@@ -76,11 +70,10 @@ For each selected item, from evidence only:
   overturned (ADRs and `docs/questions.md`, where present).
 - **Duplicate:** another open item says the same; keep the older or fuller
   one.
-- **Roll up:** it fits a planned package. On a board: a `work-package`
+- **Roll up:** it fits a planned package. A `work-package`
   issue or a package in the current phase plan; propose an issue as a
   sub-issue of that package, and a draft (which cannot be a sub-issue) as a
-  link to the package in its body. Without one: a row in `docs/plan.md` or
-  the roadmap, or an open issue or PR that row links. Name the package.
+  link to the package in its body. Name the package.
 - **Cluster:** still open, and it touches the same files or module as other
   still-open items; together they fit one S or M session. Name the cluster.
 - **Still open:** none of the above.
@@ -98,9 +91,8 @@ means "still open", with the question.
 
 Propose a priority for each item with none, and a change where the
 evidence moved (a P3 that now blocks planned work, a P1 that no longer
-affects anyone). Meanings: baseline R6. `deferred-review` items are
-prioritised like any other. On a board the priority is the Priority field;
-without one, the label.
+affects anyone). Meanings: `practices/tracking.md`, "Fields". `deferred-review` items are
+prioritised like any other. The priority is the Priority field.
 
 ## 4. Check the board (fast tier, board only)
 
@@ -132,8 +124,9 @@ On a board where people other than me have Write:
 - **Template.** Run agent-practices' own copy of the script (the one
   installed with these skills, never a copy in the reviewed project):
   `scripts/ensure-board.sh --check OWNER NUMBER TEMPLATE_OWNER
-  TEMPLATE_NUMBER`, with the template board's owner and number from my own
-  agent configuration, and report what it finds. If the script is not
+  TEMPLATE_NUMBER`, adding `--threads` for the shared board, with the
+  template board's owner and number from my own agent configuration, and
+  report what it finds. If the script is not
   installed or the template is not named, say the template check was not
   run.
 - **Missing items.** List open issues of the repository that are not on the
@@ -143,7 +136,7 @@ On a board where people other than me have Write:
 
 | Result | Output |
 |---|---|
-| Nothing to change | One line: "board current" (or "issues current"), with counts by priority |
+| Nothing to change | One line: "board current", with counts by priority |
 | Closures of addressed issues only | Proposed session that closes them with the evidence link and reports, fast tier; no question |
 | Roll-ups (sub-issues), duplicates, priority changes, board fixes or retitles | Proposed session: apply them after my OK, fast tier; list each retitle as "retitle #N to ..." and each board fix as "set FIELD of #N to ..." |
 | Clusters | One proposed session per cluster that fixes its items in one PR (`Fixes #N` each), written with `brief`; items that fail the fix-on-the-go test (`practices/scope-and-batching.md`) stay open |

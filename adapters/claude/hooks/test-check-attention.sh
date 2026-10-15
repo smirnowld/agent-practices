@@ -8,8 +8,6 @@
 # closeout written without the closeout skill, and an auto-merge that landed
 # without its closeout.
 set -eu
-# The board test falls back to it; the session running this must not leak in.
-unset CLAUDE_PROJECT_DIR
 dir=$(dirname "$0")
 hook="$dir/check-attention.py"
 tmp=$(mktemp -d)
@@ -50,36 +48,11 @@ Q2. Ship today?" '' 'numbered Q1, Q2'
 done
 passes 'The Q1 numbers are in. Q4 looks slower.'
 blocks '**Waiting on me:** acceptance of phase 2' '' 'PushNotification'
-blocks '**Waiting on the maintainer:** acceptance of phase 2' '' 'PushNotification'
 blocks "$closeout" '' 'PushNotification'
 blocks "$card" '{"background_tasks":[]}' '"decision": "block"'
 
 passes '**Waiting on me:** nothing'
 passes '**Waiting on me:** "Nothing"'
-passes '**Waiting on the maintainer:** nothing'
-# The plan.md line is no marker for a project whose AGENTS.md links a board
-# (P19b), read from the session's directory up to its git root; "Waiting on
-# me" still is.
-mkdir -p "$tmp/boarded/.git" "$tmp/boarded/sub" "$tmp/plain/.git"
-printf 'Board: https://github.com/orgs/example/projects/7\n' >"$tmp/boarded/AGENTS.md"
-printf 'No board yet.\n' >"$tmp/plain/AGENTS.md"
-passes '**Waiting on the maintainer:** acceptance of phase 2' "{\"cwd\":\"$tmp/boarded/sub\"}"
-blocks '**Waiting on me:** acceptance of phase 2' "{\"cwd\":\"$tmp/boarded\"}" 'PushNotification'
-blocks '**Waiting on the maintainer:** acceptance of phase 2' "{\"cwd\":\"$tmp/plain\"}" 'PushNotification'
-blocks '**Waiting on the maintainer:** acceptance of phase 2' "{\"cwd\":\"$tmp/missing\"}" 'PushNotification'
-# A board link above the git root is another project's: ignored.
-mkdir -p "$tmp/outer/repo/.git"
-cp "$tmp/boarded/AGENTS.md" "$tmp/outer/AGENTS.md"
-blocks '**Waiting on the maintainer:** acceptance of phase 2' "{\"cwd\":\"$tmp/outer/repo\"}" 'PushNotification'
-# Outside a repository only the session's own folder counts.
-mkdir -p "$tmp/norepo/sub"
-cp "$tmp/boarded/AGENTS.md" "$tmp/norepo/AGENTS.md"
-passes '**Waiting on the maintainer:** acceptance of phase 2' "{\"cwd\":\"$tmp/norepo\"}"
-blocks '**Waiting on the maintainer:** acceptance of phase 2' "{\"cwd\":\"$tmp/norepo/sub\"}" 'PushNotification'
-# Without a cwd in the input, CLAUDE_PROJECT_DIR names the project.
-export CLAUDE_PROJECT_DIR="$tmp/boarded"
-passes '**Waiting on the maintainer:** acceptance of phase 2'
-unset CLAUDE_PROJECT_DIR
 passes 'Here is the answer: 42.'
 passes "$card" '{"stop_hook_active":true}'
 # Running background tasks in the hook input excuse nothing.

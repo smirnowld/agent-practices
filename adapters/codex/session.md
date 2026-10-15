@@ -49,7 +49,7 @@ unverified (2026-09-30).
 - **Work in flight** (`brief` step 1): open PRs and pushed branches, plus
   `mcp__codex_app__list_threads` when available; inspect relevant chats with
   `mcp__codex_app__read_thread` as needed. Include this chat's pending briefs
-  and creation results, and for a project on a board its In progress and
+  and creation results, and the board's In progress and
   In review items (Board actions below). Unstarted proposals from other
   chats are not a dedicated inventory, and listings may be incomplete; say
   what could not be checked. Discover deferred tools before falling back.
