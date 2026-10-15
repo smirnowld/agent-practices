@@ -15,7 +15,7 @@ project elsewhere maps each row to its host's equivalent.
 | R3 | Auto-merge allowed; head branches deleted on merge | ✓ | ✓ | ✓ |
 | R4 | Default-branch ruleset: pull request required, no deletion, no force push, one aggregate check pinned to GitHub Actions | ✓ | ✓ | ✓ |
 | R5 | Public repos: licence, `SECURITY.md`, private vulnerability reporting on | when public | when public | when public |
-| R6 | Issue labels: `deferred-review`; kinds `work-package`, `maintainer-step`, `long-lead`, `initiative` ([tracking.md](tracking.md#labels)); and priorities `p1` (blocks planned work, or risks users or data), `p2` (belongs in the current or next phase), `p3` (when convenient) | ✓ | ✓ | ✓ |
+| R6 | Issue labels: `deferred-review`; kinds `work-package`, `maintainer-step`, `long-lead`, `initiative` ([tracking.md](tracking.md#labels)); priority is the board's Priority field, not a label | ✓ | ✓ | ✓ |
 | R7 | A private GitHub Projects board copied from the template, linked from `AGENTS.md` (a public repository's is named in my own agent configuration instead), with the fields, views and workflows of [tracking.md](tracking.md); set up and audited by `project-setup` | ✓ | ✓ | ✓ |
 | **CI** |||||
 | C1 | Checks run on every PR and on the default branch | ✓ | ✓ | ✓ |

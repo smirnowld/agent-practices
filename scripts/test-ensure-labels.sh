@@ -26,13 +26,13 @@ chmod +x "$dir/bin/gh"
 PATH="$dir/bin:$PATH"; export PATH
 if sh scripts/ensure-labels.sh --check o/r >/dev/null; then echo "check passed with no labels"; exit 1; fi
 [ ! -s "$state" ]                                # --check wrote nothing
-echo 'p1|000000|stale' > "$state"   # one label drifted
+echo 'deferred-review|000000|stale' > "$state"   # one label drifted
 echo 'bug|d73a4a|Something is broken' >> "$state"     # unrelated label kept
 sh scripts/ensure-labels.sh o/r >/dev/null        # create and update
-grep -qxF 'p1|b60205|Blocks planned work, or risks users or data' "$state"
+grep -qxF 'deferred-review|5319e7|Finding deferred from review, fix later (P4)' "$state"
 grep -qxF 'initiative|f9d0c4|Parent of work spanning repositories' "$state"
 grep -qxF 'bug|d73a4a|Something is broken' "$state"
-[ "$(wc -l < "$state")" -eq 9 ]
+[ "$(wc -l < "$state")" -eq 6 ]
 cp "$state" "$dir/first"
 sh scripts/ensure-labels.sh o/r >/dev/null        # rerun is idempotent
 cmp "$state" "$dir/first"

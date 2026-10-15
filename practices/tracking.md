@@ -14,7 +14,7 @@ a GitHub Projects board, and what stays in its docs.
 | Open questions | `docs/questions.md` (P11) |
 | Size of a package | The phase plan's estimate and the brief, never a board field |
 
-On a board, docs never repeat a status, and the board never copies
+Docs never repeat a status, and the board never copies
 criteria: an issue links the phase-plan section that holds them. Two stated
 exceptions mirror a scope fact, and the drift check keeps each pair in step:
 
@@ -51,7 +51,7 @@ exceptions mirror a scope fact, and the drift check keeps each pair in step:
 | Field | Type | Rule |
 |---|---|---|
 | Status | Built-in single select | The statuses below |
-| Priority | Single select | P1 now, P2 soon, P3 later, with the meanings of `p1`–`p3` in [baseline R6](project-baseline.md#checklist) |
+| Priority | Single select | P1 now (blocks planned work, or risks users or data), P2 soon (belongs in the current or next phase), P3 later (when convenient) |
 | Waiting for | Text | Required with Waiting, empty otherwise: what the item waits for ("Q12", "#81", an outside party) |
 | Phase | Single select | The phase plan the package sits in, or "Later"; not an iteration, since phases are not time-boxed |
 | Target | Date | Only for long-lead items and outside deadlines |
@@ -95,16 +95,16 @@ its Assigned to me view and the project's `docs/questions.md`.
 
 ## Statuses
 
-| Status | Meaning | Before the board (`docs/plan.md`) |
-|---|---|---|
-| Backlog | Filed but not in the current phase: findings, ideas, bugs. New items arrive here | Not listed |
-| Planned | In the phase plan with criteria, not yet briefed | Not started |
-| Ready | Briefed; can start | Ready |
-| In progress | A session is on it | In progress |
-| In review | A PR is open | In review |
-| Waiting | Needs something outside the session; Waiting for names what, the assignee who, when a person must act | Blocked; Engineering complete |
-| Parked | Out of scope for now; the phase plan records the decision and reason | Parked |
-| Done | Closed; archived after two weeks | Done |
+| Status | Meaning |
+|---|---|
+| Backlog | Filed but not in the current phase: findings, ideas, bugs. New items arrive here |
+| Planned | In the phase plan with criteria, not yet briefed |
+| Ready | Briefed; can start |
+| In progress | A session is on it |
+| In review | A PR is open |
+| Waiting | Needs something outside the session; Waiting for names what, the assignee who, when a person must act |
+| Parked | Out of scope for now; the phase plan records the decision and reason |
+| Done | Closed; archived after two weeks |
 
 ## A work package's way across the board
 
@@ -182,15 +182,11 @@ on each project's board. Project boards auto-add `is:issue
 sub-issues' progress. PRs stay off boards and show on their issue as linked
 pull requests, so nothing appears twice.
 
-## The per-project switch
+## Finding the board
 
-A project uses the board once it has one: linked from its `AGENTS.md`, or
-for a public repository named in my own agent configuration. The PR that
-adds the link copies the current status onto the board and removes status
-from the project's docs and session templates. Until then the `docs/plan.md`
-flow applies (`practices/planning.md`), and review findings and steps of
-mine are issues with a priority label (baseline R6), public repositories
-included. A session that expects a board and finds none reports
+Every project has a board: linked from its `AGENTS.md`, or for a public
+repository named in my own agent configuration. A new project gets one at
+setup (baseline R7). A session that expects a board and finds none reports
 it and never guesses.
 
 ## Keeping the board true

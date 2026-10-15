@@ -298,12 +298,10 @@ docs (for a product, roadmap and tech stack) and its board's In flight view
 board its `AGENTS.md` links; a public repository names none, and its board
 is the one my own agent configuration names. Each work package, step of mine
 that outlives a session, long-lead item and review finding (P4) is an item
-on it: an issue, or in a public repository a private draft item. Once a
-project has a board, the board owns status, priority and who acts next; its
-docs own goals, scope, decisions and open questions and never repeat a
-status (`practices/tracking.md`). Until then, `docs/plan.md` keeps status,
-and review findings and steps of mine are issues with a priority label,
-public repositories included.
+on it: an issue, or in a public repository a private draft item. The
+board owns status, priority and who acts next; the project's docs own goals,
+scope, decisions and open questions and never repeat a status
+(`practices/tracking.md`).
 
 ## P20. Project baseline
 

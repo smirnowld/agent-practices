@@ -47,7 +47,7 @@ in a public repository its board item, which the session sets Done itself
 (practices/tracking.md). Then open issues (deferred-review too) on the core
 files or goal. Fix each that passes the fix-on-the-go test in this PR
 (Fixes #N); report the rest. -->
-- <work package: #N: ID · outcome | board item link | no board yet>
+- <work package: #N: ID · outcome | board item link>
 - <#N: title | none found>
 
 ## Already verified
