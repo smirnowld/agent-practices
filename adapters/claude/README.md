@@ -234,9 +234,10 @@ unverified against vendor docs.
   [session.md](session.md). The desktop app's sidebar groups sessions into
   named groups that sessions manage with `mcp__ccd_sidebar__list_groups`,
   `create_group` and `move_sessions`; a session filing itself was observed
-  working (2026-10-15). The tools' parameters, and whether a group can be
-  removed through them, are unverified against vendor docs (no public
-  page found).
+  working in a desktop-app session (2026-10-15). Cloud sessions have no
+  sidebar tools (observed 2026-10-15), so the binding applies to local
+  sessions only. The tools' parameters, and whether a group can be removed
+  through them, are unverified against vendor docs (no public page found).
 - Proposing sessions (`brief` skill): the rule is in
   [session.md](session.md); the model it names comes from `tiers.json`
   (Sonnet for fast, Opus for standard). Before session.md was

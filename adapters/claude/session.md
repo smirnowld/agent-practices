@@ -30,7 +30,8 @@ when ToolSearch cannot find it either, and the report says so.
   then `move_sessions` this session into it. No thread: the group "Other".
   Closeout removes a closed thread's empty group. Only agents manage
   groups; a declined call is not retried, and an unattended session skips
-  this.
+  this. Desktop-app sessions only: cloud sessions have no sidebar tools, and
+  the board shows their thread.
 - **Work in flight** (`brief` step 1): `mcp__ccd_session_mgmt__list_sessions`,
   plus this session's own `spawn_task` calls, and for a project on a board
   its In progress and In review items (Board actions below). Chips not yet
