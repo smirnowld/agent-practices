@@ -29,9 +29,7 @@ Since the last run (or 7 days):
    docs over the budgets in `practices/record-keeping.md`; visuals in
    `docs/visuals/` older than the doc they draw (`project-visuals`).
    For a product (`practices/planning.md`, "Two files per phase"): a
-   finished package still in `docs/plans/phase-N.md`. Then, for every project
-   (the board link is in `AGENTS.md`, or for a public repository in my own
-   agent configuration; if it is not found, report "no board found"):
+   finished package still in `docs/plans/phase-N.md`. Then, for every project:
    status words in
    `docs/plan.md` or a phase plan (a status, health, progress or "waiting
    on" line); status in a committed visual in `docs/visuals/`; a phase-plan

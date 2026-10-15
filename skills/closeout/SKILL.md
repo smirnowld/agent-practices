@@ -99,7 +99,7 @@ For **Continuation**:
 
 ## 3. Links (P18)
 
-Follow P18. In a public repository on a board, board links and finding text
+Follow P18. In a public repository, board links and finding text
 go only in the chat closeout, never in the PR: its **Deferred** says only
 "Not fixed: PART, tracked privately" (`practices/scope-and-batching.md`).
 The rule this skill adds: a path in backticks or plain text is

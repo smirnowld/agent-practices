@@ -8,8 +8,6 @@
 # closeout written without the closeout skill, and an auto-merge that landed
 # without its closeout.
 set -eu
-# The board test falls back to it; the session running this must not leak in.
-unset CLAUDE_PROJECT_DIR
 dir=$(dirname "$0")
 hook="$dir/check-attention.py"
 tmp=$(mktemp -d)
