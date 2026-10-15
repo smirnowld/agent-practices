@@ -59,6 +59,28 @@ claude plugin marketplace add OWNER/agent-practices
 claude plugin install agent-practices@agent-practices
 ```
 
+On each machine also set the compaction point in user settings
+(`~/.claude/settings.json`). Without it, a model with a native 1M window
+compacts only near the full window, and every call re-sends that history
+([context-efficiency.md](../../practices/context-efficiency.md#where-context-goes)):
+
+```json
+{ "autoCompactWindow": 200000 }
+```
+
+The key applies to every model. A window saved with `/autocompact` lands in
+`modelSettings` for the current model and overrides it for that model;
+`/autocompact auto` clears that. `CLAUDE_CODE_AUTO_COMPACT_WINDOW` overrides
+both. The `[1m]` suffix (`opus[1m]`) has no effect on a model whose window is
+already 1M; leave `model` as the plain alias. Do not set
+`CLAUDE_CODE_DISABLE_1M_CONTEXT`: it shrinks the window rather than moving
+the compaction point, which
+[context-efficiency.md](../../practices/context-efficiency.md#rules-of-thumb)
+rules out (model-config.md, "Extended context" and auto-compact window,
+https://code.claude.com/docs/en/model-config, checked 2026-10-15). A session
+reads the key at start: one already running keeps its old compaction point
+until it restarts (observed 2026-10-15, not stated in the docs).
+
 A project that wants it for everyone adds to `.claude/settings.json`:
 
 ```json
@@ -397,8 +419,8 @@ unverified against vendor docs.
   2026-09-27).
 - Local-only paths are not links (P18): cite a GitHub URL pinned to a commit,
   or attach the file.
-- Context: the compaction threshold is `autoCompactWindow` in user settings
-  (model-config.md); tuned per `practices/context-efficiency.md`. Before
+- Context: the compaction threshold is `autoCompactWindow` in user settings,
+  set at [install](#install); tuned per `practices/context-efficiency.md`. Before
   suggesting compaction, check `/context`; suggest
   `/compact keep: goal, decisions, core files, proof status, next step`
   (https://code.claude.com/docs/en/claude-code-on-the-web.md, "Manage
