@@ -49,9 +49,25 @@ unverified (2026-09-30).
 - **Work in flight** (`brief` step 1): open PRs and pushed branches, plus
   `mcp__codex_app__list_threads` when available; inspect relevant chats with
   `mcp__codex_app__read_thread` as needed. Include this chat's pending briefs
-  and creation results. Unstarted proposals from other chats are not a
-  dedicated inventory, and listings may be incomplete; say what could not
-  be checked. Discover deferred tools before falling back.
+  and creation results, and for a project on a board its In progress and
+  In review items (Board actions below). Unstarted proposals from other
+  chats are not a dedicated inventory, and listings may be incomplete; say
+  what could not be checked. Discover deferred tools before falling back.
+- **Board actions** (P19b, `brief`, `closeout`, `board-review`): `gh
+  project` through the shell, with `gh api graphql` for what it lacks (issue
+  timelines, sub-issues, an item's other boards). Read the board: `gh
+  project item-list NUMBER --owner OWNER --format json`, narrowed with
+  `--query` (the board's filter syntax); fields and option IDs: `gh project
+  field-list`. Move an item: `gh project item-edit` with the item, field
+  and option IDs. File an assigned item: `gh issue create --assignee @me
+  --label maintainer-step`, then `gh project item-add`; in a public
+  repository a draft with `gh project item-create`, assigned with `gh api
+  graphql`, with its Kind and Area set. No board access (`gh auth status`
+  lacks the `project` scope) in a repository with issues: still file a
+  step with `gh issue create --assignee @me --label maintainer-step` and a
+  finding with `gh issue create --label deferred-review`, the priority in
+  the issue text; the board's auto-add picks them up. Only in a public repository, where no
+  issue can be filed, say so and put the step or finding in chat.
 - **Delegate a role** (P2): spawn the custom agent by name (`explorer`,
   `implementer`, `light-reviewer`, `reviewer`, `critical-reviewer`,
   `critical-reviewer-strongest`), installed as copies in

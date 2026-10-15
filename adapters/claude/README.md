@@ -238,14 +238,20 @@ unverified against vendor docs.
   now blocks a turn once, all reasons in one block, when:
   - its final message, outside code fences, holds an acceptance card, a
     question (heading, "Decision needed", or a numbered Q1 line), a
-    "Waiting on me" or "Waiting on the maintainer" line other than
-    "nothing", "none" or "n/a", or a closeout heading, and neither
+    "Waiting on me" line or, for a project not on a board (no board link
+    in an `AGENTS.md` from the session's folder up to its git root, never
+    above it, read offline; P19b), `docs/plan.md`'s "Waiting on the
+    maintainer" line, other than "nothing", "none" or "n/a", or a closeout
+    heading, and neither
     `PushNotification` nor `AskUserQuestion` was called since my last
     message. It finds that boundary in the transcript by entry shape
     (observed, not documented). A turn that starts with my dismissing a
     question is waiting on me and is not blocked for this. When my answer
     to a question is the turn's last entry and no text follows it, a final
-    message equal to the text I answered is not checked again;
+    message equal to the text I answered is not checked again. A public
+    repository's board, named only in my own configuration, is not seen
+    by the hook, so the `plan.md` check still applies there; that is
+    harmless, since such a project's `plan.md` has no waiting line;
   - it says it is waiting on CI, a run or a merge while none of the
     session's background tasks or subagents is running (any running one
     wakes the session when it ends, so it excuses the claim, a background
@@ -383,7 +389,7 @@ unverified against vendor docs.
     ([question.md](../../templates/question.md)), which the suggestion
     can match. Tool behaviour and the suggested reply observed 2026-10-06,
     unverified against vendor docs; sizes are estimates.
-- Scheduled routines (`docs-drift-check`, `triage`, `issue-review`,
+- Scheduled routines (`docs-drift-check`, `triage`, `board-review`,
   `project-setup` audit) run as local desktop-app scheduled tasks, one per
   project; a proposed session appears as a chip. Local tasks fire only while the app is open and the
   machine awake; a missed run catches up once

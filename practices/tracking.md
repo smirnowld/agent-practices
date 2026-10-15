@@ -55,6 +55,7 @@ exceptions mirror a scope fact, and the drift check keeps each pair in step:
 | Target | Date | Only for long-lead items and outside deadlines |
 | Assignees | Built-in | The person who must act next. Empty for agent work, since agents act as my account and would flood my list; set to me only for a step only I can take |
 | Kind | Single select | Only on a board that holds draft items, which cannot carry labels |
+| Area | Single select | Only on a board that holds draft items: the repository (by name) or theme a draft belongs to |
 
 Phase health and the expected end date are status too: they go in the
 board's project status update where available, otherwise in the phase
@@ -142,7 +143,7 @@ changes.
   private draft item the PR does not link; a session without board access
   lists the finding, text and priority, under "Needs you" in its chat
   closeout as a step for me (P9a). Either way the PR closeout's Deferred
-  says only "Not fixed: PART, filed privately", with no finding text and no
+  says only "Not fixed: PART, tracked privately", with no finding text and no
   board link. A finding pulled into a package becomes a sub-issue of it,
   and the package's PR closes it with `Fixes`.
 - **Issues filed by CI** are auto-added like any issue and reach Done when
@@ -159,6 +160,9 @@ link, never the closeout in the PR.
 Drafts take a title, body, assignees and the board's fields, but:
 
 - no labels, so a board holding drafts has a Kind field instead;
+- no repository, so a board holding drafts has an Area field naming the
+  repository or theme each belongs to; sessions for a public repository
+  work only the items whose Area is its name;
 - no notification for an assignment or mention;
 - no place in GitHub's assigned-to-me list, only in the board's view;
 - no closing by a PR: the session that finishes the work sets Done itself.
@@ -203,8 +207,9 @@ it and never guesses.
   - Waiting for naming a question no longer in the register;
   - an issue on more than one board;
   - Parked or Phase on the board disagreeing with the phase plan.
-- **The board review** works the No priority yet view, stale Backlog items
-  and the drift checks, and flags Waiting items whose Target has passed. On
+- **The board review** (`skills/board-review/SKILL.md`) works the No
+  priority yet view, stale Backlog items and the drift checks, and flags
+  Waiting items whose Target has passed. On
   a board where others have Write, it also flags their changes to items not
   their own, checks fields, options and views against the template, and
   lists open issues missing from the board. It stays read-only and proposes

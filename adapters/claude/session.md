@@ -23,8 +23,24 @@ when ToolSearch cannot find it either, and the report says so.
   A declined rename or move is not retried, and an unattended session does
   not move.
 - **Work in flight** (`brief` step 1): `mcp__ccd_session_mgmt__list_sessions`,
-  plus this session's own `spawn_task` calls. Chips not yet started from other
-  sessions or routines are invisible; say so.
+  plus this session's own `spawn_task` calls, and for a project on a board
+  its In progress and In review items (Board actions below). Chips not yet
+  started from other sessions or routines are invisible; say so.
+- **Board actions** (P19b, `brief`, `closeout`, `board-review`): `gh
+  project` through the shell, with `gh api graphql` for what it lacks (issue
+  timelines, sub-issues, an item's other boards). Read the board: `gh
+  project item-list NUMBER --owner OWNER --format json`, narrowed with
+  `--query` (the board's filter syntax); fields and option IDs: `gh project
+  field-list`. Move an item: `gh project item-edit` with the item, field
+  and option IDs. File an assigned item: `gh issue create --assignee @me
+  --label maintainer-step`, then `gh project item-add`; in a public
+  repository a draft with `gh project item-create`, assigned with `gh api
+  graphql`, with its Kind and Area set. No board access (`gh auth status`
+  lacks the `project` scope) in a repository with issues: still file a
+  step with `gh issue create --assignee @me --label maintainer-step` and a
+  finding with `gh issue create --label deferred-review`, the priority in
+  the issue text; the board's auto-add picks them up. Only in a public repository, where no
+  issue can be filed, say so and put the step or finding in chat.
 - **Delegate a role** (P2, P2b): the Agent tool with `subagent_type`
   `agent-practices:ROLE` (explorer, implementer, light-reviewer, reviewer,
   critical-reviewer, critical-reviewer-strongest); `model` sets a slice's
