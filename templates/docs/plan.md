@@ -5,14 +5,7 @@ practices/tracking.md). Goal and order only: no status, health, dates or
 progress, which the board owns. Changes only when the goal or scope changes
 (practices/planning.md, "Two files per phase"). Plain words: nodes name
 outcomes, not package IDs. Replaced when the phase ends, after its outcomes
-move to the roadmap and docs. Budget: practices/record-keeping.md.
-
-Projects not yet on a board keep their current plan.md, with status, until
-the PR that switches them to a board (practices/tracking.md, "The
-per-project switch"); the previous template shape is
-`git show 9e26a8a:templates/docs/plan.md`. Such a project writing a new
-phase plan moves Acceptance, Not in this phase and Risks out of its plan.md
-into the phase plan, so they are not held twice. -->
+move to the roadmap and docs. Budget: practices/record-keeping.md. -->
 
 **Goal:** <what the user can see or do when this phase ends>
 **Board:** <link to the project's board, Phase view; left out in a public repository>

@@ -9,10 +9,7 @@ LABELS='deferred-review|5319e7|Finding deferred from review, fix later (P4)
 work-package|0052cc|One package of a phase plan
 maintainer-step|d93f0b|A step only the maintainer can take
 long-lead|006b75|Outside lead time on the critical path
-initiative|f9d0c4|Parent of work spanning repositories
-p1|b60205|Blocks planned work, or risks users or data
-p2|fbca04|Belongs in the current or next phase
-p3|0e8a16|When convenient'
+initiative|f9d0c4|Parent of work spanning repositories'
 
 check=0
 if [ "${1:-}" = "--check" ]; then check=1; shift; fi

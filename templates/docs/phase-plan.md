@@ -72,7 +72,7 @@ plan.md diagram node it delivers, with the same label. -->
 
 ### WP<N>: <what it delivers> (<area, if any>; <size>; <ADR link, if any>)
 
-Issue: <#N | package ID only, in a public repository | no board yet>
+Issue: <#N | package ID only, in a public repository>
 Outcome: <OUTCOME LABEL from the plan.md diagram>
 
 <Scope in a few sentences: what it builds, where the logic lives, what it
@@ -87,7 +87,7 @@ here; the board mirrors it as Parked. -->
 
 ### WP<N>: <what it would deliver> (<area, if any>; <size>)
 
-Issue: <#N | package ID only, in a public repository | no board yet>
+Issue: <#N | package ID only, in a public repository>
 Outcome: <OUTCOME LABEL from the plan.md diagram>
 
 Briefed only if <condition> (<the maintainer's decision, date, link>).
@@ -99,11 +99,11 @@ Briefed only if <condition> (<the maintainer's decision, date, link>).
 can compare (practices/planning.md). A package added later is added with
 its source, so the review can tell the two apart. Phase health and the
 expected end date go in the board's project status update; when the board
-has none, or the project has no board yet, the Expected end line holds the
+has none, the Expected end line holds the
 date (practices/tracking.md, "Fields"). It is the one line here that is
 updated. -->
 
 <Packages by size, the longest chain of dependent packages, and the calendar
 range with what it leaves out (acceptance, review rounds, outside inputs).>
 
-**Expected end:** <date range>  <!-- only when the board has no status update or there is no board yet; the one line kept current -->
+**Expected end:** <date range>  <!-- only when the board has no status update; the one line kept current -->

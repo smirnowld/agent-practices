@@ -65,6 +65,7 @@ is missing or disabled: R7 is "partial". Exit 2 means a board could not be
 read or the template number is not the template: R7 is "missing" when the
 project has no board, otherwise report the error. Workflow settings, the
 auto-add filter, the description and the base role have no API: they stay
+<<<<<<< HEAD
 "unknown" unless I confirm them or they are read in my browser. Missing
 fields, options or views (the template changed after the copy) are fixable
 by `--sync` in setup mode (below). While the
@@ -72,6 +73,9 @@ project still has p1–p3 labels, `scripts/migrate-priority.sh <owner/repo>
 <owner> <number> --verify` lists open issues (initiatives aside) missing
 from the board or whose label and Priority disagree (exit 1, "partial";
 exit 2, an error); report them under R7. R7 also needs the work-package issue
+=======
+"unknown" unless I confirm them or they are read in my browser. R7 also needs the work-package issue
+>>>>>>> 47a907e (Drop no-board fallbacks and priority labels from skills, templates and scripts)
 template at `.github/ISSUE_TEMPLATE/work-package.md`, matching
 `templates/github/work-package-issue.md`; missing or different is
 "partial".
@@ -111,6 +115,7 @@ Sort gaps into:
   a Drafts by kind view; Area's options are the board's own and reruns
   never change them). When a public repository's work moves to the shared
   board, add the repository's name as an Area option there. Templates exist in organisations only; a user's
+<<<<<<< HEAD
   board is copied across owners from the organisation's template. A board
   copied before the template changed is brought up to it with
   `scripts/ensure-board.sh --sync <owner> <number> <template-owner>
@@ -120,6 +125,10 @@ Sort gaps into:
   overwrites a field), and `--verify` must come back clean. Both scripts
   are idempotent. The board link goes into `AGENTS.md` by the per-project
   switch in `practices/tracking.md`.
+=======
+  board is copied across owners from the organisation's template. The script is idempotent. The board link goes into `AGENTS.md` (`practices/tracking.md`,
+  "Finding the board").
+>>>>>>> 47a907e (Drop no-board fallbacks and priority labels from skills, templates and scripts)
 - **Needs the board's settings page:** the steps `ensure-board.sh` prints
   (auto-add from the repository with `is:issue -label:initiative`, base
   role No access, the description linking the Assigned to me view and

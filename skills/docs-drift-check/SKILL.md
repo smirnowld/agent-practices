@@ -36,10 +36,7 @@ Since the last run (or 7 days):
    on" line); status in a committed visual in `docs/visuals/`; a phase-plan
    package with no Outcome line, or one naming no node of the `docs/plan.md`
    order diagram. Board consistency is the board review's
-   (`skills/board-review/SKILL.md`, step 4), not this check's. For a
-   project not on a board: a `docs/plan.md` row whose status disagrees with
-   its PR (merged but not Done or Engineering complete, open but not In
-   review or In progress).
+   (`skills/board-review/SKILL.md`, step 4), not this check's.
 5. ADRs still Proposed in `docs/adr/README.md` that a PR in the range built
    (the PR names the ADR and changed code), with no ruling of mine and no
    exploratory reason in that PR: candidates for an acceptance ask (P11).
