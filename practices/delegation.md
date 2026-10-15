@@ -54,6 +54,12 @@ brief's Model line is the coordinator's.
   reports progress; the coordinator splits the rest. The brief's Size still
   counts every implementer response ([model-sizing.md](model-sizing.md#size-in-responses)).
 
+## No model per subagent
+
+Where an agent tool cannot set a model per subagent, the roles still apply
+on the model it has: delegate by role as usual and state the fallback in the
+report.
+
 ## Enforcement
 
 An adapter hook may deny the coordinator's source edits and point it to the
