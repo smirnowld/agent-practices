@@ -268,9 +268,10 @@ archive (`practices/record-keeping.md`).
   closeouts in the PR and chat, evidence in PR comments, CI artifacts or a
   private page on the project's agreed host, linked from the PR. The
   repository keeps only verification procedures and reference baselines.
-- A multi-session plan is one living document per initiative, carrying no
-  status once the project has a board (P19b), deleted when it ends after its
-  lasting outcomes move.
+- A multi-session plan, an initiative's included, lives in its parent
+  issue's body, not in a repository document
+  (`practices/tracking.md#initiatives`); a product's phase plans are the only
+  plans kept as files.
 - Consolidate at every closeout, and with `docs-gardening` past a budget.
 
 ## P18. Links that open anywhere

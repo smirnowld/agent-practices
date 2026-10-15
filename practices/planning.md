@@ -27,7 +27,7 @@ A product's current phase plan (P19) is two files and the board (P19b,
 - **`docs/plans/phase-N.md`** (`templates/docs/phase-plan.md`) owns scope:
   the open packages' criteria, acceptance, what is not in the phase, risks,
   the rules for running packages, pending inputs, parked packages and the
-  estimate. It is the phase's living plan (P17) and carries no status.
+  estimate. It is the phase's plan file (P17) and carries no status.
   Parking is a scope decision, recorded here and mirrored by Parked on the
   board.
 - **The board** owns status: one `work-package` issue per package, linking

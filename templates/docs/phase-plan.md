@@ -1,7 +1,7 @@
 # Phase <N> work packages: <name>
 
 <!-- Product repos (P19), stored as docs/plans/phase-<N>.md: the phase's
-living plan (P17). Scope of the open packages, no status; what belongs here
+plan file (P17). Scope of the open packages, no status; what belongs here
 and when a package leaves: practices/planning.md, "Two files per phase".
 Budget: practices/record-keeping.md. -->
 

@@ -25,6 +25,7 @@ Compare with the budgets; list what is over.
 | ADR superseded or rejected | Move to `docs/adr/archive/`; update the index |
 | Answered question | Answer into an ADR or doc; remove from the register |
 | Finished plan | Move outcomes; delete |
+| Plan file other than a phase plan, still open | Move into its parent issue's body (`practices/tracking.md#initiatives`); delete |
 | Screenshot or binary in docs | Delete unless a test compares against it (then move to the test baseline folder) |
 
 Never delete a record that a live doc, test or script references without

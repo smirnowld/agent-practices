@@ -26,7 +26,7 @@ exceptions mirror a scope fact, and the drift check keeps each pair in step:
 ## Boards and access
 
 - **One board per project**, private. A shared board holds cross-cutting
-  work: thread parents and parents of initiatives that span repositories,
+  work: thread parents and initiative parents ([Initiatives](#initiatives)),
   ideas and my own to-dos that belong to no repository, and the items of a public repository
   (below).
 - **One board per issue.** An issue can sit on several boards, but status is
@@ -74,8 +74,9 @@ session, need no board access and can drive auto-add filters:
 - `work-package`: one issue per package in a phase plan.
 - `maintainer-step`: a step of mine that outlives a session.
 - `long-lead`: an outside lead time on the critical path.
-- `initiative`: the parent of work spanning repositories, and every thread
-  parent issue ([Threads](#threads)).
+- `initiative`: the parent of work spanning repositories or of a
+  multi-session plan ([Initiatives](#initiatives)), and every thread parent
+  issue ([Threads](#threads)).
 - `deferred-review`: a review finding not fixed (P4).
 
 A project adds its own labels; the names follow P21a.
@@ -187,6 +188,39 @@ on each project's board. Project boards auto-add `is:issue
 -label:initiative`, which keeps parents off them; the parent shows the
 sub-issues' progress. PRs stay off boards and show on their issue as linked
 pull requests, so nothing appears twice.
+
+Where the repository carrying most of the work is public, it has no
+issues: the parent is a private draft on the shared board, which holds no
+sub-issues, so its body lists the items, and the plan never sits on a
+public issue.
+
+**The plan is the parent's body.** An initiative's plan lives in the body
+of its parent issue, never in a repository document; a product's phase
+plans ([planning.md](planning.md#two-files-per-phase)) are the only plans
+kept as files. A multi-session plan inside one repository works the same
+way: its parent is labelled `initiative` and sits on the shared board, like
+a thread's. The body holds:
+
+- **Goal** and **Done when**: the outcome, and how anyone can tell it is
+  reached.
+- **Links** to the convention it follows and the decisions it rests on
+  (practices, ADRs), at a commit SHA.
+- **How the work is done**: the order, the rules sessions follow and what
+  each repository does.
+- **What's left**: one sub-issue per remaining piece. The body carries no
+  status; the sub-issues and the board do.
+
+Sessions edit the body in place as the plan changes; the issue's edit
+history is the archive. Before the parent closes, its lasting outcomes move
+into the repositories' docs or into this repository's practices. A
+private-draft parent holds its plan the same way. A plan file left from
+before this rule moves into its parent's body and is deleted
+(`docs-gardening`).
+
+Why: a plan kept in an untracked local file was nearly lost when the machine
+was restored, and a plan in a repository document sits apart from the board
+that tracks the work and from the other repositories it spans.
+Cross-project lesson.
 
 ## Threads
 
