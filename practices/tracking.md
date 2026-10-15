@@ -188,10 +188,16 @@ on each project's board. Project boards auto-add `is:issue
 sub-issues' progress. PRs stay off boards and show on their issue as linked
 pull requests, so nothing appears twice.
 
+Where the repository carrying most of the work is public, it has no
+issues: the parent is a private draft on the shared board, which holds no
+sub-issues, so its body lists the items, and the plan never sits on a
+public issue.
+
 **The plan is the parent's body.** An initiative's plan lives in the body
 of its parent issue, never in a repository document; a product's phase
 plans ([planning.md](planning.md#two-files-per-phase)) are the only plans
-kept as files. The body holds:
+kept as files. A multi-session plan inside one repository works the same
+way, its parent a plain issue on that project's board. The body holds:
 
 - **Goal** and **Done when**: the outcome, and how anyone can tell it is
   reached.
@@ -204,14 +210,15 @@ kept as files. The body holds:
 
 Sessions edit the body in place as the plan changes; the issue's edit
 history is the archive. Before the parent closes, its lasting outcomes move
-into the repositories' docs or into this repository's practices. A thread
-kept as a private draft (Threads, below) holds its plan the same way, with
-its items listed in the body.
+into the repositories' docs or into this repository's practices. A
+private-draft parent holds its plan the same way. A plan file left from
+before this rule moves into its parent's body and is deleted
+(`docs-gardening`).
 
 Why: a plan kept in an untracked local file was nearly lost when the machine
 was restored, and a plan in a repository document sits apart from the board
 that tracks the work and from the other repositories it spans.
-Cross-repository work.
+Cross-project lesson.
 
 ## Threads
 

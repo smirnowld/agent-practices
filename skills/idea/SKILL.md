@@ -80,7 +80,7 @@ board it may name projects.
      item-add`. Its body holds the plan (`practices/tracking.md`, Initiatives:
      "The plan is the parent's body").
    - Any work in a public repository: a private draft with `gh project
-     item-create`; its body lists the thread's items.
+     item-create`; its body holds the plan and lists the thread's items.
 2. **Fields** on the parent: Focus, Rank, Next step and Priority as
    approved, and Status Backlog: the parent is a thread, not a work
    package, so it carries no Kind and its items' statuses move instead. Rank is a number; to place it

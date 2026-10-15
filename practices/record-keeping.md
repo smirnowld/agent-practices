@@ -13,9 +13,9 @@ starting points; adjust them from evidence.
 | ADRs in force | Review when over 25; many may be superseded |
 | Question register (`docs/questions.md`, template `templates/docs/questions.md`) | 30 open items or 20 KB |
 | Current-state doc | 40 KB per file; split by topic beyond that |
-| Initiative plan | None in the repo; it is the parent issue's body ([tracking.md](tracking.md#initiatives)) |
+| Multi-session plan other than a phase plan | None in the repo; it is the parent issue's body ([tracking.md](tracking.md#initiatives)) |
 | Phase overview (`docs/plan.md`) | 4 KB (goal, order diagram, board link) |
-| Phase work packages (`docs/plans/phase-N.md`, the phase's living plan) | 30 KB |
+| Phase work packages (`docs/plans/phase-N.md`) | 30 KB |
 | Binaries in `docs/` | None, except diagrams a doc embeds (< 200 KB each) |
 | Session, closeout, brief, verification logs | None in the repo |
 
