@@ -79,7 +79,7 @@ the compaction point, which
 rules out (model-config.md, "Extended context" and auto-compact window,
 https://code.claude.com/docs/en/model-config, checked 2026-10-15). A session
 reads the key at start: one already running keeps its old compaction point
-until it restarts (observed 2026-10-15).
+until it restarts (observed 2026-10-15, not stated in the docs).
 
 A project that wants it for everyone adds to `.claude/settings.json`:
 
