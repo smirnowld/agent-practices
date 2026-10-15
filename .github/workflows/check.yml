@@ -1,4 +1,4 @@
-name: Check pull requests and main with make check (adapters, scripts, pins, links, ADRs)
+name: CI
 
 on:
   pull_request:
