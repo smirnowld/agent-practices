@@ -1,6 +1,6 @@
 # Phase <N>: <name>
 
-<!-- The current phase, at a glance (P19) (P19b,
+<!-- The current phase, at a glance (P19, P19b,
 practices/tracking.md). Goal and order only: no status, health, dates or
 progress, which the board owns. Changes only when the goal or scope changes
 (practices/planning.md, "Two files per phase"). Plain words: nodes name
