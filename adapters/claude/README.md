@@ -215,6 +215,21 @@ unverified against vendor docs.
   cloud sessions pass, and skips scheduled routines, titled where they are
   configured. A title I set by hand that is not in the form is replaced too,
   after the tool asks me to approve it.
+- Evidence pages (`acceptance-evidence`): the rule is in
+  [session.md](session.md). From the Artifact tool's own description
+  (checked 2026-10-15, no public page; unverified against vendor docs): it
+  wraps the published file in its own doctype, head and body, so the page is
+  a fragment; supporting files go in `files`, a map from published path to
+  source resolved against `root`; each image may be up to 15 MB, one publish
+  up to 255 files and 64 MB; files left out of a republish are kept and
+  `null` removes one; `action` `list` with `scope` `files` and the page's
+  `url` lists what is published; a republish from the same session with the
+  same `file_path` keeps the URL, and another session passes `url` after an
+  `action` `read`; artifacts are private until shared. Republishing at the
+  same URL with the same `file_path` was observed working on 2026-10-15. The tool asks
+  sessions to load `artifact-design` and run its design pass before any
+  page, which invites restyling a fixed format; the skill's precedence line
+  overrides that pass, not the page contract.
 - Proposing sessions (`brief` skill): the rule is in
   [session.md](session.md); the model it names comes from `tiers.json`
   (Sonnet for fast, Opus for standard). Before session.md was

@@ -55,14 +55,16 @@ unverified against a primary source), and P17 keeps verification evidence out
 of the repository (the "verification logs" row above). Learnt in a product
 repo, 2026-09-27.
 
-On that page, each image opens in an in-page viewer with a visible way back,
-never as a link to the image file: the host's page viewer opens a linked
-image with no back control, which strands me in picture view on a phone
-(observed; unverified against a primary source). Start from
-[templates/evidence-page.html](../templates/evidence-page.html): a button per
-image opens a full-screen dialog with "Back to overview" and an actual-size
-toggle, and its Back button, Escape and the back gesture close it. Learnt in
-a product repo, 2026-10-02.
+How the page is captured, laid out, built and republished is one standard,
+the [acceptance-evidence skill](../skills/acceptance-evidence/SKILL.md#screenshots-the-standard);
+projects add only their own facts. It exists because pages made ad hoc
+failed in the same ways: images downscaled until text was unreadable, old
+and new captures mixed on one page, a capture of the wrong brand or of an
+unstyled screen, and screenshots committed to git. Each image opens in an
+in-page viewer with a visible way back, because the host's page viewer opens
+a linked image with no back control, which strands me in picture view on a
+phone (observed; unverified against a primary source). Learnt in a product
+repo, 2026-10-02.
 
 ## Outcomes, not conversations
 

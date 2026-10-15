@@ -70,6 +70,19 @@ when ToolSearch cannot find it either, and the report says so.
   `request_credentials` for that login only, then `autofill_credential`; a
   code through `enter_verification_code` (I approve each; you never see the
   values); `release_credentials` when done. Not connected: numbered steps.
+- **Publish an evidence page** (`acceptance-evidence` step 5): the Artifact
+  tool, building without `--full` (the tool adds doctype, head and body).
+  First publish: `file_path` `OUT_DIR/index.html`, `root` `OUT_DIR`, `files`
+  the map in `OUT_DIR/files.json`, `icon` `camera`. Republish in the same
+  session: the same call with the same `file_path`, which keeps the URL,
+  and no `icon`; from another session, first `action` `read` with the
+  page's `url`, then publish with that `url`. On every republish, list the
+  page's files (`action` `list`, `scope` `files`, its `url`) and add to
+  `files`, mapped to `null`, each `img/` path listed there but missing from
+  `OUT_DIR/files.json`. Loading
+  `artifact-design` is still required; its page contract (title, both
+  themes, phone width) is met by the template, and its design pass does not
+  apply (the skill's precedence line). Give me the URL; it stays private.
 - **Wait on CI or a merge** (P6b, `merge` step 4): run `wait-for` (the
   plugin's `bin/` is on the Bash PATH) with Bash `run_in_background` and a
   `timeout` above its deadline: 4200000 ms covers the defaults (45 and 60

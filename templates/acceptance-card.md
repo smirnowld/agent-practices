@@ -10,7 +10,9 @@ skill. -->
 click through>
 
 **Evidence:** <screenshots | PR preview or local run | phone build | recording>
-- <artifact link> — <what it shows>
+- <evidence page link, the PR's one page> — <what it shows; what changed
+  since the version I last saw>
+- <other link> — <what it shows>
 
 **Assumptions I made:** <assumption — how to undo if wrong; or "none">
 
