@@ -60,8 +60,8 @@ KIND_VIEW='Drafts by kind|table|is:draft|Kind|||Title,Status,Priority,Assignees,
 FOCUS_OPTIONS='Now|RED|Being worked this week|
 Next|YELLOW|Starts when a Now thread ends|
 Later|GRAY|Not before the next review|'
-THREAD_VIEWS='Threads|table|has:focus|Focus||Rank:ASC|Title,Priority,Status,Waiting for,Next step,Sub-issues progress
-Threads by focus|board|has:focus||Focus||Title,Priority,Next step'
+THREAD_VIEWS='Threads|table|focus:Now,Next,Later,Parked|Focus||Rank:ASC|Title,Focus,Priority,Status,Assignees,Waiting for,Next step,Sub-issues progress
+Threads by focus|board|focus:Now,Next,Later||Focus|Rank:ASC|Title,Priority,Waiting for,Next step,Sub-issues progress'
 
 # One GraphQL read per board, flattened to lines:
 #   P|id|template|title

@@ -284,8 +284,8 @@ run create o 'Shared' o 1 --threads
 grep -q '|Focus|SINGLE_SELECT|o[0-9]*~Now~RED~Being worked this week;o[0-9]*~Next~YELLOW~Starts when a Now thread ends;o[0-9]*~Later~GRAY~Not before the next review$' "$S/4/fields"
 grep -q '|Rank|NUMBER|$' "$S/4/fields"
 grep -q '|Next step|TEXT|$' "$S/4/fields"
-grep -q '|Threads|table|has:focus|Focus||Rank:ASC|Next step,Priority,Status,Sub-issues progress,Title,Waiting for$' "$S/4/views"
-grep -q '|Threads by focus|board|has:focus||Focus||Next step,Priority,Title$' "$S/4/views"
+grep -q '|Threads|table|focus:Now,Next,Later,Parked|Focus||Rank:ASC|Assignees,Focus,Next step,Priority,Status,Sub-issues progress,Title,Waiting for$' "$S/4/views"
+grep -q '|Threads by focus|board|focus:Now,Next,Later||Focus|Rank:ASC|Next step,Priority,Sub-issues progress,Title,Waiting for$' "$S/4/views"
 if grep -Eq '\|(Focus|Rank|Next step)\|' "$S/1/fields"; then echo 'thread field on the template'; exit 1; fi
 snap first
 run create o 'Shared' o 1 --threads
