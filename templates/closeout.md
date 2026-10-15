@@ -11,7 +11,9 @@ field marked "only when" if it does not apply; never fill it with "none".
 The summary ends with Status and TL;DR, the lines I see first when a chat
 opens at its end. The PR description holds the whole closeout. With no PR,
 the Record fields that apply go in chat between the heading and the
-summary. -->
+summary. In a public repository the PR never links the board: board links
+go in the chat closeout only (practices/tracking.md, "Draft items and
+public repositories"). -->
 
 **Watch out:** <only when there is a real risk or gap I should know about:
 something untested that could hurt users, data or money, an irreversible
@@ -24,7 +26,9 @@ line>
 
 **Needs you:** <only when something waits on me after you did what you
 could (P9a): numbered steps in order, as in practices/writing-to-me.md
-"Steps for me"; name an effect a step has (for example "merging deploys")>
+"Steps for me"; name an effect a step has (for example "merging deploys");
+a step that outlives the session links its `maintainer-step` issue on the
+board (practices/tracking.md, "Other items")>
 
 **Status:** <🟢 done | 🔵 ready for you | 🟡 partly done | 🔴 blocked |
 ⚪ abandoned> — <one sentence>
@@ -57,7 +61,11 @@ as already fixed with the evidence link; or "none">
 advisory links for security findings (P4), and other follow-ups with where
 they are tracked; only work that failed the fix-on-the-go test, each with
 the reason, for a review finding its `Not fixed: PART — why` line
-(practices/scope-and-batching.md), never for an advisory; or "none">
+(practices/scope-and-batching.md), never for an advisory; or "none". In a
+public repository a review finding reads only "Not fixed: PART, tracked
+privately", with no finding text and no board link; one the session could
+not file goes under "Needs you" in the chat closeout (practices/tracking.md,
+"Other items")>
 
 **Blocked on:** <each blocker or decision and who resolves it, decisions in
 the question register (P11), other blockers where tracked; or "none">
