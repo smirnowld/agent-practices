@@ -24,6 +24,8 @@ check:
 	sh -n bin/test-push-secrets.sh
 	sh -n bin/test-evidence-page.sh
 	python3 -c "import ast,sys; ast.parse(open('bin/evidence-page').read(), 'bin/evidence-page')"
+	sh -n bin/test-board-threads.sh
+	python3 -c "import ast,sys; ast.parse(open('bin/board-threads').read(), 'bin/board-threads')"
 	sh -n adapters/claude/hooks/test-session-start.sh
 	sh -n adapters/claude/hooks/test-check-chip-brief.sh
 	sh -n adapters/claude/hooks/test-check-coordinator-edit.sh
@@ -47,8 +49,9 @@ check:
 	sh bin/test-push-secrets.sh
 	sh bin/test-wait-for.sh
 	sh bin/test-evidence-page.sh
+	sh bin/test-board-threads.sh
 
 # Link the helpers in bin/ (not their tests) into ~/.local/bin.
 install-bin:
 	mkdir -p $(HOME)/.local/bin
-	for f in with-secrets push-secrets wait-for evidence-page; do ln -sf "$(CURDIR)/bin/$$f" "$(HOME)/.local/bin/$$f"; done
+	for f in with-secrets push-secrets wait-for evidence-page board-threads; do ln -sf "$(CURDIR)/bin/$$f" "$(HOME)/.local/bin/$$f"; done

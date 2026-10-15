@@ -1,0 +1,371 @@
+#!/usr/bin/env python3
+"""Print a compact, read-only snapshot of a project board.
+
+Usage: board-threads OWNER NUMBER [--json] [--stale-days N] [--me LOGIN]
+
+Reads a Projects (v2) board over the REST API through `gh api` (OWNER is an
+organisation or a user) and prints four sections: threads (Focus Now, Next or
+Later, with their next step), waiting_on_me, parked and signals (counts).
+
+waiting_on_me: open board items assigned to LOGIN or with Status Waiting and
+LOGIN, "maintainer" or "me" as a whole word in "Waiting for", plus open
+issues assigned to LOGIN in any repository (REST issue search), deduplicated
+by issue URL; a board item keeps its board fields. Sorted by priority P1-P3,
+then none, then oldest update. parked: items with Focus Parked, or Status
+Parked and Kind Idea (other Status Parked items are phase-plan work; a thread
+with Status Parked stays in threads). Every row carries item_id, node_id,
+content_type, repo ("owner/name") and number; search-only rows have no
+item_id or node_id, drafts no repo or number. signals counts threads per
+focus, waiting_on_me (all rows), waiting_on_board (rows with an item_id),
+stalled and no_next_step, and sets issue_search to "ok" or "failed"; a failed
+search leaves the board sections as they are and still exits 0.
+
+Never fetches issue bodies into the output. --json prints one object with
+those four keys; the default is short Markdown. --stale-days (default 7)
+marks a thread stalled when it has not changed for that many days. --me
+defaults to the login gh is signed in as. Exit 1 when reading the board fails
+or it is not found, 2 on a usage error.
+"""
+import datetime
+import json
+import re
+import subprocess
+import sys
+
+FIELDS = ("Status", "Focus", "Rank", "Next step", "Waiting for", "Priority",
+          "Assignees", "Kind", "Area")
+FOCUS_ORDER = ("now", "next", "later")
+# Words in "Waiting for" that name the maintainer, whatever their login.
+ME_WORDS = re.compile(r"\b(maintainer|me)\b", re.IGNORECASE)
+USAGE = "usage: board-threads OWNER NUMBER [--json] [--stale-days N] [--me LOGIN]"
+
+
+class GhError(Exception):
+    def __init__(self, msg, not_found=False):
+        super().__init__(msg)
+        self.not_found = not_found
+
+
+def fail(msg, code=1):
+    print("board-threads: " + msg, file=sys.stderr)
+    sys.exit(code)
+
+
+def gh(*args):
+    """Run gh api ARGS and return the parsed JSON; array pages are concatenated."""
+    docs = gh_docs(*args)
+    if len(docs) == 1:
+        return docs[0]
+    if all(isinstance(d, list) for d in docs):
+        return [x for d in docs for x in d]
+    raise GhError("unexpected answer from gh api " + args[-1])
+
+
+def gh_docs(*args):
+    """Run gh api ARGS and return every JSON document it printed (one per page)."""
+    try:
+        p = subprocess.run(["gh", "api", *args], capture_output=True, text=True,
+                           encoding="utf-8")
+    except FileNotFoundError:
+        raise GhError("gh is not installed or not on PATH")
+    if p.returncode != 0:
+        err = (p.stderr or p.stdout).strip().splitlines()
+        msg = err[-1] if err else "gh exited %d" % p.returncode
+        raise GhError(msg, not_found="404" in (p.stderr or "") or "Not Found" in (p.stderr or ""))
+    # --paginate may print one JSON document per page; decode them all.
+    dec, s, i, docs = json.JSONDecoder(), p.stdout, 0, []
+    while True:
+        while i < len(s) and s[i].isspace():
+            i += 1
+        if i >= len(s):
+            break
+        try:
+            doc, i = dec.raw_decode(s, i)
+        except ValueError:
+            raise GhError("unreadable answer from gh api " + args[-1])
+        docs.append(doc)
+    if not docs:
+        raise GhError("empty answer from gh api " + args[-1])
+    return docs
+
+
+def parse_args(argv):
+    pos, opts = [], {"json": False, "stale": 7, "me": None}
+    it = iter(argv)
+    for a in it:
+        if a == "--json":
+            opts["json"] = True
+        elif a in ("--stale-days", "--me"):
+            v = next(it, None)
+            if v is None:
+                fail(a + " needs a value\n" + USAGE, 2)
+            if a == "--me":
+                opts["me"] = v
+            else:
+                try:
+                    opts["stale"] = int(v)
+                except ValueError:
+                    fail("--stale-days needs a whole number\n" + USAGE, 2)
+        elif a in ("-h", "--help"):
+            print(__doc__.strip())
+            sys.exit(0)
+        elif a.startswith("-"):
+            fail("unknown option " + a + "\n" + USAGE, 2)
+        else:
+            pos.append(a)
+    if len(pos) != 2 or not pos[1].isdigit():
+        fail(USAGE, 2)
+    return pos[0], pos[1], opts
+
+
+def text_of(v):
+    """Plain text of a field value: single-select names, text, numbers."""
+    if v is None:
+        return ""
+    if isinstance(v, dict):
+        for k in ("name", "raw", "text", "title", "html"):
+            if k in v:
+                return text_of(v[k])
+        return ""
+    if isinstance(v, list):
+        return ", ".join(t for t in (text_of(x) for x in v) if t)
+    return str(v).strip()
+
+
+def values(item):
+    out = {}
+    for f in item.get("fields") or []:
+        name, v = f.get("name"), f.get("value")
+        if name == "Assignees":
+            out[name] = [u.get("login", "") for u in (v or []) if isinstance(u, dict)]
+        elif name == "Rank":
+            if isinstance(v, dict):
+                v = v.get("number", v.get("value"))
+            try:
+                out[name] = float(v) if v is not None and v != "" else None
+            except (TypeError, ValueError):
+                out[name] = None
+        else:
+            out[name] = text_of(v)
+    return out
+
+
+def days_since(stamp, now):
+    if not stamp:
+        return None
+    try:
+        t = datetime.datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=datetime.timezone.utc)
+    return max(0, (now - t).days)
+
+
+def prio_key(p):
+    p = (p or "").strip().upper()
+    for i, tag in enumerate(("P1", "P2", "P3")):
+        if p.startswith(tag):
+            return i
+    return 3
+
+
+def rank_out(r):
+    if r is None:
+        return None
+    return int(r) if r == int(r) else r
+
+
+def repo_of(url):
+    """owner/name from an issue's html_url or a repository_url, else None."""
+    m = re.match(r"https://(?:api\.)?github\.com/(?:repos/)?([^/]+)/([^/]+)", url or "")
+    return "%s/%s" % m.groups() if m else None
+
+
+def mentions(text, me):
+    """True when Waiting for TEXT names ME: the login or maintainer/me, as words."""
+    if ME_WORDS.search(text):
+        return True
+    return bool(me) and re.search(r"\b%s\b" % re.escape(me), text, re.IGNORECASE) is not None
+
+
+def snapshot(owner, number, stale, me, now):
+    base = None
+    for kind in ("orgs", "users"):
+        try:
+            fields = gh("%s/%s/projectsV2/%s/fields?per_page=100" % (kind, owner, number))
+            base = (kind, fields)
+            break
+        except GhError as e:
+            if not e.not_found:
+                raise
+    if base is None:
+        raise GhError("board %s/%s not found as an organisation or user project "
+                      "(or gh lacks the project scope: gh auth refresh -s project)" % (owner, number))
+    kind, fields = base
+    ids = [str(f["id"]) for f in fields if isinstance(f, dict) and f.get("name") in FIELDS]
+    query = "per_page=100" + "".join("&fields[]=" + i for i in ids)
+    items = gh("--paginate", "%s/%s/projectsV2/%s/items?%s" % (kind, owner, number, query))
+    found, search = [], "ok"
+    if me:
+        try:
+            for page in gh_docs("--paginate", "search/issues?q=assignee:%s+is:open+is:issue&per_page=100" % me):
+                if isinstance(page, dict):
+                    found += page.get("items") or []
+        except GhError as e:
+            # The board sections still stand; say the search is missing.
+            print("board-threads: issue search failed: %s" % e, file=sys.stderr)
+            found, search = [], "failed"
+
+    me_l = (me or "").lower()
+    threads, waiting, parked = [], [], []
+    for it in items:
+        if it.get("archived_at"):
+            continue
+        c = it.get("content") or {}
+        v = values(it)
+        status, focus = v.get("Status", ""), v.get("Focus", "")
+        drafted = it.get("content_type") == "DraftIssue"
+        link = c.get("html_url") or (
+            "https://github.com/%s/%s/projects/%s?pane=issue&itemId=%s"
+            % (kind, owner, number, it.get("id")))
+        days = days_since(it.get("updated_at"), now)
+        open_ = status.lower() != "done" and (c.get("state") or "open").lower() != "closed"
+        ident = {"item_id": it.get("id"), "node_id": it.get("node_id"),
+                 "content_type": it.get("content_type"),
+                 "repo": None if drafted else repo_of(c.get("repository_url") or c.get("html_url")),
+                 "number": None if drafted else c.get("number")}
+        base_row = dict(ident, title=c.get("title") or "(untitled)", link=link,
+                        status=status, priority=v.get("Priority", ""),
+                        days_since_update=days)
+        is_thread = focus.lower() in FOCUS_ORDER
+        if is_thread and open_:
+            nxt = v.get("Next step", "")
+            threads.append(dict(base_row, focus=focus, rank=rank_out(v.get("Rank")),
+                                next_step=nxt, waiting_for=v.get("Waiting for", ""),
+                                assignees=v.get("Assignees", []),
+                                updated_at=it.get("updated_at"),
+                                stalled=days is not None and days >= stale,
+                                no_next_step=not nxt, _rank=v.get("Rank")))
+        assigned = me_l and me_l in [a.lower() for a in v.get("Assignees", [])]
+        wf = v.get("Waiting for", "")
+        waits = status.lower() == "waiting" and mentions(wf, me)
+        if open_ and (assigned or waits):
+            waiting.append(dict(base_row, waiting_for=wf, kind=v.get("Kind", ""),
+                                area=v.get("Area", ""), labels=[],
+                                _updated=it.get("updated_at") or ""))
+        if focus.lower() == "parked" or (
+                not is_thread and status.lower() == "parked"
+                and v.get("Kind", "").lower() == "idea"):
+            parked.append(dict(ident, title=base_row["title"], link=link,
+                               kind=v.get("Kind", ""), area=v.get("Area", ""),
+                               priority=base_row["priority"], days_since_update=days,
+                               _updated=it.get("updated_at") or ""))
+
+    # Merge open issues assigned to me anywhere; a board row keeps its fields.
+    by_link = {w["link"]: w for w in waiting}
+    for s in found:
+        labels = [l.get("name", "") for l in s.get("labels") or [] if isinstance(l, dict)]
+        row = by_link.get(s.get("html_url"))
+        if row is not None:
+            row["labels"] = labels
+            continue
+        row = {"item_id": None, "node_id": None, "content_type": "Issue",
+               "repo": repo_of(s.get("repository_url")), "number": s.get("number"),
+               "title": s.get("title") or "(untitled)", "link": s.get("html_url"),
+               "status": "", "priority": "", "days_since_update":
+               days_since(s.get("updated_at"), now), "waiting_for": "", "kind": "",
+               "area": "", "labels": labels, "_updated": s.get("updated_at") or ""}
+        by_link[row["link"]] = row
+        waiting.append(row)
+
+    threads.sort(key=lambda t: (FOCUS_ORDER.index(t["focus"].lower()),
+                                t["_rank"] is None, t["_rank"] or 0, t["title"].lower()))
+    waiting.sort(key=lambda t: (prio_key(t["priority"]), t["_updated"]))
+    parked.sort(key=lambda t: t["_updated"])
+    for row in threads + waiting + parked:
+        row.pop("_rank", None)
+        row.pop("_updated", None)
+    per_focus = {f.capitalize(): sum(1 for t in threads if t["focus"].lower() == f)
+                 for f in FOCUS_ORDER}
+    signals = {"threads": per_focus, "waiting_on_me": len(waiting),
+               "waiting_on_board": sum(1 for w in waiting if w["item_id"] is not None),
+               "issue_search": search,
+               "stalled": sum(1 for t in threads if t["stalled"]),
+               "no_next_step": sum(1 for t in threads if t["no_next_step"])}
+    return {"threads": threads, "waiting_on_me": waiting, "parked": parked,
+            "signals": signals}
+
+
+def md_link(row):
+    title = row["title"].replace("[", "(").replace("]", ")")
+    return "[%s](%s)" % (title, row["link"])
+
+
+def age(days):
+    return "?" if days is None else "%d d" % days
+
+
+def markdown(snap, me):
+    out = ["## Threads"]
+    if not snap["threads"]:
+        out.append("none")
+    for t in snap["threads"]:
+        notes = [age(t["days_since_update"])]
+        if t["stalled"]:
+            notes.append("stalled")
+        if t["waiting_for"]:
+            notes.append("waiting for " + t["waiting_for"])
+        nxt = "Next: " + t["next_step"] if t["next_step"] else "no next step"
+        head = t["focus"] if t["rank"] is None else "%s %s" % (t["focus"], t["rank"])
+        out.append("- %s %s — %s (%s)" % (head, md_link(t), nxt, ", ".join(notes)))
+    out += ["", "## Waiting on %s" % (me or "me")]
+    if snap["signals"]["issue_search"] == "failed":
+        out.append("Issue search failed; assigned issues not shown.")
+    if not snap["waiting_on_me"]:
+        out.append("none")
+    for w in snap["waiting_on_me"]:
+        bits = [b for b in (w["priority"], w["status"]) if b]
+        if w["item_id"] is None and w["repo"]:
+            bits.insert(0, "%s#%s, not on the shared board" % (w["repo"], w["number"]))
+        if w["waiting_for"]:
+            bits.append("waiting for " + w["waiting_for"])
+        bits.append(age(w["days_since_update"]))
+        out.append("- %s (%s)" % (md_link(w), ", ".join(bits)))
+    out += ["", "## Parked"]
+    if not snap["parked"]:
+        out.append("none")
+    for p in snap["parked"]:
+        bits = [b for b in (p["kind"], p["area"], p["priority"]) if b]
+        bits.append(age(p["days_since_update"]))
+        out.append("- %s (%s)" % (md_link(p), ", ".join(bits)))
+    s = snap["signals"]
+    f = s["threads"]
+    out += ["", "## Signals",
+            "- Threads: %d now, %d next, %d later" % (f["Now"], f["Next"], f["Later"]),
+            "- Waiting on me: %d (%d on the board)" % (s["waiting_on_me"], s["waiting_on_board"]),
+            "- Stalled: %d, no next step: %d" % (s["stalled"], s["no_next_step"])]
+    return "\n".join(out)
+
+
+def main(argv):
+    owner, number, opts = parse_args(argv)
+    try:
+        me = opts["me"]
+        if me is None:
+            user = gh("user")
+            me = user.get("login", "") if isinstance(user, dict) else ""
+        snap = snapshot(owner, number, opts["stale"], me,
+                        datetime.datetime.now(datetime.timezone.utc))
+    except GhError as e:
+        fail(str(e))
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if opts["json"]:
+        print(json.dumps(snap, indent=2, ensure_ascii=False))
+    else:
+        print(markdown(snap, me))
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

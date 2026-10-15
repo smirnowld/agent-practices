@@ -203,6 +203,11 @@ change to my tooling, that outlives a session and may span repositories.
 - **Only my "go" creates one.** A session that finds work belonging to no
   thread proposes a thread, or files the item under an existing one; it
   never creates a thread on its own.
+- **Skills.** `idea` explores an idea and asks go, park or drop; only go
+  creates a thread. `today` writes a short note each weekday morning;
+  `weekly-review` re-ranks the threads with me on Mondays. They read the
+  board through `bin/board-threads` and run locally, since they need
+  board access.
 - **Fields.** Focus (Now, Next, Later, Parked), Rank within its Focus, Next step,
   and the board's usual Priority, Status and Waiting for (Fields above).
   Thread fields and views are on the shared board only, never on the
@@ -216,6 +221,9 @@ change to my tooling, that outlives a session and may span repositories.
   flight. Any of these is a trigger to review what is in flight before
   starting more:
   - items waiting on me pile up (Assigned to me, Waiting for naming me);
+    open issues assigned to me that are not on the shared board are
+    shown, but only board items count toward this trigger, since old
+    maintainer steps elsewhere would set it off every day;
   - a thread's parent item has not been updated in about a week (the board keeps
     no date per field; closeout updates Next step each session);
   - sessions whose titles show 🔴 or 🟡 (`templates/session-title.md`),

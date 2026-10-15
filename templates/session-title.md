@@ -62,11 +62,15 @@ when nothing else is known:
 | `project-setup` | `🟡 Chore·M — baseline setup` (audit: `🟢 Research·S — baseline audit`) |
 | `docs-gardening` | `🟢 Chore·S — consolidate DOCS` |
 | `project-visuals` | `🟢 Chore·S — redraw VISUAL` |
+| `idea` | `🟡 Decide·S — idea: SHORT NAME` |
+| `weekly-review` | `🟡 Decide·S — weekly review of threads` |
 | a routine skill run by hand | `🟢 Research·XS — WHAT IT CHECKS by hand` |
 
-A skill run inside a session already titled, such as `closeout` or
-`acceptance-evidence`, keeps the title. A scheduled routine is titled
-where it is configured (`⏱ Routine — PROJECT: WHAT IT CHECKS, WHEN`). Unlike
+A skill run inside a session already titled, such as `closeout`,
+`acceptance-evidence` or `idea`, keeps the title. The shared-board routines
+are titled `⏱ Routine — shared board: Today note, weekday mornings` and
+`⏱ Routine — shared board: propose weekly review, Monday mornings`. A scheduled
+routine is titled where it is configured (`⏱ Routine — PROJECT: WHAT IT CHECKS, WHEN`). Unlike
 other sessions, a routine names its project: routines are listed in one
 place across projects, so the title must say whose it is. The name says what
 it is for ([naming rule](../practices/writing-to-me.md#names)).
