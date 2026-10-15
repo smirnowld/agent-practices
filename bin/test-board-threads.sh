@@ -150,7 +150,7 @@ assert all({"item_id", "node_id", "content_type", "repo", "number"} <= set(r) fo
 ok "rows carry item_id, node_id, content_type, repo and number"
 check "$dir/org.json" 'assert d["threads"][0]["link"] == "https://github.com/orgs/example-org/projects/3?pane=issue&itemId=103"; assert d["threads"][1]["link"] == "https://github.com/example-org/demo/issues/102"'
 ok "links for drafts and issues"
-check "$dir/org.json" 'assert d["signals"] == {"threads": {"Now": 3, "Next": 4, "Later": 1}, "waiting_on_me": 6, "stalled": 1, "no_next_step": 1}, d["signals"]'
+check "$dir/org.json" 'assert d["signals"] == {"threads": {"Now": 3, "Next": 4, "Later": 1}, "waiting_on_me": 6, "waiting_on_board": 4, "issue_search": "ok", "stalled": 1, "no_next_step": 1}, d["signals"]'
 ok "signals"
 grep -q 'SECRET-BODY-TEXT' "$dir/org.json" && fail "JSON output carries an issue body"
 ok "JSON output has no bodies"
@@ -183,7 +183,7 @@ grep -q '^- Now 2 \[Beta now\](https://github.com/example-org/demo/issues/102) â
   || fail "thread line: $(cat "$dir/org.md")"
 grep -q '^- Next 2.5 \[Thread parked\](https://github.com/example-org/demo/issues/117) â€” Next: do f (1 d)$' "$dir/org.md" \
   || fail "fractional rank line: $(cat "$dir/org.md")"
-grep -q '^- \[Elsewhere old\](https://github.com/example-org/other/issues/7) (example-org/other#7, not on the board, 30 d)$' "$dir/org.md" \
+grep -q '^- \[Elsewhere old\](https://github.com/example-org/other/issues/7) (example-org/other#7, not on the shared board, 30 d)$' "$dir/org.md" \
   || fail "search-only line: $(cat "$dir/org.md")"
 grep -q '|' "$dir/org.md" && fail "text output has a table"
 ok "text output: sections, one bullet per item, no bodies, no tables"
@@ -193,6 +193,16 @@ check "$dir/user.json" 'assert d["threads"][0]["link"] == "https://github.com/us
 grep -q '^api orgs/example-user/projectsV2/3/fields' "$dir/calls" && grep -q '^api --paginate users/example-user/projectsV2/3/items' "$dir/calls" \
   || fail "no fallback to the user board: $(cat "$dir/calls")"
 ok "user-owned board fallback"
+
+# A failed issue search still prints the board, flagged; exit 0.
+run example-org 3 --me searchfail --json > "$dir/sf.json" 2> "$dir/err" || fail "search failure exited non-zero"
+grep -q '^board-threads: issue search failed: .*HTTP 422' "$dir/err" || fail "search failure warning: $(cat "$dir/err")"
+check "$dir/sf.json" 'assert d["signals"]["issue_search"] == "failed"; assert titles("waiting_on_me") == ["Waits on maintainer"]; assert d["signals"]["waiting_on_board"] == 1; assert len(d["threads"]) == 8'
+run example-org 3 --me searchfail > "$dir/sf.md" 2> /dev/null || fail "search failure (text) exited non-zero"
+grep -q '^Issue search failed; assigned issues not shown\.$' "$dir/sf.md" && grep -q '^## Threads$' "$dir/sf.md" \
+  || fail "search failure text: $(cat "$dir/sf.md")"
+grep -q 'Issue search failed' "$dir/org.md" && fail "search-failed line printed after a good search"
+ok "issue search failure keeps the board sections, flags it and exits 0"
 
 # Empty board: every section says none.
 echo '[]' > "$dir/fx/page1.json"; echo '[]' > "$dir/fx/page2.json"
@@ -207,14 +217,6 @@ set -e
 [ "$(wc -l < "$dir/err")" -eq 1 ] && grep -q '^board-threads: .*project scope' "$dir/err" || fail "gh failure message: $(cat "$dir/err")"
 [ -s "$dir/out" ] && fail "printed output on failure"
 ok "gh failure exits 1 with one stderr line"
-
-set +e
-run example-org 3 --me searchfail > "$dir/out" 2> "$dir/err"; rc=$?
-set -e
-[ "$rc" = 1 ] && [ "$(wc -l < "$dir/err")" -eq 1 ] && grep -q '^board-threads: .*HTTP 422' "$dir/err" \
-  || fail "search failure: exit $rc, $(cat "$dir/err")"
-[ -s "$dir/out" ] && fail "printed output when the search failed"
-ok "issue search failure exits 1"
 
 set +e
 run nobody 3 --me tester > /dev/null 2> "$dir/err"; rc=$?

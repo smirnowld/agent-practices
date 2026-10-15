@@ -73,12 +73,14 @@ For each part, a proposed change with a one-line reason from the evidence:
    and highest priority first. One that is not really mine (another
    party, or already done) gets its fix (clear Waiting for, reassign,
    close) as a numbered change. Issues assigned to me that are not on
-   the board are grouped by repository, one line each with the count,
+   the shared board are grouped by repository, one line each with the count,
    except one that needs a decision now.
 4. **Parked items** (the parked ideas `board-threads` lists; work items
    a phase plan parked are not offered here): for each, keep parked, promote to a thread (the
    `idea` skill's Go step, with Focus and Rank proposed), or drop
    (archive the draft; archiving is undone from the board's archive).
+   A parked thread whose parent is an issue is closed instead, which is
+   mine to approve like any change.
    Items parked under 4 weeks with nothing changed are listed as one
    line: "N parked, unchanged".
 5. **Capacity:** the signals (`practices/tracking.md`, Threads) as counts,

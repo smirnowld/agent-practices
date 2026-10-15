@@ -54,8 +54,8 @@ The capacity signals of `practices/tracking.md` (Threads):
 - open 🔴 or 🟡 sessions.
 
 **Review suggested** when any of these holds: a thread in Now is stalled,
-more than 5 board items wait on me (rows with an `item_id`; issues
-assigned to me that are not on the board are counted but do not
+more than 5 board items wait on me (`signals.waiting_on_board`; issues
+assigned to me that are not on the shared board are counted but do not
 trigger it), or 3 or more 🔴 or 🟡 sessions are open. My
 own agent configuration may set other thresholds. On a Monday the weekly
 review (`weekly-review`) is due anyway: say so instead.
@@ -92,7 +92,8 @@ Review: suggested — WHY / not needed / weekly review today
 - **Next N, Later N:** counts only; those threads are not listed.
 - **Waits on you:** board items first, highest priority first; past 5,
   list 5 and say how many more. Issues assigned to me that are not on the
-  board are one line: "plus N assigned issues not on the board".
+  shared board are one line: "plus N assigned issues not on the shared board". When
+  `signals.issue_search` is "failed", say "assigned issues not checked".
 - **Stalled in Next or Later:** past 3, list 3 and say how many more.
 - Empty sections are left out.
 

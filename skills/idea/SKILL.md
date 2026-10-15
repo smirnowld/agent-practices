@@ -83,8 +83,8 @@ board it may name projects.
 2. **Fields** on the parent: Focus, Rank, Next step and Priority as
    approved, and Status Backlog: the parent is a thread, not a work
    package, so it carries no Kind and its items' statuses move instead. Rank is a number; to place it
-   between two threads, use a value between theirs (the weekly review
-   renumbers).
+   between two threads, use a value between theirs; it stays fractional
+   until a weekly review lists it for renumbering.
 3. **First sub-issues:** in a private repository, an issue each (the
    project's own conventions and labels), added as a sub-issue of the
    parent (`gh api repos/OWNER/REPO/issues/N/sub_issues -F
