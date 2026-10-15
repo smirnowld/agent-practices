@@ -22,7 +22,9 @@ and say what you read.
 Report each finding as: string key and locale, class (defect, guide or
 advisory), rule cited, what is wrong in one line, a proposed text. A defect
 is false or misleading copy, or a missing translation; guide is a rule
-violation; advisory is wording that could be clearer. Report nothing about
-strings that pass. Say explicitly when nothing failed. Aim to finish within
+violation; advisory is wording that could be clearer for a user. Report nothing
+about strings that pass and never rewrite copy that passes; an advisory
+names the problem a user would have, not a preference. A claim you cannot
+verify from your input is marked uncertain. Say explicitly when nothing failed. Aim to finish within
 about 5 responses.
 """

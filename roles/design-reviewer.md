@@ -34,7 +34,9 @@ advisory), what a user would experience, the smallest change that fixes it.
 Rank defects first. Do no harm: never propose restyling something that
 passes the rules, and keep advisories to problems a user would have, not
 taste. If an image is downscaled or the cells are at different scales, say
-which size findings that weakens. Say explicitly when nothing failed.
+which size findings that weakens. A size or spacing you estimate from an
+image rather than read from the measurement report is marked as an
+estimate. Say explicitly when nothing failed.
 
 In critique mode (a new screen at planning time, from a plan, sketch or
 mock), skip the checks above and answer: does the structure suit the

@@ -2,7 +2,7 @@
 
 Cross-project rules for screens people use, and how a change to them is
 reviewed. Each rule is written so a reviewer can say pass or fail from a
-screenshot or a string; project rules (brand, tokens, component names) live
+screenshot, a string or a measurement; project rules (brand, tokens, component names) live
 in the project's `docs/design.md` and add to these.
 
 ## Rules
@@ -16,17 +16,19 @@ overrides one by number and says why.
   overview shows the state as a visual (chart, bar, status mark, grid) above
   any explanatory text. Fails when the first thing in reading order is a
   paragraph that a visual could replace.
-- **UI2. One message per card.** A card or row carries one headline fact and
-  at most two supporting lines at default text size. Fails at three or more
-  lines of prose, or two facts competing for the headline.
+- **UI2. One message per card.** A card or row carries one headline and at
+  most two supporting lines, counted as rendered lines at default text size
+  in the longest locale. Fails at three or more supporting lines, or when
+  the headline joins two facts (a count and a sentence, two numbers).
 - **UI3. Density matches the task.** No region of the first screen is empty
   for more than a third of the viewport height unless it is a deliberate
   empty state; a list or table fits the narrowest supported width without
   horizontal scroll, by hiding, merging or stacking columns.
 - **UI4. Exact values visible.** A number the user acts on is shown as text,
   not only on hover, tap-and-hold or in a tooltip.
-- **UI5. Numbers say what they are.** Every number shows its unit, the period
-  it covers and, if it can be stale, when it was measured. A value that is
+- **UI5. Numbers say what they are.** Every number shows its unit and the
+  period it covers where it has them and, where the change says it can be
+  stale, when it was measured. A value that is
   estimated or unavailable is labelled as such, never shown as a plain
   number, zero or blank.
 
@@ -34,9 +36,10 @@ overrides one by number and says why.
 
 - **UI6. Same element, same size.** One component (button, toggle, badge,
   dot, chip) has the same height, corner radius and padding everywhere it
-  appears, in every locale and theme. Width may grow with the label;
-  height and tap area may not change. Measured, not eyeballed: differences
-  above 2 points fail.
+  appears, in every locale and theme, unless the project's `docs/design.md`
+  names it as a separate size variant. Width may grow with the label; height
+  may not. Measured, not eyeballed: height differences above 2 pt (iOS),
+  2 dp (Android) or 2 CSS px fail.
 - **UI7. Same meaning, same look across platforms.** The same concept is the
   same relative size and weight on each platform, adapted to that platform's
   native control. A status mark more than 1.5 times larger, relative to its
@@ -49,8 +52,9 @@ overrides one by number and says why.
 
 ### Readability and access
 
-- **UI10. Contrast.** Text meets WCAG 2.2 AA (4.5:1, or 3:1 for text at or
-  above 18 pt regular or 14 pt bold); icons and control borders that carry
+- **UI10. Contrast.** Text meets WCAG 2.2 AA (4.5:1, or 3:1 for large text:
+  at least 24 CSS px regular or 18.66 CSS px bold, which WCAG writes as 18 pt
+  and 14 pt); icons and control borders that carry
   meaning meet 3:1.
 - **UI11. No colour-only status.** Every status shown by colour also has a
   shape, icon or word.
@@ -68,8 +72,8 @@ overrides one by number and says why.
 ### Copy
 
 - **UI15. Copy says what to do next.** An error, empty, offline or
-  unavailable state says what happened in the user's terms and what they can
-  do now. A bare label ("Unavailable: Classic", "Error") fails.
+  unavailable state says what happened and what the user can do now. A bare
+  label ("Unavailable: X", "Error") fails.
 - **UI16. Copy is true.** The text matches what the app actually does in that
   state (offline still shows cached data, a retry happens automatically, an
   item can still be ordered later). A statement the reviewer can show is
@@ -79,17 +83,18 @@ overrides one by number and says why.
   address) throughout.
 - **UI18. Every locale is written, not just translated.** Each locale reads
   naturally to a native speaker: no word-for-word calques, no untranslated
-  strings, no mixed scripts.
+  strings, no mixed scripts except names and terms kept in the original.
 
 ### Platform conventions
 
-Load only the section for each platform the change touches.
+Load only the section for each platform the change touches. A finding
+against one cites it as `iOS`, `Android` or `Web`.
 
 - **iOS** (Human Interface Guidelines): system controls for system jobs
   (toggles, segmented controls, sheets, navigation bar); large titles only on
   top-level screens; no Android-style floating action button; SF Symbols
   weight matches neighbouring text; buttons in a row share one style
-  (`.borderedProminent` for the one primary action, not every action).
+  (a filled, prominent button for the one primary action, not every action).
 - **Android** (Material 3): top app bar, navigation bar and dialogs from the
   Material components; one filled button per screen for the primary action;
   ripple on tappable surfaces; system back always works.
@@ -103,9 +108,9 @@ than by topic, cheapest first. Each layer reports only what it can see.
 
 | Layer | Input | Who | Finds |
 |---|---|---|---|
-| 0. Measurements | The running screens | Scripts | UI6, UI8, UI10, UI12, UI13 by number: sizes across locale and theme, truncation, contrast, target sizes; side-by-side grids for the next layers |
-| 1. Copy | Changed strings, every locale, with key and screen | Copy reviewer, fast tier | UI15 to UI18 |
-| 2. Visual | The grids and a few full-size screens, the change's description, the project's `docs/design.md` | Design reviewer, standard tier | Guide compliance, consistency the scripts could not measure, usability, brand, UI1 to UI5 |
+| 0. Measurements | The running screens | Scripts | UI6 to UI8, UI10, UI12, UI13 by number: sizes across locale and theme, truncation, contrast, target sizes; side-by-side grids for the next layers |
+| 1. Copy | Changed strings, every locale, with key and screen | [Copy reviewer](../roles/copy-reviewer.md) | UI15 to UI18 |
+| 2. Visual | The grids and a few full-size screens, the change's description, the project's `docs/design.md` | [Design reviewer](../roles/design-reviewer.md) | Guide compliance, consistency the scripts could not measure (UI6 to UI9), usability (UI11, UI14), brand, UI1 to UI5 |
 | 3. Critique | A new screen's plan or sketch | Design reviewer in critique mode, at planning time | Whether the screen's structure suits its job; advisory |
 
 Rules for every layer:
@@ -118,10 +123,11 @@ Rules for every layer:
 - **Full-size, not downscaled.** Size and spacing findings need images at
   device resolution or a stated scale; a downscaled screenshot hides 2-point
   differences.
-- **Findings by class.** *Defect* (broken, false, unreadable, unreachable)
-  and *guide* (violates a numbered rule, with the rule cited) are fixed
-  before acceptance. *Advisory* (a better design is possible) goes on the
-  acceptance card and is the owner's call.
+- **These layers add to the change's review (policy P4), never replace
+  it.** Their findings map onto it: *defect* (broken, false, unreadable,
+  unreachable) and *guide* (violates a numbered rule, cited) are blocking;
+  *advisory* (a better design is possible) is non-blocking, tracked as P4
+  says and shown on the acceptance card for the owner's call.
 - **Do no harm.** A reviewer never proposes restyling something that passes
   the rules; an advisory finding names the problem a user would have, not a
   taste.
