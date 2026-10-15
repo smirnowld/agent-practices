@@ -74,8 +74,9 @@ session, need no board access and can drive auto-add filters:
 - `work-package`: one issue per package in a phase plan.
 - `maintainer-step`: a step of mine that outlives a session.
 - `long-lead`: an outside lead time on the critical path.
-- `initiative`: the parent of work spanning repositories, and every thread
-  parent issue ([Threads](#threads)).
+- `initiative`: the parent of work spanning repositories or of a
+  multi-session plan ([Initiatives](#initiatives)), and every thread parent
+  issue ([Threads](#threads)).
 - `deferred-review`: a review finding not fixed (P4).
 
 A project adds its own labels; the names follow P21a.
@@ -197,9 +198,8 @@ public issue.
 of its parent issue, never in a repository document; a product's phase
 plans ([planning.md](planning.md#two-files-per-phase)) are the only plans
 kept as files. A multi-session plan inside one repository works the same
-way: in a product its parent is the package's `work-package` issue;
-otherwise the parent is labelled `initiative` like a thread's, which keeps
-it off the project board. The body holds:
+way: its parent is labelled `initiative` and sits on the shared board, like
+a thread's. The body holds:
 
 - **Goal** and **Done when**: the outcome, and how anyone can tell it is
   reached.
