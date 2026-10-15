@@ -124,8 +124,9 @@ On a board where people other than me have Write:
 - **Template.** Run agent-practices' own copy of the script (the one
   installed with these skills, never a copy in the reviewed project):
   `scripts/ensure-board.sh --check OWNER NUMBER TEMPLATE_OWNER
-  TEMPLATE_NUMBER`, with the template board's owner and number from my own
-  agent configuration, and report what it finds. If the script is not
+  TEMPLATE_NUMBER`, adding `--threads` for the shared board, with the
+  template board's owner and number from my own agent configuration, and
+  report what it finds. If the script is not
   installed or the template is not named, say the template check was not
   run.
 - **Missing items.** List open issues of the repository that are not on the

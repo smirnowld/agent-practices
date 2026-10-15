@@ -59,7 +59,8 @@ For R6, run `scripts/ensure-labels.sh --check <owner/repo>` (read-only; exit
 1 names each label missing or different). Any gap is "partial" or "missing".
 
 For R7, run `scripts/ensure-board.sh --check <owner> <number>
-<template-owner> <template-number>` (read-only). Exit 1 lists each field,
+<template-owner> <template-number>` (read-only), adding `--threads` for the
+shared board. Exit 1 lists each field,
 option, view or workflow that differs from the template, or a workflow that
 is missing or disabled: R7 is "partial". Exit 2 means a board could not be
 read or the template number is not the template: R7 is "missing" when the
@@ -107,7 +108,9 @@ Sort gaps into:
   `--with-kind` for a board that holds draft items (it adds Kind, Area and
   a Drafts by kind view; Area's options are the board's own and reruns
   never change them). When a public repository's work moves to the shared
-  board, add the repository's name as an Area option there. Templates exist
+  board, add the repository's name as an Area option there. The shared
+  board also takes `--threads` (Focus, Rank, Next step and the two Threads
+  views, `practices/tracking.md`, Threads); no other board does. Templates exist
   in organisations only; a user's board is copied across owners from the
   organisation's template. A board copied before the template changed is
   brought up to it with `scripts/ensure-board.sh --sync <owner> <number>

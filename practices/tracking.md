@@ -26,8 +26,8 @@ exceptions mirror a scope fact, and the drift check keeps each pair in step:
 ## Boards and access
 
 - **One board per project**, private. A shared board holds cross-cutting
-  work: parents of initiatives that span repositories, ideas and my own
-  to-dos that belong to no repository, and the items of a public repository
+  work: thread parents and parents of initiatives that span repositories,
+  ideas and my own to-dos that belong to no repository, and the items of a public repository
   (below).
 - **One board per issue.** An issue can sit on several boards, but status is
   stored per board and would diverge. Work spanning repositories is an
@@ -58,6 +58,9 @@ exceptions mirror a scope fact, and the drift check keeps each pair in step:
 | Assignees | Built-in | The person who must act next. Empty for agent work, since agents act as my account and would flood my list; set to me only for a step only I can take |
 | Kind | Single select | Only on a board that holds draft items, which cannot carry labels |
 | Area | Single select | Only on a board that holds draft items: the repository (by name) or theme a draft belongs to |
+| Focus | Single select | Only on the shared board, on thread parents ([Threads](#threads)): Now, Next or Later; a board may add Parked for a thread set aside |
+| Rank | Number | Only on thread parents: order within a Focus, 1 first |
+| Next step | Text | Only on thread parents: the thread's next concrete action, in plain words |
 
 Phase health and the expected end date are status too: they go in the
 board's project status update where available, otherwise in the phase
@@ -71,7 +74,8 @@ session, need no board access and can drive auto-add filters:
 - `work-package`: one issue per package in a phase plan.
 - `maintainer-step`: a step of mine that outlives a session.
 - `long-lead`: an outside lead time on the critical path.
-- `initiative`: the parent of work spanning repositories.
+- `initiative`: the parent of work spanning repositories, and every thread
+  parent issue ([Threads](#threads)).
 - `deferred-review`: a review finding not fixed (P4).
 
 A project adds its own labels; the names follow P21a.
@@ -87,6 +91,8 @@ A project adds its own labels; the names follow P21a.
 | No priority yet | Items with no priority | Board review |
 | Long-lead | Long-lead items by target date | Me |
 | Initiatives | Parent issues with sub-issue progress | Me |
+| Threads | Shared board only: thread parents (Parked too) grouped by Focus, sorted by Rank, with Priority, Status, Waiting for, Next step, assignees and sub-issue progress | Me; `brief`, closeout |
+| Threads by focus | Shared board only: Now, Next and Later threads in Focus columns, sorted by Rank | Me |
 
 A view cannot show items from other boards. What waits on me is GitHub's
 assigned-to-me issue list, which spans every repository, plus the shared
@@ -181,6 +187,54 @@ on each project's board. Project boards auto-add `is:issue
 -label:initiative`, which keeps parents off them; the parent shows the
 sub-issues' progress. PRs stay off boards and show on their issue as linked
 pull requests, so nothing appears twice.
+
+## Threads
+
+A thread is one stream of work I am pursuing, such as a product goal or a
+change to my tooling, that outlives a session and may span repositories.
+
+- **Where it lives.** A thread is a parent item on the shared board. As an
+  issue it is labelled `initiative`, even when its work sits in one
+  repository, since that label keeps it off the project boards' auto-add;
+  its work items are sub-issues in the project repositories, on their own
+  boards, as for an initiative (above). For work in a public repository it
+  is a private draft, which can hold no sub-issues: its body lists its
+  items, and it shows no sub-issue progress.
+- **Only my "go" creates one.** A session that finds work belonging to no
+  thread proposes a thread, or files the item under an existing one; it
+  never creates a thread on its own.
+- **Fields.** Focus (Now, Next, Later), Rank within its Focus, Next step,
+  and the board's usual Priority, Status and Waiting for (Fields above).
+  Thread fields and views are on the shared board only, never on the
+  template or a project board. `scripts/ensure-board.sh` adds them with
+  `--threads` and checks them with `--check ... --threads`.
+- **Briefs and closeouts.** A brief names its thread, or none
+  (`templates/brief.md`). The closeout sets the thread's Next step to what
+  comes next, and Waiting for when the thread waits on something; with
+  nothing left, it proposes closing the thread.
+- **Capacity by signals, not a limit.** No fixed number of threads in
+  flight. Any of these is a trigger to review what is in flight before
+  starting more:
+  - items waiting on me pile up (Assigned to me, Waiting for naming me);
+  - a thread's parent item has not been updated in about a week (the board keeps
+    no date per field; closeout updates Next step each session);
+  - sessions whose titles show 🔴 or 🟡 (`templates/session-title.md`),
+    since those hold my attention.
+- **Session groups.** Where the agent's app can group sessions, there is
+  one group per thread, named with the thread's short name, plus "Other"
+  for sessions in no thread. Agents create, fill and remove groups; I do
+  not touch them. A session files itself once it is titled and its thread
+  is known. A group whose thread closed is removed by a later session that
+  finds it empty, where the adapter names a tool for that. The
+  adapter's `session.md` names the tools; my own agent configuration names
+  the shared board and any naming convention per machine.
+
+Why: with only project boards, what I was pursuing across repositories
+lived in my head and in chat, sessions could not tell which goal their work
+served, and too much in flight showed only as a feeling. One parent item per
+stream, with an explicit next step, gives each stream an owner fact; a
+fixed thread limit would be either too tight in a quiet week or too loose in
+a busy one, so the signals above stand in for it. Tooling repos.
 
 ## Finding the board
 
