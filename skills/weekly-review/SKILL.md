@@ -60,8 +60,7 @@ For each part, a proposed change with a one-line reason from the evidence:
    Move a thread between Now, Next and Later where its state calls for it:
    a Now thread with no progress and no next step goes to Next unless it
    is blocked on me; a Next thread whose blocker cleared moves up. A
-   thread I have set aside goes to Parked, and a Parked thread whose
-   reason has passed comes back to Next. Keep
+   thread I have set aside goes to Parked (step 4 brings it back). Keep
    Now to threads that each have a live next step. Propose a Rank only
    for a thread whose place changes, each as its own numbered change:
    writing any field updates the parent item and resets its stall
@@ -81,8 +80,10 @@ For each part, a proposed change with a one-line reason from the evidence:
    a phase plan parked are not offered here): for each, keep parked, promote to a thread (the
    `idea` skill's Go step, with Focus and Rank proposed), or drop
    (archive the draft; archiving is undone from the board's archive).
-   A parked thread whose parent is an issue is closed instead, which is
-   mine to approve like any change.
+   An item that is already a thread (Focus Parked) is promoted by
+   setting its Focus back to Next with a proposed Rank, never through
+   the Go step. A parked thread whose parent is an issue is closed
+   instead of dropped, which is mine to approve like any change.
    Items parked under 4 weeks with nothing changed are listed as one
    line: "N parked, unchanged".
 5. **Capacity:** the signals (`practices/tracking.md`, Threads) as counts,
