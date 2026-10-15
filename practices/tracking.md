@@ -26,7 +26,7 @@ exceptions mirror a scope fact, and the drift check keeps each pair in step:
 ## Boards and access
 
 - **One board per project**, private. A shared board holds cross-cutting
-  work: thread parents and parents of initiatives that span repositories,
+  work: thread parents and initiative parents ([Initiatives](#initiatives)),
   ideas and my own to-dos that belong to no repository, and the items of a public repository
   (below).
 - **One board per issue.** An issue can sit on several boards, but status is
