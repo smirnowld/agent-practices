@@ -71,7 +71,8 @@ adb -s SERIAL shell cmd locale set-app-locales PACKAGE --locales et
 adb -s SERIAL exec-out screencap -p > FILE.png
 
 # Web: phone, tablet and desktop at device pixel ratio 2 or more; VERSION is
-# the project's pinned Playwright, or an exact release (first run: install chromium)
+# the project's pinned Playwright, or an exact release. First run:
+# npx playwright@VERSION install webkit chromium (the phone and tablet run WebKit)
 npx playwright@VERSION screenshot --device="iPhone 15" --color-scheme=dark --lang=et --full-page URL FILE.png
 npx playwright@VERSION screenshot --device="iPad Mini" --color-scheme=dark --lang=et URL FILE.png
 npx playwright@VERSION screenshot --device="Desktop Chrome HiDPI" --color-scheme=dark --lang=et URL FILE.png
@@ -84,7 +85,9 @@ phone-width capture narrower than about 750 px is too low; recapture.
 
 Keep originals as captured. Never downscale, crop, recompress or convert them
 to make a page lighter: the page opens each original in its viewer, and the
-overview loads them lazily.
+overview loads them lazily. A capture over the host's per-file limit (a very
+long full-page one) is retaken as several screen-height captures, each its
+own state.
 
 ### 3. Name and list every capture
 
@@ -152,8 +155,9 @@ adapter's session notes give the exact steps for this agent. One page per
 PR, at one URL, linked from the PR:
 
 - every new round of captures rebuilds the whole page from the current
-  manifest and republishes it at the same URL, removing images that left the
-  manifest; never append a new page or a second set of screens;
+  manifest and republishes it at the same URL, removing the images that left
+  the manifest (the build lists them in `OUT_DIR/removed.json`); never
+  append a new page or a second set of screens;
 - the page shows only current captures, and `changed` says what changed
   since the version I last saw.
 

@@ -7,7 +7,8 @@ Fills templates/evidence-page.html with one section per screen and state,
 before and after side by side, and copies the original captures byte for byte
 into OUTDIR/img/. Writes OUTDIR/index.html (a fragment for a host that adds
 its own doctype, head and body; --full writes a standalone page) and
-OUTDIR/files.json (published path -> path relative to OUTDIR).
+OUTDIR/files.json (published path -> path relative to OUTDIR) and
+OUTDIR/removed.json (img/ paths of the previous run that are gone now).
 
 Manifest:
   {"title": "...", "captured": "build, command, account",
@@ -31,7 +32,7 @@ import sys
 
 EXTS = (".png", ".jpg", ".jpeg", ".webp")
 VERSIONS = ("before", "after")
-OWNED = {"index.html", "img", "files.json"}
+OWNED = {"index.html", "img", "files.json", "removed.json"}
 
 
 def fail(msg):
@@ -49,6 +50,13 @@ def esc(s):
 
 def image_size(path):
     """(width, height) from PNG, JPEG or WebP headers, or None."""
+    try:
+        return _image_size(path)
+    except (struct.error, IndexError, ValueError, OSError):
+        return None
+
+
+def _image_size(path):
     with open(path, "rb") as f:
         head = f.read(32)
         if head[:8] == b"\x89PNG\r\n\x1a\n" and head[12:16] == b"IHDR":
@@ -99,6 +107,8 @@ def load(manifest_path):
     d = m.get("default")
     if not isinstance(d, dict) or not d.get("locale") or not d.get("theme"):
         fail('manifest is missing required field: default {"locale", "theme"}')
+    if m.get("pr") is not None and not (isinstance(m["pr"], str) and re.match(r"https?://", m["pr"])):
+        fail("pr must be a URL starting with http:// or https://")
     shots = m.get("shots")
     if not isinstance(shots, list) or not shots:
         fail("manifest is missing required field: shots (a non-empty list)")
@@ -114,6 +124,10 @@ def load(manifest_path):
                 fail("%s: missing required field: %s" % (name, k))
         if s["version"] not in VERSIONS:
             fail("%s: version must be before or after, not %r" % (name, s["version"]))
+        for k in ("screen", "state"):
+            if not slug(s[k]):
+                fail("%s: %s %r has no Latin letters or digits for the file name; use Latin letters or digits in screen and state"
+                     % (name, k, s[k]))
         for k in ("locale", "theme", "platform"):
             if slug(s[k]) != s[k]:
                 fail("%s: %s %r must be lowercase letters, digits and '-'" % (name, k, s[k]))
@@ -191,7 +205,8 @@ def build(m):
         for platform in ordered(s["platform"] for s in group):
             rows = [s for s in group if s["platform"] == platform]
             out.append('<div class="platform"><h3>%s</h3>' % esc(platform))
-            for loc, th in ordered((s["locale"], s["theme"]) for s in rows):
+            have = ordered((s["locale"], s["theme"]) for s in rows)
+            for loc, th in have:
                 pair = sorted((s for s in rows if (s["locale"], s["theme"]) == (loc, th)),
                               key=lambda s: VERSIONS.index(s["version"]))
                 hidden = "" if (loc, th) == (d["locale"], d["theme"]) else " hidden"
@@ -203,6 +218,14 @@ def build(m):
                     figs.append(figure(s, label))
                 out.append('<div class="variant pair%s" data-locale="%s" data-theme="%s"%s>%s</div>'
                            % (" two" if len(pair) == 2 else "", esc(loc), esc(th), hidden, "".join(figs)))
+            for loc in locales:
+                for th in themes:
+                    if (loc, th) in have:
+                        continue
+                    hidden = "" if (loc, th) == (d["locale"], d["theme"]) else " hidden"
+                    out.append('<div class="variant" data-locale="%s" data-theme="%s"%s>'
+                               '<p class="muted variant-missing">Not captured in %s, %s.</p></div>'
+                               % (esc(loc), esc(th), hidden, esc(loc), esc(th)))
             out.append("</div>")
         out.append("</section>")
         sections.append("\n".join(out))
@@ -211,6 +234,7 @@ def build(m):
 
 
 def prepare(outdir):
+    previous = set()
     if os.path.exists(outdir):
         if not os.path.isdir(outdir):
             fail("OUTDIR %s is not a directory" % outdir)
@@ -218,11 +242,17 @@ def prepare(outdir):
         if extra:
             fail("OUTDIR %s holds files this script did not write (%s); use an empty directory"
                  % (outdir, ", ".join(sorted(extra))))
+        try:
+            with open(os.path.join(outdir, "files.json"), encoding="utf-8") as f:
+                previous = set(json.load(f))
+        except (OSError, ValueError, TypeError):
+            pass
         shutil.rmtree(os.path.join(outdir, "img"), ignore_errors=True)
-        for f in ("index.html", "files.json"):
+        for f in ("index.html", "files.json", "removed.json"):
             if os.path.exists(os.path.join(outdir, f)):
                 os.remove(os.path.join(outdir, f))
     os.makedirs(os.path.join(outdir, "img"))
+    return previous
 
 
 def main(argv):
@@ -238,27 +268,37 @@ def main(argv):
     tpl = re.sub(r"\A\s*<!--.*?-->\s*", "", tpl, flags=re.S)  # the how-to-fill comment
     m = load(manifest)
     parts = build(m)
-    page = (tpl.replace("{{TITLE}}", esc(m["title"])).replace("{{INTRO}}", parts["intro"])
-            .replace("{{SWITCHER}}", parts["switcher"]).replace("{{SECTIONS}}", parts["sections"]))
+    fills = {"TITLE": esc(m["title"]), "INTRO": parts["intro"],
+             "SWITCHER": parts["switcher"], "SECTIONS": parts["sections"]}
+    page = re.sub(r"\{\{(TITLE|INTRO|SWITCHER|SECTIONS)\}\}", lambda mo: fills[mo.group(1)], tpl)
     if full:
         lang = esc(m["default"]["locale"])
         title_end = page.index("</style>") + len("</style>")
         page = ('<!doctype html>\n<html lang="%s">\n<head>\n<meta charset="utf-8">\n'
                 '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
                 "%s\n</head>\n<body>\n%s\n</body>\n</html>\n" % (lang, page[:title_end], page[title_end:].strip()))
-    prepare(outdir)
+    previous = prepare(outdir)
     files, total = {}, 0
     for s in m["shots"]:
         dest = os.path.join(outdir, "img", s["file"])
         shutil.copyfile(s["path"], dest)
-        total += os.path.getsize(dest)
+        size = os.path.getsize(dest)
+        total += size
+        if size > 15 * 1000 * 1000:
+            print("warning: %s is %.1f MB; some hosts cap a file at 15 MB" % (s["file"], size / 1e6), file=sys.stderr)
         files["img/" + s["file"]] = "img/" + s["file"]
+    removed = sorted(previous - set(files))
+    with open(os.path.join(outdir, "removed.json"), "w", encoding="utf-8") as f:
+        json.dump(removed, f, indent=2)
+        f.write("\n")
     with open(os.path.join(outdir, "index.html"), "w", encoding="utf-8") as f:
         f.write(page)
     with open(os.path.join(outdir, "files.json"), "w", encoding="utf-8") as f:
         json.dump(files, f, indent=2)
         f.write("\n")
     print("%d sections, %d images, %.1f MB" % (parts["count"], len(files), total / 1e6))
+    if removed:
+        print("removed: %d" % len(removed))
     print(os.path.abspath(outdir))
     return 0
 

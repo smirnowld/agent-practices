@@ -55,13 +55,16 @@ when ToolSearch cannot find it either, and the report says so.
   code through `enter_verification_code` (I approve each; you never see the
   values); `release_credentials` when done. Not connected: numbered steps.
 - **Publish an evidence page** (`acceptance-evidence` step 5): the Artifact
-  tool. First publish: `file_path` `OUT_DIR/index.html`, `root` `OUT_DIR`,
-  `files` the map in `OUT_DIR/files.json`, `icon` `camera`; build without
-  `--full` (the tool adds doctype, head and body). Republish at the same URL
-  (`url` from another session, after its `read`); map to `null` each `img/`
-  path a `scope` `files` listing shows that `files.json` lacks. The skill and
-  template win over the `artifact-design` design pass; its page contract is
-  already met. Give me the URL; it stays private.
+  tool, building without `--full` (the tool adds doctype, head and body).
+  First publish: `file_path` `OUT_DIR/index.html`, `root` `OUT_DIR`, `files`
+  the map in `OUT_DIR/files.json`, `icon` `camera`. Republish in the same
+  session: the same call with the same `file_path`, which keeps the URL,
+  and no `icon`; from another session, first `action` `read` with the
+  page's `url`, then publish with that `url`. On every republish add each
+  path in `OUT_DIR/removed.json` to `files` mapped to `null`. Loading
+  `artifact-design` is still required; its page contract (title, both
+  themes, phone width) is met by the template, and its design pass does not
+  apply (the skill's precedence line). Give me the URL; it stays private.
 - **Wait on CI or a merge** (P6b, `merge` step 4): run `wait-for` (the
   plugin's `bin/` is on the Bash PATH) with Bash `run_in_background` and a
   `timeout` above its deadline: 4200000 ms covers the defaults (45 and 60

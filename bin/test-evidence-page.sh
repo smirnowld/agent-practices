@@ -91,6 +91,43 @@ touch "$out/notes.txt"
 if "$tool" "$dir/case/manifest.json" "$out" 2>/dev/null >&2; then fail "accepted a non-empty OUTDIR"; fi
 ok "refuses an OUTDIR with other files"
 
+# Missing variant: Settings exists only in de, so en (the default pair) is a visible placeholder.
+png "$dir/case/checkout--paid--en--light--ios--after.png" 40 20
+png "$dir/case/settings--main--de--light--ios--after.png" 20 20
+manifest "$checkout"', {"screen": "Settings", "state": "main", "locale": "de", "theme": "light", "platform": "ios", "file": "settings--main--de--light--ios--after.png"}'
+"$tool" "$dir/case/manifest.json" "$dir/miss" > /dev/null
+grep -q 'class="variant" data-locale="en" data-theme="light"><p class="muted variant-missing">Not captured in en, light.</p>' "$dir/miss/index.html" \
+  || fail "default-pair placeholder missing or hidden"
+grep -q 'class="variant" data-locale="de" data-theme="light" hidden><p class="muted variant-missing">' "$dir/miss/index.html" \
+  || fail "hidden placeholder for the checkout de row missing"
+ok "missing variants get a placeholder; default pair is visible"
+rm "$dir/case/settings--main--de--light--ios--after.png" "$dir/case/checkout--paid--en--light--ios--after.png"
+
+# Placeholder text in the manifest is not expanded.
+manifest ""
+sed 's/"changed": "button colour"/"changed": "{{INTRO}} {{SECTIONS}}"/' "$dir/case/manifest.json" > "$dir/m" && mv "$dir/m" "$dir/case/manifest.json"
+"$tool" "$dir/case/manifest.json" "$dir/once" > /dev/null
+[ "$(grep -c '{{INTRO}}' "$dir/once/index.html")" -eq 1 ] || fail "manifest text was expanded"
+ok "placeholders substituted in one pass"
+
+# A truncated JPEG builds, with no width/height.
+printf '\377\330\377\300\000\021\010' > "$dir/case/menu--empty-cart--en--light--ios--after.png"
+"$tool" "$dir/case/manifest.json" "$dir/trunc" > /dev/null || fail "truncated image raised"
+png "$dir/case/menu--empty-cart--en--light--ios--after.png" 30 60
+ok "truncated image does not crash"
+
+# Removing a shot lists its path in removed.json; a first run lists none.
+[ "$(tr -d ' \n' < "$dir/once/removed.json")" = "[]" ] || fail "first run removed.json not empty"
+png "$dir/case/gone--x--en--light--ios--after.png" 10 10
+manifest ', {"screen": "Gone", "state": "x", "locale": "en", "theme": "light", "platform": "ios", "file": "gone--x--en--light--ios--after.png"}'
+"$tool" "$dir/case/manifest.json" "$dir/rm" > /dev/null
+rm "$dir/case/gone--x--en--light--ios--after.png"
+manifest ""
+"$tool" "$dir/case/manifest.json" "$dir/rm" > "$dir/log"
+grep -q '^removed: 1$' "$dir/log" || fail "removed count not printed"
+grep -q '"img/gone--x--en--light--ios--after.png"' "$dir/rm/removed.json" || fail "removed.json lacks the dropped shot"
+ok "removed.json lists dropped shots"
+
 # expect_fail MESSAGE: the run exits 2 and stderr contains MESSAGE.
 expect_fail() {
   rm -rf "$dir/bad"
@@ -110,6 +147,13 @@ manifest "$checkout"
 expect_fail 'missing file'
 manifest ', {"screen": "Menu", "state": "empty cart", "locale": "en", "theme": "light", "platform": "ios", "file": "menu--empty-cart--en--light--ios--after.png"}'
 expect_fail 'duplicate of an earlier shot'
+manifest ""
+sed 's#"https://example.org/pr/1"#"javascript:alert(1)"#' "$dir/case/manifest.json" > "$dir/m" && mv "$dir/m" "$dir/case/manifest.json"
+expect_fail 'pr must be a URL starting with http'
+png "$dir/case/---mn--en--light--ios--after.png" 10 10
+manifest ', {"screen": "Меню", "state": "x", "locale": "en", "theme": "light", "platform": "ios", "file": "---mn--en--light--ios--after.png"}'
+expect_fail 'use Latin letters or digits in screen and state'
+rm "$dir/case/---mn--en--light--ios--after.png"
 manifest ""
 sed 's/"locale": "en", "theme": "light"}/"locale": "fr", "theme": "light"}/' "$dir/case/manifest.json" > "$dir/m" && mv "$dir/m" "$dir/case/manifest.json"
 expect_fail "default locale 'fr' is not in any shot"

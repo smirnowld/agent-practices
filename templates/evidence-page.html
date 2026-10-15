@@ -1,7 +1,7 @@
 <!--
 Evidence page fragment, filled by bin/evidence-page from a manifest. The host
 that publishes it adds the doctype, html, head and body; bin/evidence-page
---full adds them for a standalone file. To fill it by hand, replace:
+--full adds them for a standalone file. Placeholders bin/evidence-page fills:
   {{TITLE}}     page title, plain text (used in <title> and the h1)
   {{INTRO}}     paragraphs: how it was captured, "Changed since last version:",
                 the PR link, and the hint "Tap a screen to open it full size"
@@ -22,8 +22,8 @@ that publishes it adds the doctype, html, head and body; bin/evidence-page
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 var(--sans);overflow-x:hidden}
 main{max-width:1100px;margin:0 auto;padding:32px 16px 64px;display:grid;gap:40px;min-width:0}
-h1{font-size:1.6rem;margin:0;text-wrap:balance}
-h2{font-size:1.1rem;margin:0}
+h1{font-size:1.6rem;margin:0;text-wrap:balance;overflow-wrap:anywhere}
+h2{font-size:1.1rem;margin:0;overflow-wrap:anywhere}
 p{margin:0;max-width:68ch;overflow-wrap:anywhere}
 a{color:var(--accent)}
 header,section{display:grid;gap:12px;min-width:0}
@@ -35,7 +35,7 @@ code{font-family:var(--mono);font-size:.88em}
 .switcher select{font:15px/1.2 var(--sans);padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--fg)}
 /* A platform row holds one variant per locale and theme; only one is shown. */
 .platform{display:grid;gap:8px;min-width:0}
-.platform>h3{font-size:.95rem;margin:0;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.platform>h3{font-size:.95rem;margin:0;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;overflow-wrap:anywhere}
 .pair{display:grid;gap:16px;grid-template-columns:minmax(0,1fr);justify-items:center;min-width:0}
 @media (min-width:720px){.pair.two{grid-template-columns:repeat(2,minmax(0,1fr))}}
 figure{margin:0;display:grid;gap:6px;justify-items:center;width:100%;min-width:0}
