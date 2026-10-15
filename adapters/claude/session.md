@@ -26,7 +26,8 @@ when ToolSearch cannot find it either, and the report says so.
   plus this session's own `spawn_task` calls, and for a project on a board
   its In progress and In review items (Board actions below). Chips not yet
   started from other sessions or routines are invisible; say so.
-- **Board actions** (P19b, `brief`, `closeout`, `board-review`): `gh
+- **Board actions** (P19b, `brief`, `closeout`, `board-review`, `idea`,
+  `today`, `weekly-review`): `gh
   project` through the shell, with `gh api graphql` for what it lacks (issue
   timelines, sub-issues, an item's other boards). Read the board: `gh
   project item-list NUMBER --owner OWNER --format json`, narrowed with

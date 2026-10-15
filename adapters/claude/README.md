@@ -431,7 +431,10 @@ unverified against vendor docs.
   project; a proposed session appears as a chip. Local tasks fire only while the app is open and the
   machine awake; a missed run catches up once
   (https://code.claude.com/docs/en/desktop-scheduled-tasks, checked
-  2026-09-27).
+  2026-09-27). The shared-board routines run the same way, one per
+  machine: `today` each weekday morning, its note the run's final message
+  plus a push notification, and a Monday-morning task whose chip starts
+  an interactive `weekly-review`. Cloud routines cannot reach the board.
 - Local-only paths are not links (P18): cite a GitHub URL pinned to a commit,
   or attach the file.
 - Context: the compaction threshold is `autoCompactWindow` in user settings,

@@ -53,7 +53,8 @@ unverified (2026-09-30).
   In review items (Board actions below). Unstarted proposals from other
   chats are not a dedicated inventory, and listings may be incomplete; say
   what could not be checked. Discover deferred tools before falling back.
-- **Board actions** (P19b, `brief`, `closeout`, `board-review`): `gh
+- **Board actions** (P19b, `brief`, `closeout`, `board-review`, `idea`,
+  `today`, `weekly-review`): `gh
   project` through the shell, with `gh api graphql` for what it lacks (issue
   timelines, sub-issues, an item's other boards). Read the board: `gh
   project item-list NUMBER --owner OWNER --format json`, narrowed with
