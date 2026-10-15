@@ -2,7 +2,9 @@
 
 <!-- Spec for docs/visuals/<doc>.html: one-page visual views of roadmap.md,
 plan.md, architecture.md and tech-stack.md, for people. The Markdown doc is
-the source of truth; a visual never says anything its source does not. -->
+the source of truth; a visual never says anything its source does not.
+Committed visuals carry no status: for a project on a board, live status is
+the board's views (practices/tracking.md), which the plan visual links. -->
 
 ## Files
 
@@ -25,7 +27,7 @@ The same meaning has the same look in every visual of a project.
 | Green | Apps and surfaces people touch |
 | Violet | A service we rent |
 | Neutral | Open source we build on |
-| Amber | A milestone or something waiting on the maintainer |
+| Amber | A milestone, or work only the maintainer can do (the roadmap's parallel track); never a status |
 | Dashed outline | A boundary, or something not yet built or confirmed |
 
 Every visual carries a legend for the encodings it uses.
@@ -42,6 +44,6 @@ Every visual carries a legend for the encodings it uses.
 | Visual | Shape |
 |---|---|
 | Roadmap | Phases in order as cards: name, size, deliverables in user terms, "Done when". Milestone flags. A parallel track for work outside engineering. No dates unless the source commits to them. |
-| Plan | The current phase: goal and status up top; the dependency order as a diagram with nodes coloured by status (done, including engineering complete with a marker; active; blocked; not started; parked, dashed); a progress count; what waits on the maintainer highlighted. |
+| Plan | The current phase: goal up top; the order of outcomes from plan.md as a diagram; scope from the phase plan (what each outcome covers, what is not in the phase). Outcomes, order and scope only: no status colours, progress count, health or "waiting on the maintainer" highlight. A link to the board's views for live status, left out in a public repository. |
 | Architecture | Boxes grouped by boundary (clients, our system, rented services), arrows for who calls whom, a caption saying so; principles below as short cards. |
 | Tech stack | One band per layer with its one-line intent; each choice tagged by kind (write, build on, rent, unconfirmed). |
