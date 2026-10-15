@@ -26,7 +26,8 @@ exceptions mirror a scope fact, and the drift check keeps each pair in step:
 ## Boards and access
 
 - **One board per project**, private. A shared board holds cross-cutting
-  work: parents of initiatives that span repositories, ideas and my own
+  work: thread parents and parents of initiatives that span repositories,
+  ideas and my own
   to-dos that belong to no repository, and the items of a public repository
   (below).
 - **One board per issue.** An issue can sit on several boards, but status is
@@ -72,7 +73,8 @@ session, need no board access and can drive auto-add filters:
 - `work-package`: one issue per package in a phase plan.
 - `maintainer-step`: a step of mine that outlives a session.
 - `long-lead`: an outside lead time on the critical path.
-- `initiative`: the parent of work spanning repositories.
+- `initiative`: the parent of work spanning repositories, and every thread
+  parent issue ([Threads](#threads)).
 - `deferred-review`: a review finding not fixed (P4).
 
 A project adds its own labels; the names follow P21a.
@@ -213,7 +215,7 @@ change to my tooling, that outlives a session and may span repositories.
   flight. Any of these is a trigger to review what is in flight before
   starting more:
   - items waiting on me pile up (Assigned to me, Waiting for naming me);
-  - a thread's item has not been updated in about a week (the board keeps
+  - a thread's parent item has not been updated in about a week (the board keeps
     no date per field; closeout updates Next step each session);
   - sessions whose titles show 🔴 or 🟡 (`templates/session-title.md`),
     since those hold my attention.

@@ -29,9 +29,9 @@ when ToolSearch cannot find it either, and the report says so.
   (or the name my own agent configuration gives it), `create_group` it;
   then `move_sessions` this session into it. No thread: the group "Other".
   No group-removal tool is verified, so groups of closed threads stay
-  until one is. Only agents manage groups; a declined call is not retried, and an unattended session skips
-  this. Desktop-app sessions only: cloud sessions have no sidebar tools, and
-  the board shows their thread.
+  until one is. Only agents manage groups; a declined call is not retried,
+  and an unattended session skips this. Desktop-app sessions only: cloud
+  sessions have no sidebar tools; their thread is the brief's Thread line.
 - **Work in flight** (`brief` step 1): `mcp__ccd_session_mgmt__list_sessions`,
   plus this session's own `spawn_task` calls, and for a project on a board
   its In progress and In review items (Board actions below). Chips not yet
@@ -54,7 +54,9 @@ when ToolSearch cannot find it either, and the report says so.
   session cannot reach boards at all (no GraphQL, no organisation paths):
   board reads and writes, a thread's Next step at closeout included, need a
   local session, so a cloud session hands its board update to me as a step
-  under **Needs you**.
+  under **Needs you**, and a brief written there says `Thread: unknown,
+  ask me` unless I named it. Whether `gh issue create` works there is
+  unverified; if it fails, the step or finding goes in chat.
 - **Delegate a role** (P2, P2b): the Agent tool with `subagent_type`
   `agent-practices:ROLE` (explorer, implementer, light-reviewer, reviewer,
   critical-reviewer, critical-reviewer-strongest); `model` sets a slice's

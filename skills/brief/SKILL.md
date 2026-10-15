@@ -42,7 +42,7 @@ these already cover is dropped and named in the report. Stale PRs (step
 The check is best effort: proposed sessions the agent cannot see may still
 exist, so the report says what it could not check.
 If a capacity signal shows (`practices/tracking.md`, Threads: items piling
-up on me, a thread's item not updated for about a week, sessions titled
+up on me, a thread's parent item not updated for about a week, sessions titled
 🔴 or 🟡), the report says which and suggests reviewing what is in flight
 before starting more.
 
