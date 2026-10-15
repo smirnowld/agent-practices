@@ -59,7 +59,9 @@ For each part, a proposed change with a one-line reason from the evidence:
 1. **Focus and Rank.** Order the threads by what I should pursue next.
    Move a thread between Now, Next and Later where its state calls for it:
    a Now thread with no progress and no next step goes to Next unless it
-   is blocked on me; a Next thread whose blocker cleared moves up. Keep
+   is blocked on me; a Next thread whose blocker cleared moves up. A
+   thread I have set aside goes to Parked, and a Parked thread whose
+   reason has passed comes back to Next. Keep
    Now to threads that each have a live next step. Propose a Rank only
    for a thread whose place changes, each as its own numbered change:
    writing any field updates the parent item and resets its stall

@@ -439,6 +439,7 @@ mark
 fails 1 --check o 5 o 1 --threads
 no_writes
 grep -q '^- field Focus: is SINGLE_SELECT|.*, want SINGLE_SELECT with Now,Next,Later,Parked$' "$dir/out"
+[ "$(grep -c '^- ' "$dir/out")" -eq 1 ]
 run create o 'Shared' o 1 --threads
 grep -q '~Someday~PINK~Ours;o[0-9]*~Later~GRAY~Not before the next review;o[0-9]*~Parked~PINK~Set aside on purpose$' "$S/5/fields"
 run --check o 5 o 1 --threads
