@@ -182,7 +182,10 @@ unverified against vendor docs.
   effort (it takes a title, a summary, a prompt and a directory; observed
   2026-09-29, unverified against vendor docs), so the chip's summary repeats
   the Model line's model and effort for me to pick when I start it, and the
-  started session runs the model check above. A `PreToolUse` hook
+  started session runs the model check above. A session started from a chip
+  or by another session runs on its starter's model and effort, not the
+  settings default (unverified against vendor docs), which is why the model
+  check is its first action. A `PreToolUse` hook
   ([`hooks/check-chip-brief.py`](hooks/check-chip-brief.py)) denies a
   `spawn_task` prompt without the brief's heading, Model line, Goal and Proof,
   or whose Model line names a tier without its `tiers.json` model (sessions

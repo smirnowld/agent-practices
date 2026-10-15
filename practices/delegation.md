@@ -62,6 +62,10 @@ whether the call comes from a subagent and fails open on any error. Shell
 writes and reading are not covered by any hook; they fall under the rule
 alone. Where an adapter has no such hook, the whole rule is wording.
 
+Where an agent tool cannot set a model per subagent, the roles still apply
+on the model it has: delegate by role as usual and state the fallback in the
+report.
+
 ## Lanes
 
 Several implementers may run at once on disjoint slices. Concurrent writers
