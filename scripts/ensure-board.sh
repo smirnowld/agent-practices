@@ -61,7 +61,7 @@ FOCUS_OPTIONS='Now|RED|Being worked this week|
 Next|YELLOW|Starts when a Now thread ends|
 Later|GRAY|Not before the next review|'
 THREAD_VIEWS='Threads|table|has:focus|Focus||Rank:ASC|Title,Priority,Status,Waiting for,Next step,Sub-issues progress
-Threads by focus|board|has:focus||Focus|Rank:ASC|Title,Priority,Next step'
+Threads by focus|board|has:focus||Focus||Title,Priority,Next step'
 
 # One GraphQL read per board, flattened to lines:
 #   P|id|template|title
@@ -360,8 +360,9 @@ check_threads() { # BOARD_FILE FIELDS_SUMMARY
   else
     ok=1
     case $got in SINGLE_SELECT\|*) ;; *) ok=0 ;; esac
-    for o in Now Next Later; do
-      case ",${got#*|}," in *",$o,"*) ;; *) ok=0 ;; esac
+    opts=$(printf '%s' "${got#*|}" | tr '[:upper:]' '[:lower:]')
+    for o in now next later; do
+      case ",$opts," in *",$o,"*) ;; *) ok=0 ;; esac
     done
     if [ "$ok" -eq 0 ]; then
       echo "field Focus: is $got, want SINGLE_SELECT with Now,Next,Later" >> "$tmp/diff"

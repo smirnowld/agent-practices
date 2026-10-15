@@ -285,7 +285,7 @@ grep -q '|Focus|SINGLE_SELECT|o[0-9]*~Now~RED~Being worked this week;o[0-9]*~Nex
 grep -q '|Rank|NUMBER|$' "$S/4/fields"
 grep -q '|Next step|TEXT|$' "$S/4/fields"
 grep -q '|Threads|table|has:focus|Focus||Rank:ASC|Next step,Priority,Status,Sub-issues progress,Title,Waiting for$' "$S/4/views"
-grep -q '|Threads by focus|board|has:focus||Focus|Rank:ASC|Next step,Priority,Title$' "$S/4/views"
+grep -q '|Threads by focus|board|has:focus||Focus||Next step,Priority,Title$' "$S/4/views"
 if grep -Eq '\|(Focus|Rank|Next step)\|' "$S/1/fields"; then echo 'thread field on the template'; exit 1; fi
 snap first
 run create o 'Shared' o 1 --threads
@@ -311,6 +311,11 @@ fails 2 --check o 4 o 1 --other
 sed 's/~Later~GRAY~Not before the next review/~Someday~PINK~Ours/' "$S/4/fields" > "$dir/f"; cp "$dir/f" "$S/4/fields"
 run create o 'Shared' o 1 --threads
 grep -q '~Next~YELLOW~[^;]*;[a-z0-9]*~Someday~PINK~Ours;o[0-9]*~Later~GRAY~Not before the next review$' "$S/4/fields"
+run --check o 4 o 1 --threads
+
+# Focus options match without regard to case, as create does.
+sed 's/~Now~RED~/~now~RED~/' "$S/4/fields" > "$dir/f"; cp "$dir/f" "$S/4/fields"
+grep -q '~now~RED~' "$S/4/fields"
 run --check o 4 o 1 --threads
 
 # Thread drift is reported, one line each, without writing.
