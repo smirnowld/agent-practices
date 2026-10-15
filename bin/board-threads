@@ -5,9 +5,18 @@ Usage: board-threads OWNER NUMBER [--json] [--stale-days N] [--me LOGIN]
 
 Reads a Projects (v2) board over the REST API through `gh api` (OWNER is an
 organisation or a user) and prints four sections: threads (Focus Now, Next or
-Later, with their next step), waiting_on_me (open items assigned to LOGIN, or
-Waiting with LOGIN, "maintainer" or "me" in
-"Waiting for"), parked items, and signals (counts).
+Later, with their next step), waiting_on_me, parked and signals (counts).
+
+waiting_on_me: open board items assigned to LOGIN or with Status Waiting and
+LOGIN, "maintainer" or "me" as a whole word in "Waiting for", plus open
+issues assigned to LOGIN in any repository (REST issue search), deduplicated
+by issue URL; a board item keeps its board fields. Sorted by priority P1-P3,
+then none, then oldest update. parked: items with Focus Parked, or Status
+Parked and Kind Idea (other Status Parked items are phase-plan work; a thread
+with Status Parked stays in threads). Every row carries item_id, node_id,
+content_type, repo ("owner/name") and number; search-only rows have no
+item_id or node_id, drafts no repo or number.
+
 Never fetches issue bodies into the output. --json prints one object with
 those four keys; the default is short Markdown. --stale-days (default 7)
 marks a thread stalled when it has not changed for that many days. --me
@@ -40,7 +49,17 @@ def fail(msg, code=1):
 
 
 def gh(*args):
-    """Run gh api ARGS and return the parsed JSON; pages are concatenated."""
+    """Run gh api ARGS and return the parsed JSON; array pages are concatenated."""
+    docs = gh_docs(*args)
+    if len(docs) == 1:
+        return docs[0]
+    if all(isinstance(d, list) for d in docs):
+        return [x for d in docs for x in d]
+    raise GhError("unexpected answer from gh api " + args[-1])
+
+
+def gh_docs(*args):
+    """Run gh api ARGS and return every JSON document it printed (one per page)."""
     try:
         p = subprocess.run(["gh", "api", *args], capture_output=True, text=True,
                            encoding="utf-8")
@@ -62,11 +81,9 @@ def gh(*args):
         except ValueError:
             raise GhError("unreadable answer from gh api " + args[-1])
         docs.append(doc)
-    if len(docs) == 1:
-        return docs[0]
-    if all(isinstance(d, list) for d in docs):
-        return [x for d in docs for x in d]
-    raise GhError("unexpected answer from gh api " + args[-1])
+    if not docs:
+        raise GhError("empty answer from gh api " + args[-1])
+    return docs
 
 
 def parse_args(argv):
@@ -156,6 +173,19 @@ def rank_out(r):
     return int(r) if r == int(r) else r
 
 
+def repo_of(url):
+    """owner/name from an issue's html_url or a repository_url, else None."""
+    m = re.match(r"https://(?:api\.)?github\.com/(?:repos/)?([^/]+)/([^/]+)", url or "")
+    return "%s/%s" % m.groups() if m else None
+
+
+def mentions(text, me):
+    """True when Waiting for TEXT names ME: the login or maintainer/me, as words."""
+    if ME_WORDS.search(text):
+        return True
+    return bool(me) and re.search(r"\b%s\b" % re.escape(me), text, re.IGNORECASE) is not None
+
+
 def snapshot(owner, number, stale, me, now):
     base = None
     for kind in ("orgs", "users"):
@@ -173,6 +203,11 @@ def snapshot(owner, number, stale, me, now):
     ids = [str(f["id"]) for f in fields if isinstance(f, dict) and f.get("name") in FIELDS]
     query = "per_page=100" + "".join("&fields[]=" + i for i in ids)
     items = gh("--paginate", "%s/%s/projectsV2/%s/items?%s" % (kind, owner, number, query))
+    found = []
+    if me:
+        for page in gh_docs("--paginate", "search/issues?q=assignee:%s+is:open+is:issue&per_page=100" % me):
+            if isinstance(page, dict):
+                found += page.get("items") or []
 
     me_l = (me or "").lower()
     threads, waiting, parked = [], [], []
@@ -182,15 +217,21 @@ def snapshot(owner, number, stale, me, now):
         c = it.get("content") or {}
         v = values(it)
         status, focus = v.get("Status", ""), v.get("Focus", "")
+        drafted = it.get("content_type") == "DraftIssue"
         link = c.get("html_url") or (
             "https://github.com/%s/%s/projects/%s?pane=issue&itemId=%s"
             % (kind, owner, number, it.get("id")))
         days = days_since(it.get("updated_at"), now)
         open_ = status.lower() != "done" and (c.get("state") or "open").lower() != "closed"
-        base_row = {"title": c.get("title") or "(untitled)", "link": link,
-                    "status": status, "priority": v.get("Priority", ""),
-                    "days_since_update": days}
-        if focus.lower() in FOCUS_ORDER and open_:
+        ident = {"item_id": it.get("id"), "node_id": it.get("node_id"),
+                 "content_type": it.get("content_type"),
+                 "repo": None if drafted else repo_of(c.get("repository_url") or c.get("html_url")),
+                 "number": None if drafted else c.get("number")}
+        base_row = dict(ident, title=c.get("title") or "(untitled)", link=link,
+                        status=status, priority=v.get("Priority", ""),
+                        days_since_update=days)
+        is_thread = focus.lower() in FOCUS_ORDER
+        if is_thread and open_:
             nxt = v.get("Next step", "")
             threads.append(dict(base_row, focus=focus, rank=rank_out(v.get("Rank")),
                                 next_step=nxt, waiting_for=v.get("Waiting for", ""),
@@ -200,17 +241,35 @@ def snapshot(owner, number, stale, me, now):
                                 no_next_step=not nxt, _rank=v.get("Rank")))
         assigned = me_l and me_l in [a.lower() for a in v.get("Assignees", [])]
         wf = v.get("Waiting for", "")
-        waits = status.lower() == "waiting" and (
-            bool(me_l and me_l in wf.lower()) or bool(ME_WORDS.search(wf)))
+        waits = status.lower() == "waiting" and mentions(wf, me)
         if open_ and (assigned or waits):
-            waiting.append(dict(base_row, waiting_for=v.get("Waiting for", ""),
-                                kind=v.get("Kind", ""), area=v.get("Area", ""),
+            waiting.append(dict(base_row, waiting_for=wf, kind=v.get("Kind", ""),
+                                area=v.get("Area", ""), labels=[],
                                 _updated=it.get("updated_at") or ""))
-        if status.lower() == "parked" or focus.lower() == "parked":
-            parked.append({"title": base_row["title"], "link": link,
-                           "kind": v.get("Kind", ""), "area": v.get("Area", ""),
-                           "priority": base_row["priority"], "days_since_update": days,
-                           "_updated": it.get("updated_at") or ""})
+        if focus.lower() == "parked" or (
+                not is_thread and status.lower() == "parked"
+                and v.get("Kind", "").lower() == "idea"):
+            parked.append(dict(ident, title=base_row["title"], link=link,
+                               kind=v.get("Kind", ""), area=v.get("Area", ""),
+                               priority=base_row["priority"], days_since_update=days,
+                               _updated=it.get("updated_at") or ""))
+
+    # Merge open issues assigned to me anywhere; a board row keeps its fields.
+    by_link = {w["link"]: w for w in waiting}
+    for s in found:
+        labels = [l.get("name", "") for l in s.get("labels") or [] if isinstance(l, dict)]
+        row = by_link.get(s.get("html_url"))
+        if row is not None:
+            row["labels"] = labels
+            continue
+        row = {"item_id": None, "node_id": None, "content_type": "Issue",
+               "repo": repo_of(s.get("repository_url")), "number": s.get("number"),
+               "title": s.get("title") or "(untitled)", "link": s.get("html_url"),
+               "status": "", "priority": "", "days_since_update":
+               days_since(s.get("updated_at"), now), "waiting_for": "", "kind": "",
+               "area": "", "labels": labels, "_updated": s.get("updated_at") or ""}
+        by_link[row["link"]] = row
+        waiting.append(row)
 
     threads.sort(key=lambda t: (FOCUS_ORDER.index(t["focus"].lower()),
                                 t["_rank"] is None, t["_rank"] or 0, t["title"].lower()))
@@ -248,12 +307,15 @@ def markdown(snap, me):
         if t["waiting_for"]:
             notes.append("waiting for " + t["waiting_for"])
         nxt = "Next: " + t["next_step"] if t["next_step"] else "no next step"
-        out.append("- %s %s — %s (%s)" % (t["focus"], md_link(t), nxt, ", ".join(notes)))
+        head = t["focus"] if t["rank"] is None else "%s %s" % (t["focus"], t["rank"])
+        out.append("- %s %s — %s (%s)" % (head, md_link(t), nxt, ", ".join(notes)))
     out += ["", "## Waiting on %s" % (me or "me")]
     if not snap["waiting_on_me"]:
         out.append("none")
     for w in snap["waiting_on_me"]:
         bits = [b for b in (w["priority"], w["status"]) if b]
+        if w["item_id"] is None and w["repo"]:
+            bits.insert(0, "%s#%s, not on the board" % (w["repo"], w["number"]))
         if w["waiting_for"]:
             bits.append("waiting for " + w["waiting_for"])
         bits.append(age(w["days_since_update"]))

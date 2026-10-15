@@ -81,8 +81,8 @@ board it may name projects.
    - Any work in a public repository: a private draft with `gh project
      item-create`; its body lists the thread's items.
 2. **Fields** on the parent: Focus, Rank, Next step and Priority as
-   approved; Status Ready for Focus Now, otherwise Backlog; Kind Work
-   package where the board has Kind. Rank is a number; to place it
+   approved, and Status Backlog: the parent is a thread, not a work
+   package, so it carries no Kind and its items' statuses move instead. Rank is a number; to place it
    between two threads, use a value between theirs (the weekly review
    renumbers).
 3. **First sub-issues:** in a private repository, an issue each (the
@@ -90,15 +90,17 @@ board it may name projects.
    parent (`gh api repos/OWNER/REPO/issues/N/sub_issues -F
    sub_issue_id=ID`, the child's numeric issue ID); they reach the
    project board by its auto-add. In a public repository, a private draft
-   each on the shared board with its Kind and Area, listed in the
-   parent's body.
+   each on the shared board with its Kind and Area. A draft parent holds
+   no sub-issues: every item, issue or draft, is listed in its body
+   instead, with no `sub_issues` call.
 4. Report the links (P18). With Focus Now, offer to propose the first
    session for its Next step with the `brief` skill, naming the thread.
 
 ### File under thread X
 
-Add the items as in Go step 3 under X, and update X's body or Next step
-only if my answer said so.
+Add the items as in Go step 3 under X. When X is a draft, add each item
+to its body list; that edit is part of filing under it. Change X's Next
+step only if my answer said so.
 
 ### Park
 
