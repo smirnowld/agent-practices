@@ -95,16 +95,16 @@ its Assigned to me view and the project's `docs/questions.md`.
 
 ## Statuses
 
-| Status | Meaning | Before the board (`docs/plan.md`) |
-|---|---|---|
-| Backlog | Filed but not in the current phase: findings, ideas, bugs. New items arrive here | Not listed |
-| Planned | In the phase plan with criteria, not yet briefed | Not started |
-| Ready | Briefed; can start | Ready |
-| In progress | A session is on it | In progress |
-| In review | A PR is open | In review |
-| Waiting | Needs something outside the session; Waiting for names what, the assignee who, when a person must act | Blocked; Engineering complete |
-| Parked | Out of scope for now; the phase plan records the decision and reason | Parked |
-| Done | Closed; archived after two weeks | Done |
+| Status | Meaning |
+|---|---|
+| Backlog | Filed but not in the current phase: findings, ideas, bugs. New items arrive here |
+| Planned | In the phase plan with criteria, not yet briefed |
+| Ready | Briefed; can start |
+| In progress | A session is on it |
+| In review | A PR is open |
+| Waiting | Needs something outside the session; Waiting for names what, the assignee who, when a person must act |
+| Parked | Out of scope for now; the phase plan records the decision and reason |
+| Done | Closed; archived after two weeks |
 
 ## A work package's way across the board
 
