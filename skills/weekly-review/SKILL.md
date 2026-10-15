@@ -76,7 +76,7 @@ For each part, a proposed change with a one-line reason from the evidence:
    close) as a numbered change. Issues assigned to me that are not on
    the shared board are grouped by repository, one line each with the count,
    except one that needs a decision now.
-4. **Parked items** (the parked ideas `board-threads` lists; work items
+4. **Parked items** (the parked items `board-threads` lists; work items
    a phase plan parked are not offered here): for each, keep parked, promote to a thread (the
    `idea` skill's Go step, with Focus and Rank proposed), or drop
    (archive the draft; archiving is undone from the board's archive).
