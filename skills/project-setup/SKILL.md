@@ -65,7 +65,12 @@ is missing or disabled: R7 is "partial". Exit 2 means a board could not be
 read or the template number is not the template: R7 is "missing" when the
 project has no board, otherwise report the error. Workflow settings, the
 auto-add filter, the description and the base role have no API: they stay
-"unknown" unless I confirm them or they are read in my browser. While the
+"unknown" unless I confirm them or they are read in my browser. When the
+gaps are missing fields, options or views (the template changed after the
+copy), setup mode runs `scripts/ensure-board.sh --sync <owner> <number>
+<template-owner> <template-number>`, first with `--dry-run`: it adds only
+what is missing, never deletes or renames, reports the rest and prints the
+workflow and auto-add steps left to me. While the
 project still has p1–p3 labels, `scripts/migrate-priority.sh <owner/repo>
 <owner> <number> --verify` lists open issues (initiatives aside) missing
 from the board or whose label and Priority disagree (exit 1, "partial";

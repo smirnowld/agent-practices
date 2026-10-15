@@ -36,7 +36,9 @@ exceptions mirror a scope fact, and the drift check keeps each pair in step:
   base role No access; a user-owned board is private to its collaborators.
   Granting a person access is asked each time (P9).
 - **A board copied from one template** keeps fields, views and workflows the
-  same everywhere; `project-setup` sets it up and audits it.
+  same everywhere; `project-setup` sets it up and audits it. After the
+  template changes, run `scripts/ensure-board.sh --sync` on each copied
+  board: it adds what is missing and only reports what differs.
 - **A project with outside contributors who are not developers** gets a
   restricted board. Board access never grants repository access: people see
   only the items from repositories they can read, so anything they must not
