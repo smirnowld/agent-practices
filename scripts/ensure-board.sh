@@ -4,13 +4,15 @@
 #   ensure-board.sh template OWNER
 #     Create or update the board "Board template" under the organisation OWNER
 #     and mark it a template (GitHub allows templates in organisations only).
-#   ensure-board.sh create OWNER TITLE TEMPLATE_OWNER TEMPLATE_NUMBER [--repo OWNER/REPO] [--with-kind]
+#   ensure-board.sh create OWNER TITLE TEMPLATE_OWNER TEMPLATE_NUMBER [--repo OWNER/REPO] [--with-kind] [--threads]
 #     Copy the template into a board under OWNER (a user or an organisation),
 #     link the repository; --with-kind adds the Kind and Area fields and a
-#     Drafts by kind view.
-#   ensure-board.sh --check OWNER NUMBER TEMPLATE_OWNER TEMPLATE_NUMBER
-#     Read-only: compare a board with the template. Exit 1 lists the
-#     differences; exit 2 means a board could not be read.
+#     Drafts by kind view; --threads adds the thread profile of the shared
+#     board (Focus, Rank and Next step fields, Threads views).
+#   ensure-board.sh --check OWNER NUMBER TEMPLATE_OWNER TEMPLATE_NUMBER [--threads]
+#     Read-only: compare a board with the template, and with --threads also
+#     with the thread profile. Exit 1 lists the differences; exit 2 means a
+#     board could not be read.
 # Workflows, auto-add, the description and the base role have no API; the
 # script prints them as steps.
 set -eu
@@ -53,6 +55,13 @@ Initiatives|table|label:initiative||||Title,Status,Sub-issues progress,Repositor
 # Drafts carry no labels, and a filter cannot OR a label with a field, so a
 # board with drafts gets one more view instead of changed filters.
 KIND_VIEW='Drafts by kind|table|is:draft|Kind|||Title,Status,Priority,Assignees,Area'
+# Thread profile: Focus, Rank and Next step plus these views, only on the
+# shared board, never on the template (practices/tracking.md, Threads).
+FOCUS_OPTIONS='Now|RED|Being worked this week|
+Next|YELLOW|Starts when a Now thread ends|
+Later|GRAY|Not before the next review|'
+THREAD_VIEWS='Threads|table|has:focus|Focus||Rank:ASC|Title,Priority,Status,Waiting for,Next step,Sub-issues progress
+Threads by focus|board|has:focus||Focus|Rank:ASC|Title,Priority,Next step'
 
 # One GraphQL read per board, flattened to lines:
 #   P|id|template|title
@@ -276,11 +285,12 @@ EOF
 
 create_mode() {
   title=$1; towner=$2; tpl=$3; shift 3
-  repo=''; kind=0
+  repo=''; kind=0; threads=0
   while [ $# -gt 0 ]; do
     case $1 in
       --repo) [ $# -ge 2 ] || usage; repo=$2; shift ;;
       --with-kind) kind=1 ;;
+      --threads) threads=1 ;;
       *) usage ;;
     esac
     shift
@@ -314,6 +324,13 @@ create_mode() {
     read_board "$number" "$b"
     ensure_views "$number" "$b" "$KIND_VIEW"
   fi
+  if [ "$threads" -eq 1 ]; then
+    ensure_field "$number" "$b" Focus SINGLE_SELECT "$FOCUS_OPTIONS" add
+    ensure_field "$number" "$b" Rank NUMBER
+    ensure_field "$number" "$b" 'Next step' TEXT
+    read_board "$number" "$b"
+    ensure_views "$number" "$b" "$THREAD_VIEWS"
+  fi
   echo "board $number: $web/projects/$number"
   echo "Steps with no API, in the board's settings ($web/projects/$number/settings):"
   if [ -n "$repo" ]; then
@@ -335,8 +352,47 @@ fields_summary() {
   }' "$1"
 }
 
+# Thread profile on a board: fields by type, views as ensure_views compares them.
+check_threads() { # BOARD_FILE FIELDS_SUMMARY
+  got=$(awk -F'|' '$1 == "Focus" {print $2 "|" $3; exit}' "$2")
+  if [ -z "$got" ]; then
+    echo "field Focus: missing" >> "$tmp/diff"
+  else
+    ok=1
+    case $got in SINGLE_SELECT\|*) ;; *) ok=0 ;; esac
+    for o in Now Next Later; do
+      case ",${got#*|}," in *",$o,"*) ;; *) ok=0 ;; esac
+    done
+    if [ "$ok" -eq 0 ]; then
+      echo "field Focus: is $got, want SINGLE_SELECT with Now,Next,Later" >> "$tmp/diff"
+    fi
+  fi
+  for ft in Rank:NUMBER 'Next step:TEXT'; do
+    name=${ft%:*}; type=${ft##*:}
+    got=$(awk -F'|' -v n="$name" '$1 == n {print $2; exit}' "$2")
+    if [ -z "$got" ]; then
+      echo "field $name: missing" >> "$tmp/diff"
+    elif [ "$got" != "$type" ]; then
+      echo "field $name: is $got, want $type" >> "$tmp/diff"
+    fi
+  done
+  while IFS='|' read -r name layout filter group cols sort visible; do
+    want="$layout|$filter|$group|$cols|$sort"
+    if [ "$layout" != roadmap ]; then want="$want|$(sorted "$visible")"; fi
+    cur=$(awk -F'|' -v n="$name" -v r="$layout" '$1 == "V" && $3 == n {
+      s = $4 "|" $5 "|" $6 "|" $7 "|" $8; if (r != "roadmap") s = s "|" $9; print s; exit}' "$1")
+    if [ -z "$cur" ]; then
+      echo "view $name: missing" >> "$tmp/diff"
+    elif [ "$cur" != "$want" ]; then
+      echo "view $name: is $cur, want $want" >> "$tmp/diff"
+    fi
+  done <<EOF
+$THREAD_VIEWS
+EOF
+}
+
 check_mode() {
-  number=$1; towner=$2; tpl=$3
+  number=$1; towner=$2; tpl=$3; threads=${4:-0}
   owner_info
   read_board "$number" "$tmp/board"
   read_template "$towner" "$tpl" "$tmp/tpl"
@@ -351,7 +407,9 @@ check_mode() {
       echo "field $name: is $got, template has $type|$opts" >> "$tmp/diff"
     fi
   done < "$tmp/tf"
-  awk -F'|' 'NR == FNR {t[$1] = 1; next} !($1 in t) && $1 != "Kind" && $1 != "Area" {print "field " $1 ": not in the template"}' \
+  awk -F'|' -v th="$threads" 'NR == FNR {t[$1] = 1; next}
+    !($1 in t) && $1 != "Kind" && $1 != "Area" &&
+    !(th && ($1 == "Focus" || $1 == "Rank" || $1 == "Next step")) {print "field " $1 ": not in the template"}' \
     "$tmp/tf" "$tmp/bf" >> "$tmp/diff"
   awk -F'|' '$1 == "V" {print $3 "|" $4 "|" $5 "|" $6 "|" $7 "|" $8 "|" $9}' "$tmp/tpl" > "$tmp/tv"
   while IFS='|' read -r name rest_of; do
@@ -362,6 +420,7 @@ check_mode() {
       echo "view $name: is $got, template has $rest_of" >> "$tmp/diff"
     fi
   done < "$tmp/tv"
+  if [ "$threads" -eq 1 ]; then check_threads "$tmp/board" "$tmp/bf"; profile=' with the thread profile'; else profile=''; fi
   # Workflow names as GitHub lists them; one not yet configured is not listed.
   # "Auto-add to project" follows the settings page (unverified through the API).
   wanted='item added to project
@@ -392,16 +451,21 @@ $wanted
 EOF
   echo "Not checked (no API): workflow settings, the auto-add filter, the description, the base role."
   if [ -s "$tmp/diff" ]; then
-    echo "board $number differs from template $tpl:"
+    echo "board $number differs from template $tpl$profile:"
     sed 's/^/- /' "$tmp/diff"
     exit 1
   fi
-  echo "board $number matches template $tpl"
+  echo "board $number matches template $tpl$profile"
 }
 
 case ${1:-} in
   template) [ $# -eq 2 ] || usage; owner=$2; template_mode ;;
   create) [ $# -ge 5 ] || usage; owner=$2; shift 2; create_mode "$@" ;;
-  --check) [ $# -eq 5 ] || usage; owner=$2; check_mode "$3" "$4" "$5" ;;
+  --check)
+    case $#:${6:-} in
+      5:) owner=$2; check_mode "$3" "$4" "$5" ;;
+      6:--threads) owner=$2; check_mode "$3" "$4" "$5" 1 ;;
+      *) usage ;;
+    esac ;;
   *) usage ;;
 esac

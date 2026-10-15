@@ -277,4 +277,50 @@ grep -q '^- view No priority yet: is table|no:assignee' "$dir/out"
 grep -q '^- view Initiatives: missing$' "$dir/out"
 grep -q '^- workflow item closed: disabled$' "$dir/out"
 [ "$(grep -c '^- ' "$dir/out")" -eq 5 ]
+
+# Threads: the thread profile goes on the shared board only, never the template.
+run create o 'Shared' o 1 --threads
+[ "$(cat "$S/4/title")" = 'Shared' ]
+grep -q '|Focus|SINGLE_SELECT|o[0-9]*~Now~RED~Being worked this week;o[0-9]*~Next~YELLOW~Starts when a Now thread ends;o[0-9]*~Later~GRAY~Not before the next review$' "$S/4/fields"
+grep -q '|Rank|NUMBER|$' "$S/4/fields"
+grep -q '|Next step|TEXT|$' "$S/4/fields"
+grep -q '|Threads|table|has:focus|Focus||Rank:ASC|Next step,Priority,Status,Sub-issues progress,Title,Waiting for$' "$S/4/views"
+grep -q '|Threads by focus|board|has:focus||Focus|Rank:ASC|Next step,Priority,Title$' "$S/4/views"
+if grep -Eq '\|(Focus|Rank|Next step)\|' "$S/1/fields"; then echo 'thread field on the template'; exit 1; fi
+snap first
+run create o 'Shared' o 1 --threads
+snap second
+diff -r "$dir/first" "$dir/second"
+if grep -Eq ': (set|created)$' "$dir/out"; then echo 'threads rerun changed the board'; exit 1; fi
+
+# Check with the thread profile passes; without it the thread fields are extra.
+printf 'W|Item reopened|true\nW|Auto-archive items|true\n' >> "$S/4/workflows"
+mark
+run --check o 4 o 1 --threads
+no_writes
+grep -q 'board 4 matches template 1 with the thread profile' "$dir/out"
+fails 1 --check o 4 o 1
+no_writes
+grep -q '^- field Focus: not in the template$' "$dir/out"
+grep -q '^- field Rank: not in the template$' "$dir/out"
+grep -q '^- field Next step: not in the template$' "$dir/out"
+[ "$(grep -c '^- ' "$dir/out")" -eq 3 ]
+fails 2 --check o 4 o 1 --other
+
+# Focus on an existing board: own options stay, missing ones are added.
+sed 's/~Later~GRAY~Not before the next review/~Someday~PINK~Ours/' "$S/4/fields" > "$dir/f"; cp "$dir/f" "$S/4/fields"
+run create o 'Shared' o 1 --threads
+grep -q '~Next~YELLOW~[^;]*;[a-z0-9]*~Someday~PINK~Ours;o[0-9]*~Later~GRAY~Not before the next review$' "$S/4/fields"
+run --check o 4 o 1 --threads
+
+# Thread drift is reported, one line each, without writing.
+sed '/|Threads by focus|/d' "$S/4/views" > "$dir/v"; cp "$dir/v" "$S/4/views"
+sed 's/|Rank|NUMBER|/|Rank|TEXT|/' "$S/4/fields" > "$dir/f"; cp "$dir/f" "$S/4/fields"
+mark
+fails 1 --check o 4 o 1 --threads
+no_writes
+grep -q 'board 4 differs from template 1 with the thread profile:' "$dir/out"
+grep -q '^- field Rank: is TEXT, want NUMBER$' "$dir/out"
+grep -q '^- view Threads by focus: missing$' "$dir/out"
+[ "$(grep -c '^- ' "$dir/out")" -eq 2 ]
 echo "ensure-board self-test passed"
