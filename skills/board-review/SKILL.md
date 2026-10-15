@@ -24,8 +24,7 @@ for a public repository, my own agent configuration names one. Read the
 link as `OWNER` and board `NUMBER`.
 
 - **On a board:** steps 1 to 6.
-- **Board not found** (a public repository whose board is not found):
-  report "no board found" and stop; never guess.
+- **Board not found:** report "no board found" and stop; never guess.
 
 A public repository's items are private drafts on the shared board: review
 only the items whose Area field is that repository's name, and skip `gh
@@ -53,7 +52,7 @@ Narrow with the board's own filter syntax where a view's filter is wanted
 "status:Backlog"` for Backlog). If a list comes back full, say it was
 truncated and review the highest priorities first.
 
-Select, on a board: items with no priority yet; Backlog items not reviewed
+Select: items with no priority yet; Backlog items not reviewed
 in 30 days or more; items new or changed since the last run; items a merge
 since the last run may address (it names the item, or touches the files or
 area the item names: a cheap match on titles, bodies and changed paths).

@@ -63,7 +63,7 @@ tier; the relevance check, ranking and brief writing stay here (P2).
   them in the report, do not brief them.
 
 Rank: P1 items and packages that block other work; then the current
-phase's next packages (on a board, by Priority and then Phase), P2 items
+phase's next packages (by Priority and then Phase), P2 items
 and stale PRs; then P3. Within a band, cheaper to finish first.
 
 ## 3. Choose
@@ -126,8 +126,8 @@ is split before it is proposed. Set Autonomy and the title from
 ## 6. Propose
 
 Propose one session per brief with the tool the adapter's `session.md`
-names (P1); writing a brief out in chat does not propose it. On a board,
-a session that proposes a package's work itself moves its item Planned →
+names (P1); writing a brief out in chat does not propose it. A
+session that proposes a package's work itself moves its item Planned →
 Ready (`gh project item-edit`; a draft the same way). A read-only routine
 such as `board-review` never writes: the session it proposes makes the
 move when it runs. Its summary

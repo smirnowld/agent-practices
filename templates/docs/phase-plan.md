@@ -10,8 +10,7 @@ package is one agent and one pull request (or a small series), with criteria
 a reviewer can check. Package IDs are `WP` plus a number that continues
 across phases and is never reused. Size per `practices/model-sizing.md`; an L
 package is split before it is briefed. Status: on the [board](<board link,
-Phase view; left out in a public repository>), or in [plan.md](../plan.md)
-before the project's switch to a board. Order of outcomes:
+Phase view; left out in a public repository>). Order of outcomes:
 [plan.md](../plan.md).
 
 **Goal:** <what the user can see or do when this phase ends>
@@ -41,13 +40,6 @@ platform, a component), if it has one. -->
 
 **Parallelism rule:** <which packages may run at the same time and which
 must wait, with the shared files or resources that force the order>.
-
-<!-- A project not yet on a board keeps the order chain here instead of the
-"Package order" line; every dependency not listed has merged:
-
-AREA:   WPA ─► WPB   what each delivers, a few words
-AREA:   WPC          what it delivers
--->
 
 ## Completion states
 

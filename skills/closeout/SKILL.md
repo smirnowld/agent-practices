@@ -15,9 +15,8 @@ PR (P17), never in the repository.
 - The PRs opened, their state, and the merge commit SHA of each merged one.
   State what is finished from the merged default branch, never from a
   branch or a worker's report.
-- The board matches the outcome, for a project on a board by the P19b test
-  (its `AGENTS.md` links one, or for a public repository my own agent
-  configuration names one). Check each item this session worked on with
+- The board matches the outcome (P19b; its link is in `AGENTS.md`, or for
+  a public repository in my own agent configuration). Check each item this session worked on with
   `gh project item-list` and fix it with `gh project item-edit`: Done once
   its `Fixes` PR merged; Waiting, with Waiting for set and me assigned
   when the next move is mine, when engineering is complete and the rest
@@ -37,7 +36,7 @@ PR (P17), never in the repository.
   names the tool) and say so.
 - Steps addressed to me anywhere: the PR body, changed READMEs and docs,
   workers' reports, your own notes. Run each one you can (P9a; file changes
-  through a slice, P2b); the rest go under **Needs you**. On a board, file
+  through a slice, P2b); the rest go under **Needs you**. File
   each step of mine that outlives the session as an item assigned to me,
   labelled `maintainer-step`, and link it from the PR and closeout; in a
   public repository it is a draft, which sends no notification and is
