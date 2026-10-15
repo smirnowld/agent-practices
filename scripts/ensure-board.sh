@@ -11,6 +11,10 @@
 #   ensure-board.sh --check OWNER NUMBER TEMPLATE_OWNER TEMPLATE_NUMBER
 #     Read-only: compare a board with the template. Exit 1 lists the
 #     differences; exit 2 means a board could not be read.
+#   ensure-board.sh --sync OWNER NUMBER TEMPLATE_OWNER TEMPLATE_NUMBER [--dry-run]
+#     Bring a copied board up to the template: add missing fields, single-select
+#     options and views. Never deletes, renames or changes anything; reports
+#     what differs instead. --dry-run only prints what it would add.
 # Workflows, auto-add, the description and the base role have no API; the
 # script prints them as steps.
 set -eu
@@ -57,6 +61,7 @@ KIND_VIEW='Drafts by kind|table|is:draft|Kind|||Title,Status,Priority,Assignees,
 # One GraphQL read per board, flattened to lines:
 #   P|id|template|title
 #   F|id|databaseId|name|dataType|optionId~name~colour~description;...
+#     (option names and descriptions percent-encode %, ~, ;, | and newlines)
 #   V|id|name|layout|filter|group by|columns|field:direction|visible fields, sorted
 #   W|name|enabled
 #   R|number of linked repositories
@@ -70,9 +75,10 @@ verticalGroupByFields(first:5){nodes{...on ProjectV2FieldCommon{name}}}
 sortByFields(first:5){nodes{direction field{...on ProjectV2FieldCommon{name}}}}}}
 workflows(first:50){nodes{name enabled}}
 repositories(first:1){totalCount}}'
-BOARD_JQ='.data[].projectV2 |
+BOARD_JQ='def enc: gsub("%"; "%25") | gsub("~"; "%7E") | gsub(";"; "%3B") | gsub("\\|"; "%7C") | gsub("\n"; "%0A");
+.data[].projectV2 |
 "P|\(.id)|\(.template)|\(.title)",
-(.fields.nodes[] | "F|\(.id)|\(.databaseId)|\(.name)|\(.dataType)|\((.options // []) | map("\(.id)~\(.name)~\(.color)~\(.description)") | join(";"))"),
+(.fields.nodes[] | "F|\(.id)|\(.databaseId)|\(.name)|\(.dataType)|\((.options // []) | map("\(.id)~\(.name | enc)~\(.color)~\(.description | enc)") | join(";"))"),
 (.views.nodes[] | "V|\(.id)|\(.name)|\(.layout | sub("_LAYOUT$"; "") | ascii_downcase)|\(.filter // "")|\([.groupByFields.nodes[].name] | join(","))|\([.verticalGroupByFields.nodes[].name] | join(","))|\([.sortByFields.nodes[] | "\(.field.name):\(.direction)"] | join(","))|\([.fields.nodes[].name] | sort | join(","))"),
 (.workflows.nodes[] | "W|\(.name)|\(.enabled)"),
 "R|\(.repositories.totalCount)"'
@@ -116,6 +122,10 @@ read_template() { # OWNER NUMBER FILE
 
 field_line() { awk -F'|' -v n="$2" '$1 == "F" && $4 == n' "$1"; }
 field_id() { awk -F'|' -v n="$2" '$1 == "F" && $4 == n {print $3; exit}' "$1"; }
+# Encoded option text (BOARD_JQ) as the inside of a GraphQL string.
+gql_str() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/%0A/\\n/g; s/%7E/~/g; s/%3B/;/g; s/%7C/|/g; s/%25/%/g'; }
+# Text as the inside of a JSON string.
+json_str() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
 sorted() { printf '%s\n' "$1" | tr ',' '\n' | LC_ALL=C sort | paste -sd, -; }
 
 find_board() { # TITLE -> sets found to its number, or empty
@@ -148,7 +158,7 @@ sync_options() { # FILE FIELD SPEC [add]
   while IFS='|' read -r name colour desc old; do
     id=$(awk -F'~' -v n="$name" -v o="$old" \
       'tolower($2) == tolower(n) || (o != "" && $2 == o) {print $1; exit}' "$tmp/opts")
-    item="name:\"$name\",color:$colour,description:\"$desc\""
+    item="name:\"$(gql_str "$name")\",color:$colour,description:\"$(gql_str "$desc")\""
     if [ -n "$id" ]; then item="id:\"$id\",$item"; fi
     literal="$literal${literal:+,}{$item}"
     want="$want${want:+;}$name~$colour~$desc"
@@ -198,8 +208,8 @@ create_view() { # NUMBER FILE NAME LAYOUT FILTER GROUP COLUMNS SORT VISIBLE
     if [ -n "$id" ]; then ids="$ids${ids:+,}$id"; else echo "view $3: no field $f to show" >&2; fi
   done
   IFS=$oldifs
-  json="{\"name\":\"$3\",\"layout\":\"$4\",\"visible_fields\":[$ids]"
-  if [ -n "$5" ]; then json="$json,\"filter\":\"$5\""; fi
+  json="{\"name\":\"$(json_str "$3")\",\"layout\":\"$4\",\"visible_fields\":[$ids]"
+  if [ -n "$5" ]; then json="$json,\"filter\":\"$(json_str "$5")\""; fi
   if [ -n "$6" ]; then json="$json,\"group_by\":[$(field_id "$2" "$6")]"; fi
   if [ -n "$7" ]; then json="$json,\"vertical_group_by\":[$(field_id "$2" "$7")]"; fi
   if [ -n "$8" ]; then
@@ -335,6 +345,38 @@ fields_summary() {
   }' "$1"
 }
 
+# Appends to OUT one line per workflow the board lacks or has disabled.
+workflow_gaps() { # FILE NUMBER OUT
+  # Workflow names as GitHub lists them; one not yet configured is not listed.
+  # "Auto-add to project" follows the settings page (unverified through the API).
+  wanted='item added to project
+item closed
+item reopened
+auto-archive items'
+  # Auto-add needs a linked repository; the shared board may have none.
+  # "Linked" stands in for "should auto-add": a board linked only for display is still asked.
+  repos=$(awk -F'|' '$1 == "R" {print $2}' "$1")
+  case $repos in
+    ''|*[!0-9]*) die "cannot read linked repositories of board $2" ;;
+  esac
+  if [ "$repos" -gt 0 ]; then
+    wanted="$wanted
+auto-add to project"
+  else
+    echo "board $2: no linked repository, auto-add not needed"
+  fi
+  while IFS= read -r wf; do
+    state=$(awk -F'|' -v n="$wf" '$1 == "W" && tolower($2) == n {print $3; exit}' "$1")
+    case $state in
+      true) ;;
+      '') echo "workflow $wf: not set up" >> "$3" ;;
+      *) echo "workflow $wf: disabled" >> "$3" ;;
+    esac
+  done <<EOF
+$wanted
+EOF
+}
+
 check_mode() {
   number=$1; towner=$2; tpl=$3
   owner_info
@@ -362,34 +404,7 @@ check_mode() {
       echo "view $name: is $got, template has $rest_of" >> "$tmp/diff"
     fi
   done < "$tmp/tv"
-  # Workflow names as GitHub lists them; one not yet configured is not listed.
-  # "Auto-add to project" follows the settings page (unverified through the API).
-  wanted='item added to project
-item closed
-item reopened
-auto-archive items'
-  # Auto-add needs a linked repository; the shared board may have none.
-  # "Linked" stands in for "should auto-add": a board linked only for display is still asked.
-  repos=$(awk -F'|' '$1 == "R" {print $2}' "$tmp/board")
-  case $repos in
-    ''|*[!0-9]*) die "cannot read linked repositories of board $number" ;;
-  esac
-  if [ "$repos" -gt 0 ]; then
-    wanted="$wanted
-auto-add to project"
-  else
-    echo "board $number: no linked repository, auto-add not needed"
-  fi
-  while IFS= read -r wf; do
-    state=$(awk -F'|' -v n="$wf" '$1 == "W" && tolower($2) == n {print $3; exit}' "$tmp/board")
-    case $state in
-      true) ;;
-      '') echo "workflow $wf: not set up" >> "$tmp/diff" ;;
-      *) echo "workflow $wf: disabled" >> "$tmp/diff" ;;
-    esac
-  done <<EOF
-$wanted
-EOF
+  workflow_gaps "$tmp/board" "$number" "$tmp/diff"
   echo "Not checked (no API): workflow settings, the auto-add filter, the description, the base role."
   if [ -s "$tmp/diff" ]; then
     echo "board $number differs from template $tpl:"
@@ -399,9 +414,146 @@ EOF
   echo "board $number matches template $tpl"
 }
 
+# Template options of FIELD in FILE as SPEC lines name|colour|description|.
+# Phase's options are each project's own phase names; only Later is shared.
+template_spec() { # FILE FIELD
+  field_line "$1" "$2" | cut -d'|' -f6 | tr ';' '\n' |
+    awk -F'~' -v f="$2" 'NF && (f != "Phase" || tolower($2) == "later") {print $2 "|" $3 "|" $4 "|"}'
+}
+
+# Visible fields of view NAME: VIEWS or KIND_VIEW give the order where they
+# name the view (the template read sorts them); fields they lack follow.
+view_order() { # NAME VISIBLE
+  printf '%s\n%s\n' "$VIEWS" "$KIND_VIEW" | awk -F'|' -v n="$1" '$1 == n {print $7; exit}' |
+    tr ',' '\n' > "$tmp/pref"
+  printf '%s\n' "$2" | tr ',' '\n' > "$tmp/shown"
+  awk 'FILENAME == ARGV[1] {if ($0 != "") {h[$0] = 1; o[++n] = $0}; next}
+    ($0 in h) && !($0 in done) {out = out (out != "" ? "," : "") $0; done[$0] = 1}
+    END {for (i = 1; i <= n; i++) if (!(o[i] in done)) out = out (out != "" ? "," : "") o[i]; print out}' \
+    "$tmp/shown" "$tmp/pref"
+}
+
+report() { echo "$*"; echo "$*" >> "$tmp/diff"; }
+
+sync_mode() {
+  number=$1; towner=$2; tpl=$3; dry=${4:-}
+  owner_info
+  b="$tmp/board"; t="$tmp/tpl"
+  read_board "$number" "$b"
+  read_template "$towner" "$tpl" "$t"
+  : > "$tmp/diff"; : > "$tmp/new"
+  adds=0
+  # Fields: add the missing ones; Kind and Area are each board's own.
+  awk -F'|' '$1 == "F" && $4 != "Kind" && $4 != "Area" {print $4 "|" $5}' "$t" > "$tmp/tf"
+  while IFS='|' read -r fname ftype; do
+    got=$(field_line "$b" "$fname" | cut -d'|' -f5)
+    if [ -n "$got" ]; then
+      [ "$got" = "$ftype" ] || report "field $fname: differs (board $got, template $ftype)"
+      continue
+    fi
+    case $ftype in
+      TEXT|NUMBER|DATE|SINGLE_SELECT) ;;
+      *) report "field $fname: missing, a built-in $ftype field the API cannot add"; continue ;;
+    esac
+    adds=$((adds + 1))
+    if [ -n "$dry" ]; then echo "field $fname: would add ($ftype)"; continue; fi
+    if [ "$ftype" = SINGLE_SELECT ]; then
+      names=$(template_spec "$t" "$fname" | cut -d'|' -f1 | paste -sd, -)
+      gh project field-create "$number" --owner "$owner" --name "$fname" \
+        --data-type SINGLE_SELECT --single-select-options "$names" >/dev/null </dev/null
+    else
+      gh project field-create "$number" --owner "$owner" --name "$fname" \
+        --data-type "$ftype" >/dev/null </dev/null
+    fi
+    echo "$fname" >> "$tmp/new"
+    echo "field $fname: added"
+  done < "$tmp/tf"
+  if [ -s "$tmp/new" ]; then read_board "$number" "$b"; fi   # new field ids for the views
+  awk -F'|' 'NR == FNR {t[$4] = 1; next} $1 == "F" && !($4 in t) && $4 != "Kind" && $4 != "Area" {print $4}' \
+    "$t" "$b" > "$tmp/extra"
+  while IFS= read -r fname; do report "field $fname: extra, not in the template"; done < "$tmp/extra"
+
+  # Options: append the template's missing ones; existing options stay as they are.
+  awk -F'|' '$1 == "F" && $5 == "SINGLE_SELECT" && $4 != "Kind" && $4 != "Area" {print $4}' "$t" > "$tmp/ts"
+  while IFS= read -r fname; do
+    [ "$(field_line "$b" "$fname" | cut -d'|' -f5)" = SINGLE_SELECT ] || continue
+    template_spec "$t" "$fname" > "$tmp/spec"
+    if grep -qxF "$fname" "$tmp/new"; then   # created above: set the template's colours and descriptions
+      sync_options "$b" "$fname" "$(cat "$tmp/spec")" > /dev/null
+      continue
+    fi
+    field_line "$b" "$fname" | cut -d'|' -f6 | tr ';' '\n' > "$tmp/bo"
+    : > "$tmp/missing"
+    while IFS='|' read -r oname ocolour odesc _; do
+      cur=$(awk -F'~' -v n="$oname" 'NF && tolower($2) == tolower(n) {print $3 "|" $4; exit}' "$tmp/bo")
+      if [ -z "$cur" ]; then
+        echo "$oname|$ocolour|$odesc|" >> "$tmp/missing"
+        adds=$((adds + 1))
+        if [ -n "$dry" ]; then echo "field $fname: would add option $oname"; else echo "field $fname: option $oname added"; fi
+      elif [ "$cur" != "$ocolour|$odesc" ]; then
+        report "field $fname: option $oname differs (board $cur, template $ocolour|$odesc)"
+      fi
+    done < "$tmp/spec"
+    if [ "$fname" != Phase ]; then
+      awk -F'|' 'NR == FNR {t[tolower($1)] = 1; next} {split($0, p, "~")} NF && !(tolower(p[2]) in t) {print p[2]}' \
+        "$tmp/spec" "$tmp/bo" > "$tmp/extra"
+      while IFS= read -r oname; do report "field $fname: option $oname extra, not in the template"; done < "$tmp/extra"
+    fi
+    if [ -s "$tmp/missing" ] && [ -z "$dry" ]; then
+      sync_options "$b" "$fname" "$(cat "$tmp/missing")" add > /dev/null
+    fi
+  done < "$tmp/ts"
+
+  # Views: add the missing ones with the board's field ids; never recreate one.
+  awk -F'|' '$1 == "V"' "$t" > "$tmp/tv"
+  while IFS='|' read -r _ _ vname layout filter group cols sort visible; do
+    cur=$(awk -F'|' -v n="$vname" '$1 == "V" && $3 == n {print $4 "|" $5 "|" $6 "|" $7 "|" $8 "|" $9; exit}' "$b")
+    want="$layout|$filter|$group|$cols|$sort|$visible"
+    if [ -z "$cur" ]; then
+      adds=$((adds + 1))
+      if [ -n "$dry" ]; then echo "view $vname: would add"; continue; fi
+      create_view "$number" "$b" "$vname" "$layout" "$filter" "$group" "$cols" "$sort" \
+        "$(view_order "$vname" "$visible")"
+      echo "view $vname: added"
+    elif [ "$layout" = roadmap ] && [ "${cur%|*}" = "${want%|*}" ]; then
+      :   # a roadmap ignores the visible fields it is given
+    elif [ "$cur" != "$want" ]; then
+      report "view $vname: differs (board $cur, template $want)"
+    fi
+  done < "$tmp/tv"
+  kind_view=${KIND_VIEW%%|*}
+  awk -F'|' -v k="$kind_view" 'NR == FNR {if ($1 == "V") t[$3] = 1; next} $1 == "V" && !($3 in t) && $3 != k {print $3}' \
+    "$t" "$b" > "$tmp/extra"
+  while IFS= read -r vname; do report "view $vname: extra, not in the template"; done < "$tmp/extra"
+
+  : > "$tmp/wf"
+  workflow_gaps "$b" "$number" "$tmp/wf"
+  echo "Steps with no API, in the board's Workflows settings ($web/projects/$number/workflows):"
+  sed "s/^/- /; s/\$/; set it up as in template $tpl of $towner./" "$tmp/wf"
+  echo "- Built-in workflows: check their settings match the template's."
+  echo "- Auto-add to project: check its repository and filter (is:issue -label:initiative)."
+  kept=$(wc -l < "$tmp/diff" | tr -d ' ')
+  left=''
+  if [ "$kept" -gt 0 ]; then left="; $kept differences above left as they are"; fi
+  if [ "$adds" -eq 0 ]; then
+    echo "board $number: nothing missing from template $tpl$left; nothing to do"
+  elif [ -n "$dry" ]; then
+    echo "board $number: dry run, would add $adds from template $tpl$left"
+  else
+    echo "board $number: added $adds from template $tpl$left"
+  fi
+}
+
 case ${1:-} in
   template) [ $# -eq 2 ] || usage; owner=$2; template_mode ;;
   create) [ $# -ge 5 ] || usage; owner=$2; shift 2; create_mode "$@" ;;
   --check) [ $# -eq 5 ] || usage; owner=$2; check_mode "$3" "$4" "$5" ;;
+  --sync)
+    case "$#|${6:-}" in
+      5\|) ;;
+      6\|--dry-run) ;;
+      *) usage ;;
+    esac
+    owner=$2; sync_mode "$3" "$4" "$5" "${6:+dry}" ;;
   *) usage ;;
 esac
