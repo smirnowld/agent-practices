@@ -1,53 +1,69 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TITLE evidence</title>
+<!--
+Evidence page fragment, filled by bin/evidence-page from a manifest. The host
+that publishes it adds the doctype, html, head and body; bin/evidence-page
+--full adds them for a standalone file. To fill it by hand, replace:
+  {{TITLE}}     page title, plain text (used in <title> and the h1)
+  {{INTRO}}     paragraphs: how it was captured, "Changed since last version:",
+                the PR link, and the hint "Tap a screen to open it full size"
+  {{SWITCHER}}  locale/theme controls, or nothing when there is one variant
+  {{SECTIONS}}  one <section> per screen and state (see the markup in
+                bin/evidence-page); image src is the original capture
+-->
+<title>{{TITLE}}</title>
 <style>
-/* One column of screens, each with what to look for above it.
+/* One section per screen and state, before and after side by side.
    Each image sits in a button that opens the in-page viewer, never a link to
-   the image file: the host's page viewer opens a linked image with no back control. */
-:root{--bg:#f6f7f9;--fg:#1c2128;--muted:#5a6472;--line:#d9dee5;--accent:#1f5fbf;
+   the image file: a host's page viewer opens a linked image with no back control. */
+:root{--bg:#f6f7f9;--fg:#1c2128;--muted:#5a6472;--line:#d9dee5;--accent:#1f5fbf;--panel:#ffffff;
 --sans:system-ui,-apple-system,sans-serif;--mono:ui-monospace,monospace}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171c;--fg:#e6e9ee;--muted:#9aa4b2;--line:#2c323b;--accent:#7fb0ff;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#14171c;--fg:#e6e9ee;--muted:#9aa4b2;--line:#2c323b;--accent:#7fb0ff;color-scheme:dark}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 var(--sans)}
-main{max-width:1100px;margin:0 auto;padding:32px 16px 64px;display:grid;gap:40px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171c;--fg:#e6e9ee;--muted:#9aa4b2;--line:#2c323b;--accent:#7fb0ff;--panel:#1b1f26;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14171c;--fg:#e6e9ee;--muted:#9aa4b2;--line:#2c323b;--accent:#7fb0ff;--panel:#1b1f26;color-scheme:dark}
+[hidden]{display:none!important}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 var(--sans);overflow-x:hidden}
+main{max-width:1100px;margin:0 auto;padding:32px 16px 64px;display:grid;gap:40px;min-width:0}
 h1{font-size:1.6rem;margin:0;text-wrap:balance}
 h2{font-size:1.1rem;margin:0}
-p,ul{margin:0;max-width:68ch}
-ul{padding-left:1.2em}
-header,section{display:grid;gap:10px;min-width:0}
+p{margin:0;max-width:68ch;overflow-wrap:anywhere}
+a{color:var(--accent)}
+header,section{display:grid;gap:12px;min-width:0}
+.muted{color:var(--muted)}
 code{font-family:var(--mono);font-size:.88em}
-figure{margin:0;border:1px solid var(--line)}
+/* Switcher: one control per dimension that has more than one value. */
+.switcher{position:sticky;top:env(safe-area-inset-top,0px);z-index:2;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:10px 0;background:var(--bg);border-bottom:1px solid var(--line)}
+.switcher label{display:flex;gap:6px;align-items:center;font-weight:600}
+.switcher select{font:15px/1.2 var(--sans);padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--fg)}
+/* A platform row holds one variant per locale and theme; only one is shown. */
+.platform{display:grid;gap:8px;min-width:0}
+.platform>h3{font-size:.95rem;margin:0;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.pair{display:grid;gap:16px;grid-template-columns:minmax(0,1fr);justify-items:center;min-width:0}
+@media (min-width:720px){.pair.two{grid-template-columns:repeat(2,minmax(0,1fr))}}
+figure{margin:0;display:grid;gap:6px;justify-items:center;width:100%;min-width:0}
+figure .label{justify-self:start;font-weight:600;font-size:.9rem}
+figure .label.after{color:var(--accent)}
+figcaption{justify-self:start;font-size:.8rem;color:var(--muted);overflow-wrap:anywhere}
+figure button.open{display:block;width:100%;padding:0;border:1px solid var(--line);background:var(--panel);cursor:zoom-in}
 img{display:block;width:100%;height:auto}
-figure button.open{display:block;width:100%;padding:0;border:0;background:none;cursor:zoom-in}
+/* Portrait captures (phones) stay phone-sized in the overview; the viewer shows them full size. */
+figure.portrait button.open{max-width:390px}
 /* Viewer */
 dialog#viewer{padding:0;border:0;margin:0;width:100vw;height:100dvh;max-width:none;max-height:none;background:var(--bg);color:var(--fg)}
 dialog#viewer[open]{display:flex;flex-direction:column}
 dialog#viewer::backdrop{background:rgba(0,0,0,.6)}
-#viewer .bar{position:sticky;top:0;z-index:1;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--line)}
+#viewer .bar{position:sticky;top:0;z-index:1;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top,0px));background:var(--bg);border-bottom:1px solid var(--line)}
 #viewer .bar button{font:600 15px/1 var(--sans);padding:10px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
 #viewer .bar .back{background:var(--accent);border-color:var(--accent);color:var(--bg)}
 #viewer .stage{flex:1;min-height:0;overflow:auto}
-#viewer .stage img{width:auto;max-width:100%;cursor:zoom-in}
-#viewer.actual .stage img{max-width:none;cursor:zoom-out}
+#viewer .stage img{width:auto;max-width:100%;margin:0 auto;cursor:zoom-in}
+#viewer.actual .stage img{max-width:none;margin:0;cursor:zoom-out}
 </style>
-</head>
-<body>
 <main>
 <header>
-<h1>TITLE</h1>
-<p>How it was captured: the build, the command, the account. Tap a screen to open it full size; "Back to overview", Escape or the back gesture returns here.</p>
+<h1>{{TITLE}}</h1>
+{{INTRO}}
 </header>
-<!-- One section per screen and state. Repeat as needed. img src: a path or URL
-     that resolves on the published host. -->
-<section>
-<h2>SCREEN AND STATE</h2>
-<ul><li>What to look for.</li></ul>
-<figure><button class="open" type="button" aria-label="Open full size: DESCRIPTION"><img src="img/IMAGE.png" alt="DESCRIPTION" loading="lazy"></button></figure>
-</section>
+{{SWITCHER}}
+{{SECTIONS}}
 </main>
 <dialog id="viewer" aria-label="Screen, full size">
 <div class="bar"><button class="back" type="button">← Back to overview</button><button class="zoom" type="button">Actual size</button></div>
@@ -69,7 +85,20 @@ viewer.addEventListener('cancel',e=>{e.preventDefault();back.click();});
 addEventListener('popstate',closeViewer);
 // A reload with the viewer open keeps its history entry; drop it so Back leaves in one press.
 if(history.state&&history.state.viewer)history.replaceState(null,'');
+
+// Locale and theme switcher: show the chosen variant everywhere, remember it per viewer.
+const sel={},key='evidence-page:'+location.pathname;
+document.querySelectorAll('.switcher select').forEach(s=>{sel[s.name]=s;});
+function show(){
+  const want={};for(const k in sel)want[k]=sel[k].value;
+  document.querySelectorAll('.variant').forEach(v=>{
+    v.hidden=!Object.keys(want).every(k=>v.dataset[k]===want[k]);
+  });
+}
+try{const saved=JSON.parse(localStorage.getItem(key)||'{}');
+  for(const k in sel)if(saved[k]&&[...sel[k].options].some(o=>o.value===saved[k]))sel[k].value=saved[k];}catch(e){}
+for(const k in sel)sel[k].addEventListener('change',()=>{show();
+  try{const o={};for(const n in sel)o[n]=sel[n].value;localStorage.setItem(key,JSON.stringify(o));}catch(e){}});
+if(Object.keys(sel).length)show();
 }
 </script>
-</body>
-</html>

@@ -54,6 +54,14 @@ when ToolSearch cannot find it either, and the report says so.
   `request_credentials` for that login only, then `autofill_credential`; a
   code through `enter_verification_code` (I approve each; you never see the
   values); `release_credentials` when done. Not connected: numbered steps.
+- **Publish an evidence page** (`acceptance-evidence` step 5): the Artifact
+  tool. First publish: `file_path` `OUT_DIR/index.html`, `root` `OUT_DIR`,
+  `files` the map in `OUT_DIR/files.json`, `icon` `camera`; build without
+  `--full` (the tool adds doctype, head and body). Republish at the same URL
+  (`url` from another session, after its `read`); map to `null` each `img/`
+  path a `scope` `files` listing shows that `files.json` lacks. The skill and
+  template win over the `artifact-design` design pass; its page contract is
+  already met. Give me the URL; it stays private.
 - **Wait on CI or a merge** (P6b, `merge` step 4): run `wait-for` (the
   plugin's `bin/` is on the Bash PATH) with Bash `run_in_background` and a
   `timeout` above its deadline: 4200000 ms covers the defaults (45 and 60
