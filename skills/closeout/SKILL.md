@@ -28,6 +28,13 @@ PR (P17), never in the repository.
   plan (`practices/planning.md`, "When a package leaves"). With neither a
   board nor a `docs/plan.md` where the project expects one, say "no board
   found" under **Not verified**; never guess.
+- The thread, when the brief names one (`practices/tracking.md`,
+  Threads): set its Next step on the shared board to the next concrete
+  action in plain words, and Waiting for to what it waits on (me assigned
+  when the move is mine), or clear it. With nothing left in the thread,
+  propose closing it under **Needs you**; closing is mine. If its session
+  group is now empty and the thread closed, remove the group (the
+  adapter's `session.md` names the tools).
 - The files a reader needs to see, pinned to that SHA (or the PR head SHA if
   not merged).
 - Proof: the checks on the final commit, with the CI run URL.

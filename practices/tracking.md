@@ -56,6 +56,9 @@ exceptions mirror a scope fact, and the drift check keeps each pair in step:
 | Assignees | Built-in | The person who must act next. Empty for agent work, since agents act as my account and would flood my list; set to me only for a step only I can take |
 | Kind | Single select | Only on a board that holds draft items, which cannot carry labels |
 | Area | Single select | Only on a board that holds draft items: the repository (by name) or theme a draft belongs to |
+| Focus | Single select | Only on the shared board, on thread parents ([Threads](#threads)): Now, Next or Later |
+| Rank | Number | Only on thread parents: order within a Focus, 1 first |
+| Next step | Text | Only on thread parents: the thread's next concrete action, in plain words |
 
 Phase health and the expected end date are status too: they go in the
 board's project status update where available, otherwise in the phase
@@ -85,6 +88,8 @@ A project adds its own labels; the names follow P21a.
 | No priority yet | Items with no priority | Board review |
 | Long-lead | Long-lead items by target date | Me |
 | Initiatives | Parent issues with sub-issue progress | Me |
+| Threads | Shared board only: thread parents grouped by Focus, sorted by Rank, with Priority, Status, Waiting for, Next step and sub-issue progress | Me; `brief`, closeout |
+| Threads by focus | Shared board only: thread parents in Focus columns | Me |
 
 A view cannot show items from other boards. What waits on me is GitHub's
 assigned-to-me issue list, which spans every repository, plus the shared
@@ -179,6 +184,50 @@ on each project's board. Project boards auto-add `is:issue
 -label:initiative`, which keeps parents off them; the parent shows the
 sub-issues' progress. PRs stay off boards and show on their issue as linked
 pull requests, so nothing appears twice.
+
+## Threads
+
+A thread is one stream of work I am pursuing, such as a product goal or a
+change to my tooling, that outlives a session and may span repositories.
+
+- **Where it lives.** A thread is a parent item on the shared board: an
+  issue, or a private draft for work in a public repository. Its work items
+  are sub-issues in the project repositories, on their own boards, as for an
+  initiative (above); a thread spanning repositories is labelled
+  `initiative` too.
+- **Only my "go" creates one.** A session that finds work belonging to no
+  thread proposes a thread, or files the item under an existing one; it
+  never creates a thread on its own.
+- **Fields.** Focus (Now, Next, Later), Rank within its Focus, Next step,
+  and the board's usual Priority, Status and Waiting for (Fields above).
+  Thread fields and views are on the shared board only, never on the
+  template or a project board. `scripts/ensure-board.sh` adds them with
+  `--threads` and checks them with `--check ... --threads`.
+- **Briefs and closeouts.** A brief names its thread, or none
+  (`templates/brief.md`). The closeout sets the thread's Next step to what
+  comes next, and Waiting for when the thread waits on something; with
+  nothing left, it proposes closing the thread.
+- **Capacity by signals, not a limit.** No fixed number of threads in
+  flight. Any of these is a trigger to review what is in flight before
+  starting more:
+  - items waiting on me pile up (Assigned to me, Waiting for naming me);
+  - a thread's Next step has not changed in about a week;
+  - sessions whose titles show 🔴 or 🟡 (`templates/session-title.md`),
+    since those hold my attention.
+- **Session groups.** Where the agent's app can group sessions, there is
+  one group per thread, named with the thread's short name, plus "Other"
+  for sessions in no thread. Agents create, fill and remove groups; I do
+  not touch them. A session files itself once it is titled and its thread
+  is known, and the closeout removes a group whose thread closed. The
+  adapter's `session.md` names the tools; my own agent configuration names
+  the shared board and any naming convention per machine.
+
+Why: with only project boards, what I was pursuing across repositories
+lived in my head and in chat, sessions could not tell which goal their work
+served, and too much in flight showed only as a feeling. One parent item per
+stream, with an explicit next step, gives each stream an owner fact; a
+fixed thread limit would be either too tight in a quiet week or too loose in
+a busy one, so the signals above stand in for it. Tooling repos.
 
 ## The per-project switch
 

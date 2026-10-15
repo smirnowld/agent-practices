@@ -108,7 +108,9 @@ Sort gaps into:
   `--with-kind` for a board that holds draft items (it adds Kind, Area and
   a Drafts by kind view; Area's options are the board's own and reruns
   never change them). When a public repository's work moves to the shared
-  board, add the repository's name as an Area option there. Templates exist in organisations only; a user's
+  board, add the repository's name as an Area option there. The shared
+  board also takes `--threads` (Focus, Rank, Next step and the two
+  Threads views, `practices/tracking.md`, Threads); no other board does. Templates exist in organisations only; a user's
   board is copied across owners from the organisation's template. Then `scripts/migrate-priority.sh <owner/repo> <owner>
   <number>` copies p1–p3 labels into Priority (it never removes a label or
   overwrites a field), and `--verify` must come back clean. Both scripts
