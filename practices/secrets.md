@@ -74,6 +74,14 @@ are fine.
 - A full-access template may point at an `agents-*` item rather than keep
   a copy.
 - Agents archive items, never delete them. Deleting is mine.
+- Moving an item to another vault is one sitting and one PR: move the
+  item, repoint every reference to it (templates, Operator item paths,
+  docs) and update the docs that name its vault. A move copies the item
+  and deletes the original, so the item gets a new ID
+  ([`op item move`](https://www.1password.dev/cli/reference/management-commands/item/),
+  checked 2026-10-15): take references by ID after the move, never before.
+- Deleting a vault is mine, and only once it is empty and a search of every
+  checkout finds its name nowhere.
 - Never in an agent vault: production keys, signing keys, backup private
   keys, recovery codes, anything that can't be revoked on its own. Where a
   service can't scope a key (an account-wide API key), give agents their own

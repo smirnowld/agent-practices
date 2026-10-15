@@ -77,7 +77,8 @@ board it may name projects.
 1. **Parent item** (Threads, "Where it lives"):
    - Work only in private repositories: an issue in the repository that
      holds most of it, labelled `initiative`, added with `gh project
-     item-add`.
+     item-add`. Its body holds the plan (`practices/tracking.md`, Initiatives:
+     "The plan is the parent's body").
    - Any work in a public repository: a private draft with `gh project
      item-create`; its body lists the thread's items.
 2. **Fields** on the parent: Focus, Rank, Next step and Priority as
