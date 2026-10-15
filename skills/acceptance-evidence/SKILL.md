@@ -155,8 +155,8 @@ adapter's session notes give the exact steps for this agent. One page per
 PR, at one URL, linked from the PR:
 
 - every new round of captures rebuilds the whole page from the current
-  manifest and republishes it at the same URL, removing the images that left
-  the manifest (the build lists them in `OUT_DIR/removed.json`); never
+  manifest and republishes it at the same URL, removing every published
+  image the new build does not list; never
   append a new page or a second set of screens;
 - the page shows only current captures, and `changed` says what changed
   since the version I last saw.

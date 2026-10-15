@@ -200,7 +200,11 @@ unverified against vendor docs.
   a fragment; supporting files go in `files`, a map from published path to
   source resolved against `root`; each image may be up to 15 MB, one publish
   up to 255 files and 64 MB; files left out of a republish are kept and
-  `null` removes one; artifacts are private until shared. The tool asks
+  `null` removes one; `action` `list` with `scope` `files` and the page's
+  `url` lists what is published; a republish from the same session with the
+  same `file_path` keeps the URL, and another session passes `url` after an
+  `action` `read`; artifacts are private until shared. Republishing at the
+  same URL with the same `file_path` was observed working on 2026-10-15. The tool asks
   sessions to load `artifact-design` and run its design pass before any
   page, which invites restyling a fixed format; the skill's precedence line
   overrides that pass, not the page contract.

@@ -60,8 +60,10 @@ when ToolSearch cannot find it either, and the report says so.
   the map in `OUT_DIR/files.json`, `icon` `camera`. Republish in the same
   session: the same call with the same `file_path`, which keeps the URL,
   and no `icon`; from another session, first `action` `read` with the
-  page's `url`, then publish with that `url`. On every republish add each
-  path in `OUT_DIR/removed.json` to `files` mapped to `null`. Loading
+  page's `url`, then publish with that `url`. On every republish, list the
+  page's files (`action` `list`, `scope` `files`, its `url`) and add to
+  `files`, mapped to `null`, each `img/` path listed there but missing from
+  `OUT_DIR/files.json`. Loading
   `artifact-design` is still required; its page contract (title, both
   themes, phone width) is met by the template, and its design pass does not
   apply (the skill's precedence line). Give me the URL; it stays private.
