@@ -58,7 +58,7 @@ exceptions mirror a scope fact, and the drift check keeps each pair in step:
 | Assignees | Built-in | The person who must act next. Empty for agent work, since agents act as my account and would flood my list; set to me only for a step only I can take |
 | Kind | Single select | Only on a board that holds draft items, which cannot carry labels |
 | Area | Single select | Only on a board that holds draft items: the repository (by name) or theme a draft belongs to |
-| Focus | Single select | Only on the shared board, on thread parents ([Threads](#threads)): Now, Next or Later; a board may add Parked for a thread set aside |
+| Focus | Single select | Only on the shared board, on thread parents ([Threads](#threads)): Now, Next, Later, or Parked for a thread set aside on purpose |
 | Rank | Number | Only on thread parents: order within a Focus, 1 first |
 | Next step | Text | Only on thread parents: the thread's next concrete action, in plain words |
 
@@ -203,7 +203,7 @@ change to my tooling, that outlives a session and may span repositories.
 - **Only my "go" creates one.** A session that finds work belonging to no
   thread proposes a thread, or files the item under an existing one; it
   never creates a thread on its own.
-- **Fields.** Focus (Now, Next, Later), Rank within its Focus, Next step,
+- **Fields.** Focus (Now, Next, Later, Parked), Rank within its Focus, Next step,
   and the board's usual Priority, Status and Waiting for (Fields above).
   Thread fields and views are on the shared board only, never on the
   template or a project board. `scripts/ensure-board.sh` adds them with

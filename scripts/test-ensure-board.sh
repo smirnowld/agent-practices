@@ -400,7 +400,7 @@ rm "$S/fail_read"
 # Threads: the thread profile goes on the shared board only, never the template.
 run create o 'Shared' o 1 --threads
 [ "$(cat "$S/5/title")" = 'Shared' ]
-grep -q '|Focus|SINGLE_SELECT|o[0-9]*~Now~RED~Being worked this week;o[0-9]*~Next~YELLOW~Starts when a Now thread ends;o[0-9]*~Later~GRAY~Not before the next review$' "$S/5/fields"
+grep -q '|Focus|SINGLE_SELECT|o[0-9]*~Now~RED~Being worked this week;o[0-9]*~Next~YELLOW~Starts when a Now thread ends;o[0-9]*~Later~GRAY~Not before the next review;o[0-9]*~Parked~PINK~Set aside on purpose$' "$S/5/fields"
 grep -q '|Rank|NUMBER|$' "$S/5/fields"
 grep -q '|Next step|TEXT|$' "$S/5/fields"
 grep -q '|Threads|table|focus:Now,Next,Later,Parked|Focus||Rank:ASC|Assignees,Focus,Next step,Priority,Status,Sub-issues progress,Title,Waiting for$' "$S/5/views"
@@ -429,7 +429,18 @@ fails 2 --check o 5 o 1 --other
 # Focus on an existing board: own options stay, missing ones are added.
 sed 's/~Later~GRAY~Not before the next review/~Someday~PINK~Ours/' "$S/5/fields" > "$dir/f"; cp "$dir/f" "$S/5/fields"
 run create o 'Shared' o 1 --threads
-grep -q '~Next~YELLOW~[^;]*;[a-z0-9]*~Someday~PINK~Ours;o[0-9]*~Later~GRAY~Not before the next review$' "$S/5/fields"
+grep -q '~Next~YELLOW~[^;]*;[a-z0-9]*~Someday~PINK~Ours;o[0-9]*~Parked~PINK~Set aside on purpose;o[0-9]*~Later~GRAY~Not before the next review$' "$S/5/fields"
+run --check o 5 o 1 --threads
+
+# A Focus field with three options lacks Parked: check says so, a rerun adds it.
+sed 's/;o[0-9]*~Parked~PINK~Set aside on purpose//' "$S/5/fields" > "$dir/f"; cp "$dir/f" "$S/5/fields"
+if grep "|Focus|" "$S/5/fields" | grep -q "~Parked~"; then echo "Parked not removed"; exit 1; fi
+mark
+fails 1 --check o 5 o 1 --threads
+no_writes
+grep -q '^- field Focus: is SINGLE_SELECT|.*, want SINGLE_SELECT with Now,Next,Later,Parked$' "$dir/out"
+run create o 'Shared' o 1 --threads
+grep -q '~Someday~PINK~Ours;o[0-9]*~Later~GRAY~Not before the next review;o[0-9]*~Parked~PINK~Set aside on purpose$' "$S/5/fields"
 run --check o 5 o 1 --threads
 
 # Focus options match without regard to case, as create does.

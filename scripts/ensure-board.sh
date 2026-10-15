@@ -63,7 +63,8 @@ KIND_VIEW='Drafts by kind|table|is:draft|Kind|||Title,Status,Priority,Assignees,
 # shared board, never on the template (practices/tracking.md, Threads).
 FOCUS_OPTIONS='Now|RED|Being worked this week|
 Next|YELLOW|Starts when a Now thread ends|
-Later|GRAY|Not before the next review|'
+Later|GRAY|Not before the next review|
+Parked|PINK|Set aside on purpose|'
 THREAD_VIEWS='Threads|table|focus:Now,Next,Later,Parked|Focus||Rank:ASC|Title,Focus,Priority,Status,Assignees,Waiting for,Next step,Sub-issues progress
 Threads by focus|board|focus:Now,Next,Later||Focus|Rank:ASC|Title,Priority,Waiting for,Next step,Sub-issues progress'
 
@@ -371,11 +372,11 @@ check_threads() { # BOARD_FILE FIELDS_SUMMARY
     ok=1
     case $got in SINGLE_SELECT\|*) ;; *) ok=0 ;; esac
     opts=$(printf '%s' "${got#*|}" | tr '[:upper:]' '[:lower:]')
-    for o in now next later; do
+    for o in now next later parked; do
       case ",$opts," in *",$o,"*) ;; *) ok=0 ;; esac
     done
     if [ "$ok" -eq 0 ]; then
-      echo "field Focus: is $got, want SINGLE_SELECT with Now,Next,Later" >> "$tmp/diff"
+      echo "field Focus: is $got, want SINGLE_SELECT with Now,Next,Later,Parked" >> "$tmp/diff"
     fi
   fi
   for ft in Rank:NUMBER 'Next step:TEXT'; do
