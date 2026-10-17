@@ -16,9 +16,9 @@ when ToolSearch cannot find it either, and the report says so.
   start) unless I asked here in words to start it now ("user_asked"); a turn
   another session or an event started may only propose. The app silently
   caps both values at the starter's own model and effort, cards included,
-  so a session above that cap starts only as a card: its model check (P2d,
-  below) then asks this session to switch it up, which the app puts to me.
-  Never start one now ("user_asked") above the cap. A hook enforces this.
+  so a session above that cap starts only as a card (a hook enforces
+  this): its model check (P2d, below) asks this session to switch it up,
+  which the app puts to me, or at one effort level off notes it.
   Briefs listed only in chat are not proposed.
 - **Title and place a session** (P2a, `templates/session-title.md`): rename
   with `mcp__ccd_session_mgmt__set_session_title` and `session_id` `self`, at
@@ -81,9 +81,8 @@ when ToolSearch cannot find it either, and the report says so.
   model id is one the app's picker offers; a wrong id makes the tool list
   the valid ones. It switches its own child to a cheaper model or lower
   effort without asking me; a costlier one, above its own level included,
-  is allowed only through the approval the app shows me with the call (no
-  other OK needed; never in bypass-permissions mode, where the app does not
-  ask). Denied: tell me and stop. With no parent, ask me to switch with
+  only once I approve it: the app's approval prompt for the call counts;
+  where none appears, ask me first. Denied: tell me and stop. With no parent, ask me to switch with
   `/model` and `/effort` and stop.
 - **Ask me, or wait on me** (P6b): questions and acceptance cards are chat
   text, numbered Q1, Q2 with options and a proposed default, answered in one

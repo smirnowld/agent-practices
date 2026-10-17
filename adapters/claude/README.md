@@ -216,9 +216,13 @@ unverified against vendor docs.
   denies a passed `model` or `effort` that differs from the Model line,
   and a "user_asked" start whose Model line is above the starter's model
   (the transcript's last assistant model) or effort (`CLAUDE_EFFORT`, set
-  in desktop-app sessions, observed 2026-10-17); where either is unknown
-  that last check is skipped with a note. A call without a prompt (an
-  "offer", or starting a proposal by id) passes.
+  in desktop-app sessions, observed 2026-10-17; whether it follows a later
+  effort switch is unverified); where either is unknown that last check is
+  skipped with a note. An effort word it cannot read is denied. A call
+  without a prompt passes only as an "offer" or a start of a proposal by id.
+  A card above the cap passes: it waits for me, and its model check asks
+  to be switched up, or at one effort level off notes it in its report
+  (P2d).
 - Session titles (P2a): the rule is in [session.md](session.md). Before it,
   sessions I started were titled after my first message, and the session list
   showed neither the work's kind nor whether it waited on me (2026-10-07).
@@ -466,13 +470,13 @@ unverified against vendor docs.
     unverified against vendor docs; sizes are estimates.
 - Scheduled routines (`docs-drift-check`, `triage`, `board-review`,
   `project-setup` audit) run as local desktop-app scheduled tasks, one per
-  project; a proposed session appears as a chip. Local tasks fire only while the app is open and the
+  project; a proposed session appears as a card. Local tasks fire only while the app is open and the
   machine awake; a missed run catches up once
   (https://code.claude.com/docs/en/desktop-scheduled-tasks, checked
   2026-09-27). The shared-board routines run the same way, on one
   machine only, or each note arrives twice: `today` each weekday morning,
   its note the run's final message plus a push notification, and a
-  Monday-morning task whose chip starts an interactive `weekly-review`.
+  Monday-morning task whose card starts an interactive `weekly-review`.
   They stay local because a cloud session has no `gh` sign-in with the
   `project` scope (observed; unverified against vendor docs).
 - Local-only paths are not links (P18): cite a GitHub URL pinned to a commit,
