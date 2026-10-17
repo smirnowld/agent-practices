@@ -199,8 +199,8 @@ unverified against vendor docs.
     Opus-medium parent) works; the app showed me an approval card for each
     first, in auto mode. Its tool description says bypass-permissions mode
     does not ask.
-  - Whether I can change a card's model or effort before starting it is
-    not verified.
+  - A card offers me no way to change its model or effort before I start
+    it.
 
   So a session above its starter's cap starts as a card and is raised
   through its model check, with my approval on the app's card; a start
