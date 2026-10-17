@@ -18,7 +18,7 @@ when ToolSearch cannot find it either, and the report says so.
   caps both values at the starter's own model and effort, cards included,
   so a session above that cap starts only as a card (a hook enforces
   this): its model check (P2d, below) asks this session to switch it up,
-  which the app puts to me, or at one effort level off notes it.
+  which the app puts to me.
   Briefs listed only in chat are not proposed.
 - **Title and place a session** (P2a, `templates/session-title.md`): rename
   with `mcp__ccd_session_mgmt__set_session_title` and `session_id` `self`, at

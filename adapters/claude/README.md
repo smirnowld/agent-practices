@@ -220,9 +220,9 @@ unverified against vendor docs.
   effort switch is unverified); where either is unknown that last check is
   skipped with a note. An effort word it cannot read is denied. A call
   without a prompt passes only as an "offer" or a start of a proposal by id.
-  A card above the cap passes: it waits for me, and its model check asks
-  to be switched up, or at one effort level off notes it in its report
-  (P2d).
+  A fresh start must pass both `model` and `effort`, so a start never
+  takes the starter's level by default. A card above the cap passes: it
+  waits for me, and its model check asks to be switched up (P2d).
 - Session titles (P2a): the rule is in [session.md](session.md). Before it,
   sessions I started were titled after my first message, and the session list
   showed neither the work's kind nor whether it waited on me (2026-10-07).
