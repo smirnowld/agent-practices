@@ -2,15 +2,16 @@
 """PreToolUse hook for session starts and cards: a started session's prompt
 must be a brief (P2c), started at the brief's model and effort.
 
-A call without a prompt (an offer sent with a title only, or starting an
-earlier proposal by its id) passes. A prompt that lacks the brief's heading,
-Model line, Goal or Proof, or whose Model line lacks a tier followed by its
-model from tiers.json, is blocked with templates/brief.md handed back so the
-retry takes one call. A passed model or effort that differs from the Model
+A call without a prompt passes only as an offer (initiation "offer") or
+when it starts an earlier proposal by its proposal_id; any other is blocked.
+A prompt that lacks the brief's heading, Model line, Goal or Proof, or whose
+Model line lacks a tier followed by its model from tiers.json, or names an
+effort that is not a known one, is blocked with templates/brief.md handed
+back so the retry takes one call. A passed model or effort that differs from the Model
 line is blocked. A session started now ("user_asked") whose Model line is
 above the starter's own model or effort is blocked, since the app would
 silently run it at the starter's level (cards are capped the same way when
-started); ROUTE gives the card-then-approved-switch route instead. Any
+started); ROUTE gives the card-then-switch route instead. Any
 error lets the call through with a note on stderr; a broken check must not
 block session starts.
 """
@@ -31,11 +32,10 @@ FAMILIES = ["haiku", "sonnet", "opus", "fable"]
 EFFORTS = ["low", "medium", "high", "xhigh", "max"]
 
 ROUTE = (
-    "The app would start it at your own model and effort, so start it within "
-    "your cap only through the switch the user approves: propose it as a card "
-    "(initiation \"own_initiative\") passing the brief's model and effort; when "
-    "it starts, its model check (P2d) asks you to switch it, and the app asks "
-    "the user to approve the costlier switch."
+    "The app would start it at your own model and effort, so propose it as a "
+    "card instead (initiation \"own_initiative\") passing the brief's model and "
+    "effort. When it starts, its model check (P2d) asks you to switch it up, "
+    "and the app asks the user to approve the costlier switch."
 )
 
 
@@ -67,16 +67,29 @@ def deny(reason):
     }}, sys.stdout)
 
 
+def template_text(root):
+    with open(os.path.join(root, "templates/brief.md")) as f:
+        return f.read()
+
+
 def main():
     data = json.load(sys.stdin)
     tool_input = data["tool_input"]
     prompt = tool_input.get("prompt")
+    root = os.environ.get("CLAUDE_PLUGIN_ROOT") or os.path.join(os.path.dirname(__file__), "../../..")
     if prompt is None or prompt == "":
+        if tool_input.get("initiation") == "offer" or tool_input.get("proposal_id"):
+            return
+        deny(
+            "The start needs the filled brief as its prompt (P2c); only an offer "
+            "(initiation \"offer\") or a call with a proposal_id may omit it. "
+            "Fill this template, pass it as prompt, and pass the Model line's "
+            "model and effort as model and effort.\n\n" + template_text(root)
+        )
         return
     if not isinstance(prompt, str):
         raise TypeError("prompt is not a string")
     missing = [what for pattern, what in REQUIRED if not re.search(pattern, prompt, re.M)]
-    root = os.environ.get("CLAUDE_PLUGIN_ROOT") or os.path.join(os.path.dirname(__file__), "../../..")
     with open(os.path.join(root, "adapters/claude/tiers.json")) as f:
         tiers = json.load(f)
     models, effort_map = tiers["models"], tiers["effort"]
@@ -86,20 +99,27 @@ def main():
     if line and not pair:
         pairs = ", ".join(f"{t} ({m})" for t, m in models.items())
         missing.append("the model in the Model line, as TIER (MODEL): " + pairs)
+    word = brief_effort = None
+    if pair:
+        # The effort follows "at" after the model; "extra high" counts as "extra-high".
+        m = re.search(r"\)\s*at\s+(extra[\s-]+high\b|\S+)", line.group(0), re.I)
+        if m:
+            word = re.sub(r"\s+", "-", m.group(1).lower()).rstrip(".,;:")
+            brief_effort = effort_map.get(word, word if word in EFFORTS else None)
+            if not brief_effort:
+                valid = list(effort_map) + [e for e in EFFORTS if e not in effort_map]
+                missing.append(
+                    f"a known effort after 'at' in the Model line (got {m.group(1)!r}): " + ", ".join(valid)
+                )
     if missing:
-        with open(os.path.join(root, "templates/brief.md")) as f:
-            template = f.read()
         deny(
             "A started session's prompt is a brief (P2c). Missing: " + "; ".join(missing) + ". "
             "Refill the prompt from this template, keep what you already wrote, "
-            "and pass the Model line's model and effort as model and effort.\n\n" + template
+            "and pass the Model line's model and effort as model and effort.\n\n" + template_text(root)
         )
         return
 
     brief_model = re.split(r"\(\s*", pair.group(1))[-1].lower()
-    m = re.search(r"\)\s*at\s+([A-Za-z-]+)", line.group(0))
-    word = m.group(1).lower() if m else None
-    brief_effort = effort_map.get(word, word if word in EFFORTS else None)
     brief_desc = brief_model + (" at " + word if brief_effort else "")
 
     problems = []
