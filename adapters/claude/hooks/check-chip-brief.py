@@ -5,15 +5,15 @@ must be a brief (P2c), started at the brief's model and effort.
 A call without a prompt passes only as an offer (initiation "offer") or
 when it starts an earlier proposal by its proposal_id; any other is blocked.
 A prompt that lacks the brief's heading, Model line, Goal or Proof, or whose
-Model line lacks a tier followed by its model from tiers.json, or names an
-effort that is not a known one, is blocked with templates/brief.md handed
-back so the retry takes one call. A passed model or effort that differs from the Model
-line is blocked. A session started now ("user_asked") whose Model line is
-above the starter's own model or effort is blocked, since the app would
-silently run it at the starter's level (cards are capped the same way when
-started); ROUTE gives the card-then-switch route instead. Any
-error lets the call through with a note on stderr; a broken check must not
-block session starts.
+Model line lacks a tier followed by its model from tiers.json and then
+"at" and a known effort, is blocked with templates/brief.md handed back so
+the retry takes one call. A passed model or effort that differs from the
+Model line is blocked. A session started now ("user_asked") whose Model
+line is above the starter's own model or effort is blocked, since the app
+would silently run it at the starter's level (cards are capped the same way
+when started); ROUTE gives the card-then-switch route instead. Any error
+lets the call through with a note on stderr; a broken check must not block
+session starts.
 """
 import json
 import os
@@ -35,7 +35,7 @@ ROUTE = (
     "The app would start it at your own model and effort, so propose it as a "
     "card instead (initiation \"own_initiative\") passing the brief's model and "
     "effort. When it starts, its model check (P2d) asks you to switch it up, "
-    "and the app asks the user to approve the costlier switch."
+    "or at one effort level off notes it in its report, and the app asks the user to approve the costlier switch."
 )
 
 
@@ -101,16 +101,20 @@ def main():
         missing.append("the model in the Model line, as TIER (MODEL): " + pairs)
     word = brief_effort = None
     if pair:
-        # The effort follows "at" after the model; "extra high" counts as "extra-high".
-        m = re.search(r"\)\s*at\s+(extra[\s-]+high\b|\S+)", line.group(0), re.I)
+        # The effort follows the model as "at EFFORT", with punctuation allowed
+        # before "at"; "extra high" counts as "extra-high".
+        rest = line.group(0)[pair.end():]
+        m = re.match(r"\s*\)[\s,;:.-]*at\s+(extra[\s-]+high\b|\S+)", rest, re.I)
         if m:
             word = re.sub(r"\s+", "-", m.group(1).lower()).rstrip(".,;:")
             brief_effort = effort_map.get(word, word if word in EFFORTS else None)
-            if not brief_effort:
-                valid = list(effort_map) + [e for e in EFFORTS if e not in effort_map]
-                missing.append(
-                    f"a known effort after 'at' in the Model line (got {m.group(1)!r}): " + ", ".join(valid)
-                )
+        if not brief_effort:
+            valid = list(effort_map) + [e for e in EFFORTS if e not in effort_map]
+            got = f"got {m.group(1)!r}" if m else "none found"
+            missing.append(
+                "a known effort after the model in the Model line, as "
+                f"'{pair.group(1)}) at EFFORT' ({got}): " + ", ".join(valid)
+            )
     if missing:
         deny(
             "A started session's prompt is a brief (P2c). Missing: " + "; ".join(missing) + ". "

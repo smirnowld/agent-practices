@@ -3,7 +3,7 @@
 # free-form prompt is denied with every missing part named and the template
 # attached; a Model line without its tier's model is denied with the tier map;
 # the template with its model and effort filled and a filled brief pass
-# silently; an unknown effort word is denied; a call without a prompt passes
+# silently; a missing or unknown effort word is denied; a call without a prompt passes
 # only as an offer or with a proposal_id; a passed model or effort must match
 # the Model line;
 # a session started now may not exceed the starter's model or effort; bad
@@ -66,11 +66,15 @@ passes "$(call 'strong (fable) at extra high (x)' '{"model":"claude-fable-5-1","
   { echo "error: 'extra high' brief with effort xhigh was not passed: $out" >&2; exit 1; }
 out=$(call 'strong (fable) at extra-high (x)' '{"effort":"high","initiation":"own_initiative"}' | run)
 denied "$out" && echo "$out" | grep -qF 'effort \"xhigh\"' || { echo "error: extra-high brief with effort high was not denied: $out" >&2; exit 1; }
-for eff in '<effort>' 'turbo'; do
-  out=$(call "standard (opus) at $eff (x)" '{"initiation":"own_initiative"}' | run)
+for line in 'standard (opus) at <effort> (x)' 'standard (opus) at turbo (x)' 'standard (opus) (x)' 'standard (opus)'; do
+  out=$(call "$line" '{"initiation":"own_initiative"}' | run)
   denied "$out" && echo "$out" | grep -qF "low, medium, high, extra-high" ||
-    { echo "error: unknown effort $eff was not denied with the valid efforts: $out" >&2; exit 1; }
+    { echo "error: Model line '$line' was not denied with the valid efforts: $out" >&2; exit 1; }
 done
+out=$(call 'standard (opus), at high (x)' '{"effort":"medium","initiation":"own_initiative"}' | run)
+denied "$out" && echo "$out" | grep -qF 'effort \"high\"' || { echo "error: ', at high' was not parsed as high: $out" >&2; exit 1; }
+passes "$(call 'standard (opus) at medium.' '{"effort":"medium","initiation":"own_initiative"}')" ||
+  { echo "error: 'at medium.' was not passed: $out" >&2; exit 1; }
 out=$(call 'standard (opus) at medium (x)' '{"model":"claude-sonnet-5-5"}' | run)
 denied "$out" && echo "$out" | grep -qF 'Pass model \"opus\"' || { echo "error: mismatched model was not denied: $out" >&2; exit 1; }
 out=$(call 'standard (opus) at medium (x)' '{"effort":"high"}' | run)
