@@ -81,9 +81,10 @@ when ToolSearch cannot find it either, and the report says so.
   model id is one the app's picker offers; a wrong id makes the tool list
   the valid ones. It switches its own child to a cheaper model or lower
   effort without asking me; a costlier one, above its own level included,
-  only once I approve it: the app's approval prompt for the call counts;
-  where none appears, ask me first. Denied: tell me and stop. With no parent, ask me to switch with
-  `/model` and `/effort` and stop.
+  only with my approval: ask me first unless the app will prompt for the
+  call (not in bypass-permissions mode, tool not allow-listed), and then
+  its prompt counts. Denied: tell me and stop. With no parent, ask me to
+  switch with `/model` and `/effort` and stop.
 - **Ask me, or wait on me** (P6b): questions and acceptance cards are chat
   text, numbered Q1, Q2 with options and a proposed default, answered in one
   reply ("Q1 A, Q2 B"); the closing Reply line
