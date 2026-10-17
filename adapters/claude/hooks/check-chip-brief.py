@@ -8,7 +8,9 @@ A prompt that lacks the brief's heading, Model line, Goal or Proof, or whose
 Model line lacks a tier followed by its model from tiers.json and then
 "at" and a known effort, is blocked with templates/brief.md handed back so
 the retry takes one call. A passed model or effort that differs from the
-Model line is blocked. A session started now ("user_asked") whose Model
+Model line is blocked. A call with a brief whose context is not "fork" (an
+omitted context counts as fresh) must pass both model and effort; a fork
+inherits the starter's. A session started now ("user_asked") whose Model
 line is above the starter's own model or effort is blocked, since the app
 would silently run it at the starter's level (cards are capped the same way
 when started); ROUTE gives the card-then-switch route instead. Any error
@@ -35,7 +37,7 @@ ROUTE = (
     "The app would start it at your own model and effort, so propose it as a "
     "card instead (initiation \"own_initiative\") passing the brief's model and "
     "effort. When it starts, its model check (P2d) asks you to switch it up, "
-    "or at one effort level off notes it in its report, and the app asks the user to approve the costlier switch."
+    "and the app asks the user to approve the costlier switch."
 )
 
 
@@ -141,6 +143,16 @@ def main():
             "or fix the Model line."
         )
         return
+    if tool_input.get("context") != "fork":
+        absent = [k for k in ("model", "effort") if not tool_input.get(k)]
+        if absent:
+            deny(
+                "A fresh session must start at its brief's model and effort, so the "
+                "call passes both; missing: " + " and ".join(absent) + ". "
+                f"Pass model \"{brief_model}\" and effort \"{brief_effort}\" from the "
+                f"Model line ({brief_desc})."
+            )
+            return
 
     if tool_input.get("initiation") != "user_asked":
         return

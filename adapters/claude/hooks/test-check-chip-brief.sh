@@ -5,7 +5,8 @@
 # the template with its model and effort filled and a filled brief pass
 # silently; a missing or unknown effort word is denied; a call without a prompt passes
 # only as an offer or with a proposal_id; a passed model or effort must match
-# the Model line;
+# the Model line; a call with a brief must pass both unless its context is
+# "fork" (an omitted context is fresh);
 # a session started now may not exceed the starter's model or effort; bad
 # input passes with a note on stderr.
 set -eu
@@ -22,7 +23,7 @@ for needle in '"permissionDecision": "deny"' "# Brief: TITLE" "Model:" "## Goal"
   echo "$out" | grep -qF "$needle" || { echo "error: deny output lacks: $needle" >&2; exit 1; }
 done
 
-template=$(python3 -c 'import json,sys; print(json.dumps({"tool_input": {"prompt": open(sys.argv[1]).read().replace("<tier> (<model>) at <effort>", "standard (opus) at medium")}}))' "$dir/../../../templates/brief.md")
+template=$(python3 -c 'import json,sys; print(json.dumps({"tool_input": {"model": "opus", "effort": "medium", "prompt": open(sys.argv[1]).read().replace("<tier> (<model>) at <effort>", "standard (opus) at medium")}}))' "$dir/../../../templates/brief.md")
 passes "$template" || { echo "error: templates/brief.md with its model and effort filled was denied; hook and template disagree" >&2; exit 1; }
 
 out=$(printf "%s\n" '{"tool_input":{"prompt":"# Brief: Fix badge\n\n**Model:** standard at medium\n\n## Goal\n\nx\n\n## Proof\n\n- make check\n"}}' | run)
@@ -30,7 +31,7 @@ echo "$out" | grep -qF "standard (opus)" || { echo "error: tier without model wa
 out=$(printf "%s\n" '{"tool_input":{"prompt":"# Brief: Fix badge\n\n**Model:** standard (sonnet) at medium\n\n## Goal\n\nx\n\n## Proof\n\n- make check\n"}}' | run)
 echo "$out" | grep -qF '"permissionDecision": "deny"' || { echo "error: model not matching its tier was not denied" >&2; exit 1; }
 
-passes '{"tool_input":{"prompt":"  # Brief: Fix badge\n\n  **Model:** fast (Sonnet) at low\n\n  ## Goal\n\nx\n\n  ## Proof\n\n- make check\n"}}' ||
+passes '{"tool_input":{"model":"sonnet","effort":"low","prompt":"  # Brief: Fix badge\n\n  **Model:** fast (Sonnet) at low\n\n  ## Goal\n\nx\n\n  ## Proof\n\n- make check\n"}}' ||
   { echo "error: indented brief was not passed: $out" >&2; exit 1; }
 
 for bad in 'not json' '{"tool_input":null}' '{"tool_input":{"prompt":["x"]}}'; do
@@ -73,37 +74,48 @@ for line in 'standard (opus) at <effort> (x)' 'standard (opus) at turbo (x)' 'st
 done
 out=$(call 'standard (opus), at high (x)' '{"effort":"medium","initiation":"own_initiative"}' | run)
 denied "$out" && echo "$out" | grep -qF 'effort \"high\"' || { echo "error: ', at high' was not parsed as high: $out" >&2; exit 1; }
-passes "$(call 'standard (opus) at medium.' '{"effort":"medium","initiation":"own_initiative"}')" ||
+passes "$(call 'standard (opus) at medium.' '{"model":"opus","effort":"medium","initiation":"own_initiative"}')" ||
   { echo "error: 'at medium.' was not passed: $out" >&2; exit 1; }
 out=$(call 'standard (opus) at medium (x)' '{"model":"claude-sonnet-5-5"}' | run)
 denied "$out" && echo "$out" | grep -qF 'Pass model \"opus\"' || { echo "error: mismatched model was not denied: $out" >&2; exit 1; }
 out=$(call 'standard (opus) at medium (x)' '{"effort":"high"}' | run)
 denied "$out" && echo "$out" | grep -qF 'effort \"medium\"' || { echo "error: mismatched effort was not denied: $out" >&2; exit 1; }
 
+# A brief without context or with a non-fork context must pass model and effort.
+out=$(call 'standard (opus) at medium (x)' '{"effort":"medium","initiation":"own_initiative","context":"fresh"}' | run)
+denied "$out" && echo "$out" | grep -qF 'missing: model' && echo "$out" | grep -qF 'Pass model \"opus\" and effort \"medium\" from the Model line' ||
+  { echo "error: missing model was not denied: $out" >&2; exit 1; }
+out=$(call 'standard (opus) at medium (x)' '{"model":"opus","initiation":"own_initiative","context":"fresh"}' | run)
+denied "$out" && echo "$out" | grep -qF 'missing: effort' || { echo "error: missing effort was not denied: $out" >&2; exit 1; }
+out=$(call 'standard (opus) at medium (x)' '{"initiation":"own_initiative"}' | run)
+denied "$out" && echo "$out" | grep -qF 'missing: model and effort' || { echo "error: omitted context was not treated as fresh: $out" >&2; exit 1; }
+passes "$(call 'standard (opus) at medium (x)' '{"initiation":"own_initiative","context":"fork"}')" ||
+  { echo "error: fork without model and effort was denied: $out" >&2; exit 1; }
+
 route=$(python3 -c 'import importlib.util,sys
 s = importlib.util.spec_from_file_location("h", sys.argv[1]); m = importlib.util.module_from_spec(s)
 s.loader.exec_module(m); print(m.ROUTE)' "$hook")
 [ -n "$route" ] || { echo "error: ROUTE constant not found" >&2; exit 1; }
 for ctx in fresh fork; do
-  out=$(call 'standard (opus) at medium (x)' '{"initiation":"user_asked","context":"'$ctx'"}' | run)
+  out=$(call 'standard (opus) at medium (x)' '{"model":"opus","effort":"medium","initiation":"user_asked","context":"'$ctx'"}' | run)
   denied "$out" && reason "$out" | grep -qF "$route" || { echo "error: user_asked above starter model ($ctx) was not denied with ROUTE: $out" >&2; exit 1; }
 done
-out=$(call 'fast (sonnet) at high (x)' '{"initiation":"user_asked"}' | run)
+out=$(call 'fast (sonnet) at high (x)' '{"model":"sonnet","effort":"high","initiation":"user_asked"}' | run)
 denied "$out" && echo "$out" | grep -qF "effort high is above the starter's medium" ||
   { echo "error: user_asked above starter effort was not denied: $out" >&2; exit 1; }
-passes "$(call 'standard (opus) at high (x)' '{"initiation":"own_initiative"}')" ||
+passes "$(call 'standard (opus) at high (x)' '{"model":"opus","effort":"high","initiation":"own_initiative"}')" ||
   { echo "error: own_initiative above the cap was not passed: $out" >&2; exit 1; }
 passes "$(call 'fast (sonnet) at low (x)' '{"initiation":"user_asked","model":"claude-sonnet-5-5","effort":"low"}')" ||
   { echo "error: user_asked within the cap was not passed: $out" >&2; exit 1; }
 
-out=$(call 'standard (opus) at medium (x)' '{"initiation":"user_asked"}' missing.jsonl | python3 "$hook" 2>"$tmp/err")
+out=$(call 'standard (opus) at medium (x)' '{"model":"opus","effort":"medium","initiation":"user_asked"}' missing.jsonl | python3 "$hook" 2>"$tmp/err")
 [ -z "$out" ] && grep -q "check-chip-brief: cap unknown" "$tmp/err" ||
   { echo "error: missing transcript did not pass with a cap-unknown note: $out $(cat "$tmp/err")" >&2; exit 1; }
-out=$(call 'standard (opus) at medium (x)' '{"initiation":"user_asked"}' | CLAUDE_EFFORT= python3 "$hook" 2>"$tmp/err")
+out=$(call 'standard (opus) at medium (x)' '{"model":"opus","effort":"medium","initiation":"user_asked"}' | CLAUDE_EFFORT= python3 "$hook" 2>"$tmp/err")
 [ -z "$out" ] && grep -q "check-chip-brief: cap unknown" "$tmp/err" ||
   { echo "error: unset CLAUDE_EFFORT did not pass with a cap-unknown note: $out $(cat "$tmp/err")" >&2; exit 1; }
 printf '%s\n' '{"type":"assistant","message":{"model":"claude-newfamily-1"}}' >"$tmp/u.jsonl"
-out=$(call 'standard (opus) at medium (x)' '{"initiation":"user_asked"}' u.jsonl | python3 "$hook" 2>"$tmp/err")
+out=$(call 'standard (opus) at medium (x)' '{"model":"opus","effort":"medium","initiation":"user_asked"}' u.jsonl | python3 "$hook" 2>"$tmp/err")
 [ -z "$out" ] && grep -q "unknown model family in 'claude-newfamily-1'; starter cap not checked" "$tmp/err" ||
   { echo "error: unknown starter family did not pass with a cap-unknown note: $out $(cat "$tmp/err")" >&2; exit 1; }
 out=$(call 'standard (opus) at medium (x)' '{"initiation":"user_asked","model":"claude-haiku-5-5"}' missing.jsonl | python3 "$hook" 2>/dev/null)
