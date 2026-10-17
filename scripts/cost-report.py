@@ -25,11 +25,23 @@ Measures, the same every run so runs compare:
     not a doc, delegated when it ran an implementer subagent and edited none,
     and "neither" otherwise: reading only, or edits only by a subagent that
     is not an implementer.
+Added sections (absent from older scans they need: effort "e", idle "gap",
+compaction "next_usd", session "start_sources"):
+ 9. cost and runs by role x model x effort (main sessions are role
+    "coordinator");
+10. idle cache rebuilds (calls with cause "idle"): per-event rows, by gap
+    bucket, by role, share of spend, by number of other main sessions active
+    in the previous hour, long-running main sessions, and subagent rebuilds
+    resumed after the 5-minute cache lifetime;
+11. the compaction log, with the cost of the call after each compaction;
+12. the first call's context split by source, estimated from sizes
+    (characters / 4) of the lines recorded before it, with the unsplit rest.
 Spend uses each session's basis cost (scan field "usd"); by day, the main
 session's share and each subagent's are spread over days by their
 transcript cost per day.
 """
 import argparse
+import bisect
 import datetime as dt
 import json
 import os
@@ -42,6 +54,12 @@ REVIEW_ROLES = ("light-reviewer", "reviewer", "critical-reviewer", "critical-rev
 # The coordinator-edit hook's doc rule (adapters/claude/hooks/check-coordinator-edit.py).
 DOCS = {".md", ".markdown", ".rst", ".txt", ".adoc"}
 SOURCE_NAMES = ("cmakelists.txt", "requirements", "constraints")
+GAP_BUCKETS = ((3600, "5min-1h"), (7200, "1-2h"), (28800, "2-8h"), (None, "8h+"))
+ACTIVE_BUCKETS = ("0", "1", "2", "3+")
+ACTIVE_WINDOW = 3600  # a main-session call this many seconds back counts as active
+LONG_SESSION = 28800  # wall span of a long-running main session
+RESUME_TTL = 300  # subagent cache lifetime
+TOP_EVENTS = 15
 COST_BANDS = ((1, "under $1"), (5, "$1-5"), (15, "$5-15"), (30, "$15-30"), (None, "$30+"))
 CONTEXT_BANDS = ((50, "under 50k"), (75, "50-75k"), (100, "75-100k"), (125, "100-125k"),
                  (150, "125-150k"), (175, "150-175k"), (None, "175k+"))
@@ -305,6 +323,159 @@ def rates(window, total, by_role, review_usd):
                            "by_role": {k: r2(v * f) for k, v in by_role.items()}}}
 
 
+def epoch(t):
+    return dt.datetime.fromisoformat(t.replace("Z", "+00:00")).timestamp()
+
+
+def common(items):
+    counts = {}
+    for x in items:
+        counts[x] = counts.get(x, 0) + 1
+    return max(sorted(counts), key=counts.get) if counts else "?"
+
+
+def units_of(s):
+    """(who, role, unit id, unit dict) for the main session and each subagent."""
+    yield "main", "coordinator", s["session_id"], s
+    for a in s["subagents"]:
+        yield "subagent", role_of(a["type"]), a["id"], a
+
+
+def effort_of(u):
+    return u.get("effort") or common([c.get("e", "unknown") for c in u["calls"]]) if u["calls"] else "unknown"
+
+
+def role_model_effort(sessions):
+    runs, calls = {}, {}
+    for s in sessions:
+        for who, role, _, u in units_of(s):
+            if not u["calls"]:
+                continue
+            model = common([c["m"] for c in u["calls"]])
+            e = runs.setdefault((role, model, effort_of(u)), {"runs": 0, "usd": 0.0})
+            e["runs"] += 1
+            e["usd"] += u["main_usd"] if who == "main" else u["usd"]
+            for c in u["calls"]:
+                k = calls.setdefault((role, c["m"], c.get("e", "unknown")), {"calls": 0, "usd": 0.0})
+                k["calls"] += 1
+                k["usd"] += c["usd"]
+    row = lambda k, e, n: {"role": k[0], "model": k[1], "effort": k[2], n: e[n], "usd": r2(e["usd"])}
+    return {"basis": "by_run: runs by the model and effort most of their calls used, cost as the basis "
+                     "cost of the main session (its own share) or subagent; by_call: every call at its own "
+                     "model and effort, transcript cost",
+            "by_run": [row(k, e, "runs") for k, e in sorted(runs.items(), key=lambda kv: -kv[1]["usd"])],
+            "by_call": [row(k, e, "calls") for k, e in sorted(calls.items(), key=lambda kv: -kv[1]["usd"])]}
+
+
+def idle_rebuilds(sessions, rate_window):
+    main_calls = sorted((epoch(c["t"]), s["session_id"]) for s in sessions for c in s["calls"] if c["t"])
+    times = [t for t, _ in main_calls]
+    events = []
+    for s in sessions:
+        for who, role, uid, u in units_of(s):
+            for c in u["calls"]:
+                if c.get("cause") != "idle" or not c["t"]:
+                    continue
+                t = epoch(c["t"])
+                lo = bisect.bisect_left(times, t - ACTIVE_WINDOW)
+                hi = bisect.bisect_right(times, t)
+                others = {sid for _, sid in main_calls[lo:hi] if sid != s["session_id"]}
+                events.append({"session": s["session_id"], "project": s["project_name"], "unit": uid,
+                               "who": who, "role": role, "t": c["t"], "gap_s": c.get("gap"),
+                               "tokens": c["w5"] + c["w1"], "usd": c["wusd"], "model": c["m"],
+                               "effort": c.get("e", "unknown"), "other_main_sessions_active": len(others)})
+    total_spend = sum(s["usd"] for s in sessions)
+    usd = sum(e["usd"] for e in events)
+    f = rate_window
+    by_gap = {label: {"events": 0, "usd": 0.0, "tokens": 0} for _, label in GAP_BUCKETS}
+    by_role, by_active = {}, {k: {"events": 0, "usd": 0.0} for k in ACTIVE_BUCKETS}
+    for e in events:
+        g = by_gap[band(e["gap_s"] or 0, GAP_BUCKETS)]
+        g["events"] += 1
+        g["usd"] += e["usd"]
+        g["tokens"] += e["tokens"]
+        k = by_role.setdefault(f"{e['who']}:{e['role']}", {"events": 0, "usd": 0.0, "tokens": 0})
+        k["events"] += 1
+        k["usd"] += e["usd"]
+        k["tokens"] += e["tokens"]
+        a = by_active["3+" if e["other_main_sessions_active"] >= 3 else str(e["other_main_sessions_active"])]
+        a["events"] += 1
+        a["usd"] += e["usd"]
+    long_sessions = []
+    for s in sessions:
+        ts = [epoch(c["t"]) for c in s["calls"] if c["t"]]
+        if not ts or max(ts) - min(ts) <= LONG_SESSION:
+            continue
+        ev = [e for e in events if e["session"] == s["session_id"]]
+        long_sessions.append({
+            "session": s["session_id"], "project": s["project_name"],
+            "span_hours": round((max(ts) - min(ts)) / 3600, 1), "session_usd": r2(s["usd"]),
+            "rebuilds": len(ev), "main_rebuilds": sum(1 for e in ev if e["who"] == "main"),
+            "rebuild_usd": r2(sum(e["usd"] for e in ev)),
+            "share_of_session": round(sum(e["usd"] for e in ev) / s["usd"], 3) if s["usd"] else None})
+    long_sessions.sort(key=lambda x: -x["rebuild_usd"])
+    resumed = [e for e in events if e["who"] == "subagent" and (e["gap_s"] or 0) > RESUME_TTL]
+    return {
+        "basis": "calls with cause idle; cost is the cache-write cost of the call (wusd); main sessions "
+                 "1h cache lifetime, subagents 5 min",
+        "events": len(events), "tokens": sum(e["tokens"] for e in events), "usd": r2(usd),
+        "share_of_spend": round(usd / total_spend, 4) if total_spend else None,
+        "per_7_days_usd": r2(usd * f), "spend_per_7_days_usd": r2(total_spend * f),
+        "by_gap": {k: {"events": v["events"], "usd": r2(v["usd"]), "tokens": v["tokens"]} for k, v in by_gap.items()},
+        "by_role": {k: {"events": v["events"], "usd": r2(v["usd"]), "tokens": v["tokens"]}
+                    for k, v in sorted(by_role.items(), key=lambda kv: -kv[1]["usd"])},
+        "by_other_main_sessions_active": {
+            k: {"events": v["events"], "usd": r2(v["usd"]),
+                "avg_usd": round(v["usd"] / v["events"], 4) if v["events"] else None}
+            for k, v in by_active.items()},
+        "active_rule": f"distinct other main sessions with a call in the {ACTIVE_WINDOW}s before the event, "
+                       "across every session in the scan",
+        "long_main_sessions": long_sessions,
+        "long_session_rule": f"main-session wall span first to last call over {LONG_SESSION // 3600}h; "
+                             "rebuilds count the session's main and subagent events",
+        "subagent_resumed_after_5min": {
+            "events": len(resumed), "usd": r2(sum(e["usd"] for e in resumed)),
+            "rule": f"subagent idle events with a gap over {RESUME_TTL}s; the subagent cache lifetime is "
+                    f"{RESUME_TTL}s, so every subagent idle event qualifies"},
+        "event_rows": sorted(events, key=lambda e: -e["usd"])}
+
+
+def compaction_log(sessions):
+    rows = []
+    for s in sessions:
+        for c in s["compactions"]:
+            rows.append({"session": s["session_id"], "project": s["project_name"], "t": c["t"],
+                         "trigger": c["trigger"], "pre": c["pre"], "post": c["post"],
+                         "next_call_usd": c.get("next_usd"), "next_call_cache_write_usd": c.get("next_wusd")})
+    rows.sort(key=lambda x: x["t"] or "")
+    known = [x["next_call_usd"] for x in rows if x["next_call_usd"] is not None]
+    return {"count": len(rows), "next_call_usd": r2(sum(known)), "rows": rows}
+
+
+def start_split(sessions):
+    have = [s for s in sessions if s["calls"] and "start_sources" in s]
+    if not have:
+        return {"sessions": 0, "note": "the scan has no start_sources (older scan or no main session)"}
+    tot, sources = 0, {}
+    for s in have:
+        tot += ctx(s["calls"][0])
+        for k, v in s["start_sources"].items():
+            sources[k] = sources.get(k, 0) + v
+    known = sum(sources.values())
+    n = len(have)
+    rows = {k: {"tokens": v, "per_session": v // n, "share": round(v / tot, 3) if tot else None}
+            for k, v in sorted(sources.items(), key=lambda kv: -kv[1])}
+    return {
+        "sessions": n, "estimate": "characters / 4 of the lines recorded before the first call; sizes only",
+        "first_call_context_tokens": tot, "first_call_context_per_session": tot // n,
+        "by_source": rows,
+        "not_split": {"tokens": tot - known, "per_session": (tot - known) // n,
+                      "share": round((tot - known) / tot, 3) if tot else None,
+                      "note": "remainder of the first call's context: tool definitions are not in the "
+                              "transcript, the system prompt only as recorded, estimate error, and for a "
+                              "resumed session the earlier conversation; these cannot be separated"}}
+
+
 def report(doc):
     sessions = doc["sessions"]
     rules = doc.get("rules", {})
@@ -338,6 +509,10 @@ def report(doc):
         "coordinator_reads": coordinator_reads(sessions, set(rules.get("coordinator_read_programs", []))),
         "reviews": rv,
         "delegation": delegation(sessions),
+        "role_model_effort": role_model_effort(sessions),
+        "idle_rebuilds": idle_rebuilds(sessions, 7 / rates(doc["window"], 0, {}, 0)["window_days"]),
+        "compaction_log": compaction_log(sessions),
+        "start_split": start_split(sessions),
     }
 
 
@@ -392,7 +567,55 @@ def text(r):
                              for k, v in r["reviews"]["by_role"].items()))
     lines.append("P2b: " + "; ".join(f"{k} {v['sessions']} ({money(v['usd'])}, median {money(v['median_usd'] or 0)})"
                                       for k, v in r["delegation"].items()))
+    lines += text_added(r)
     return "\n".join(lines) + "\n"
+
+
+def text_added(r):
+    L = []
+    L.append("Cost by role x model x effort (by run: runs, cost; top 12):")
+    for x in r["role_model_effort"]["by_run"][:12]:
+        L.append(f"  {x['role']} / {x['model']} / {x['effort']}: {x['runs']} runs, {money(x['usd'])}")
+    L.append("  by call (top 8): " + "; ".join(
+        f"{x['role']}/{x['model']}/{x['effort']} {x['calls']} calls {money(x['usd'])}"
+        for x in r["role_model_effort"]["by_call"][:8]))
+    ir = r["idle_rebuilds"]
+    L.append(f"Idle cache rebuilds: {ir['events']} events, {ir['tokens']:,} tokens, {money(ir['usd'])} = "
+             f"{100 * (ir['share_of_spend'] or 0):.1f}% of spend (per 7 days {money(ir['per_7_days_usd'])} of "
+             f"{money(ir['spend_per_7_days_usd'])})")
+    L.append("  by gap: " + "; ".join(f"{k} {v['events']} ({money(v['usd'])})" for k, v in ir["by_gap"].items()))
+    L.append("  by role: " + "; ".join(f"{k} {v['events']} ({money(v['usd'])})" for k, v in ir["by_role"].items()))
+    L.append("  by other main sessions active in the previous hour: " + "; ".join(
+        f"{k}: {v['events']} events, {money(v['usd'])}, avg {money(v['avg_usd'] or 0)}"
+        for k, v in ir["by_other_main_sessions_active"].items()))
+    sr = ir["subagent_resumed_after_5min"]
+    L.append(f"  subagents resumed after 5 min (gap over {RESUME_TTL}s): {sr['events']} events, {money(sr['usd'])}")
+    L.append(f"  long-running main sessions (span over {LONG_SESSION // 3600}h): {len(ir['long_main_sessions'])}")
+    for x in ir["long_main_sessions"][:10]:
+        L.append(f"    {x['session'][:8]} {x['project']} {x['span_hours']}h: {x['rebuilds']} rebuilds "
+                 f"({x['main_rebuilds']} main), {money(x['rebuild_usd'])} = "
+                 f"{100 * (x['share_of_session'] or 0):.0f}% of its {money(x['session_usd'])}")
+    L.append(f"  top {TOP_EVENTS} events by cost:")
+    for e in ir["event_rows"][:TOP_EVENTS]:
+        L.append(f"    {e['session'][:8]} {e['who']} {e['role']} {e['t']} gap {(e['gap_s'] or 0) / 3600:.1f}h "
+                 f"{e['tokens']:,} tokens {money(e['usd'])}, {e['other_main_sessions_active']} other main active")
+    cl = r["compaction_log"]
+    L.append(f"Compaction log: {cl['count']} compactions, next-call cost {money(cl['next_call_usd'])}")
+    for x in cl["rows"][:15]:
+        nxt = money(x["next_call_usd"]) if x["next_call_usd"] is not None else "no call after"
+        L.append(f"    {x['session'][:8]} {x['t']} {x['trigger']} pre {x['pre']} post {x['post']} next call {nxt}")
+    sp = r["start_split"]
+    if not sp["sessions"]:
+        L.append("Starting context split: " + sp["note"])
+    else:
+        L.append(f"Starting context split ({sp['sessions']} main sessions, first call mean "
+                 f"{sp['first_call_context_per_session']:,} tokens; sources are {sp['estimate']}):")
+        for k, v in sp["by_source"].items():
+            L.append(f"    {k}: ~{v['per_session']:,} tokens/session ({100 * (v['share'] or 0):.1f}%)")
+        ns = sp["not_split"]
+        L.append(f"    not split: remainder ~{ns['per_session']:,} tokens/session ({100 * (ns['share'] or 0):.1f}%); "
+                 + ns["note"])
+    return L
 
 
 def main():

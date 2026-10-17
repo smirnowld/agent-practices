@@ -591,12 +591,40 @@ line with usage, or none with a cost-state line; recheck these facts then.
   record which was used per call, and the scanner prices each as recorded.
 - **Compactions** are `{"type":"system","subtype":"compact_boundary"}` lines
   with `compactMetadata.trigger` (`auto` or `manual`) and `preTokens`.
+- **Effort.** Assistant lines, main and subagent, carry top-level `effort`
+  (`low`, `medium`, `high`, `xhigh`, `max`) and `perTurnEffort`; a few
+  lines have none, which the scanner records as `unknown`. A session's or
+  subagent's effort is the most common among its calls.
+- **Cache lifetime and rebuilds.** Main sessions write 1-hour cache, which a
+  call refreshes; subagents write 5-minute cache. The scanner marks a write
+  after a pause over that lifetime as `idle` and records the gap; a rebuild
+  is priced at the write rate.
+- **Starting context.** Before a main session's first API call the
+  transcript holds attachment lines: `prompt_snapshot` (the system prompt as
+  a list of strings), `instructions` (CLAUDE.md and AGENTS.md files),
+  `skill_listing`, `agent_listing_delta`, `mcp_instructions_delta`,
+  `deferred_tools_delta` (tool names only), `hook_success` (hook output, by
+  `hookEvent`), `session_context`, `environment`, `model` and `date`, then
+  the user's first prompt. The scanner keeps only the length of each
+  (characters / 4, an estimate), never the text. Not recorded, so they stay
+  in the unsplit remainder: tool definitions' schemas, and anything the
+  client adds that is not a line; for a resumed session the remainder also
+  holds the earlier conversation. Subagent starts are not split.
 - **Prices** are from <https://platform.claude.com/docs/en/about-claude/pricing>,
   checked 2026-10-07: the per-model rates, fast mode at twice the standard
   rates for the Opus models that offer it, US-only inference
   (`inference_geo` `us`) at 1.1 times for models from Opus 4.6 on, the
   1M-token context at standard rates, and web search at $10 per 1,000
   searches.
+  Claude Haiku 5.5 (`claude-haiku-5-5`) was added and checked on the same
+  page 2026-10-17: $0.10 input, $0.50 output, $0.01 cache read, $0.125 5m
+  write and $0.20 1h write per million tokens for prompts up to 100,000
+  tokens, and $0.50, $2.50, $0.05, $0.625 and $1 for longer prompts (input,
+  cache reads and cache writes count; each request is priced on its own); the
+  US multiplier applies to both rows and it has no fast mode. Only that row
+  was checked on 2026-10-17: on that page Claude Sonnet 5.5's cache read is
+  listed at $0.10 (0.05 times input), while the scanner's row has $0.20; not
+  yet corrected here.
 
 ## Not verified
 

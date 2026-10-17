@@ -121,6 +121,19 @@ The measures, every run:
    did not, and an implementer subagent ran. Other (the scripts' `neither`):
    the rest, such as reading, coordinating, docs only, or edits by a
    subagent that is not an implementer.
+9. Cost and runs by role, model and effort (main sessions are the
+   coordinator).
+10. Idle cache rebuilds (the idle cause of measure 4), per event and
+    summarised by gap, role, share of spend, number of other main sessions
+    active, long-running main sessions and subagents resumed after 5 minutes.
+11. The compaction log, with the cost of the call after each compaction.
+12. The first call's context split by source (estimated from sizes), with
+    what the transcripts cannot split.
+13. Throughput beside rebuilds (optional): merged pull requests per day
+    next to active main sessions and the day's idle-rebuild cost, from
+    `python3 SKILL_DIR/../../scripts/cost-throughput.py SCRATCH/scan.json
+    --repo OWNER/NAME [--repo ...] --out SCRATCH/throughput.json --text`,
+    with the repositories I name.
 
 Totals use the agent's own session counter where the transcript has one,
 and the transcript sum where it does not; a session with calls after its
@@ -216,7 +229,7 @@ day; a re-run takes the next free `-N` name, step 0), following the folder's own
 
 - Summary: window, totals with basis, the price table's date, the report
   link.
-- Measures: the eight measures' headline figures, so the next run compares.
+- Measures: the measures' headline figures, so the next run compares.
 - Decisions: what I decided, each with where and when it takes effect.
 - Predictions: for each decision, the measure, its figure this window, and
   a number that counts as met (per 7 days where weekly), so the next run
