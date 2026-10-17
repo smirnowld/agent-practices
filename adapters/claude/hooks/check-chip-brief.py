@@ -9,7 +9,8 @@ model from tiers.json, is blocked with templates/brief.md handed back so the
 retry takes one call. A passed model or effort that differs from the Model
 line is blocked. A session started now ("user_asked") whose Model line is
 above the starter's own model or effort is blocked, since the app would
-silently run it at the starter's level; ROUTE says what to do instead. Any
+silently run it at the starter's level (cards are capped the same way when
+started); ROUTE gives the card-then-approved-switch route instead. Any
 error lets the call through with a note on stderr; a broken check must not
 block session starts.
 """
@@ -30,9 +31,11 @@ FAMILIES = ["haiku", "sonnet", "opus", "fable"]
 EFFORTS = ["low", "medium", "high", "xhigh", "max"]
 
 ROUTE = (
-    "Instead, propose it as a card (initiation \"own_initiative\") with the "
-    "brief's model and effort for the user to start, or start it within the "
-    "cap and switch it up through the model check (P2d) with the user's OK."
+    "The app would start it at your own model and effort, so start it within "
+    "your cap only through the switch the user approves: propose it as a card "
+    "(initiation \"own_initiative\") passing the brief's model and effort; when "
+    "it starts, its model check (P2d) asks you to switch it, and the app asks "
+    "the user to approve the costlier switch."
 )
 
 
@@ -89,7 +92,7 @@ def main():
         deny(
             "A started session's prompt is a brief (P2c). Missing: " + "; ".join(missing) + ". "
             "Refill the prompt from this template, keep what you already wrote, "
-            "and repeat the Model line's model and effort in the summary (tldr).\n\n" + template
+            "and pass the Model line's model and effort as model and effort.\n\n" + template
         )
         return
 
