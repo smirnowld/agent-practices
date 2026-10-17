@@ -8,15 +8,23 @@ Any tool named here may be deferred: if it is not callable, load it with
 ToolSearch `select:NAME` before judging it absent. Chat is the fallback only
 when ToolSearch cannot find it either, and the report says so.
 
-- **Propose a session** (P2c, `brief` step 6, closeout, routines): one
-  `mcp__ccd_session__spawn_task` chip per brief. The prompt is the filled
-  brief; the title is its title; the summary says why now and repeats the
-  Model line's model and effort. Briefs listed only in chat are not proposed.
+- **Propose or start a session** (P2c, `brief` step 6, closeout, routines):
+  `mcp__ccd_session__start_session`, one call per brief, `context` "fresh".
+  The prompt is the filled brief, the title its title, `background` why now.
+  Pass the Model line's model as `model` (the id the app's picker offers)
+  and its effort as `effort`. `initiation` is "own_initiative" (a card I
+  start) unless I asked here in words to start it now ("user_asked"); a turn
+  another session or an event started may only propose. The app silently
+  caps both values at the starter's own model and effort, cards included,
+  so a session above that cap starts only as a card (a hook enforces
+  this): its model check (P2d, below) asks this session to switch it up,
+  which the app puts to me, or at one effort level off notes it.
+  Briefs listed only in chat are not proposed.
 - **Title and place a session** (P2a, `templates/session-title.md`): rename
   with `mcp__ccd_session_mgmt__set_session_title` and `session_id` `self`, at
   start once sized, before the first turn ends even for a one-answer task
   (started by a skill: before its first step), and whenever the autonomy
-  marker moves up. A `spawn_task` chip's title is already in that form; a
+  marker moves up. A proposed session's title is already in that form; a
   Stop hook blocks a turn end while the title is not and no rename was
   tried. Move into a project with
   `mcp__ccd_directory__change_directory`; the move applies when the turn ends.
@@ -32,9 +40,10 @@ when ToolSearch cannot find it either, and the report says so.
   until one is. Only agents manage groups; a declined call is not retried,
   and an unattended session skips this. Desktop-app sessions only: cloud
   sessions have no sidebar tools; their thread is the brief's Thread line.
-- **Work in flight** (`brief` step 1): `mcp__ccd_session_mgmt__list_sessions`,
-  plus this session's own `spawn_task` calls, and the board's
-  In progress and In review items (Board actions below). Chips not yet
+- **Work in flight** (`brief` step 1): `mcp__ccd_session_mgmt__list_sessions`
+  (`linked` true for the sessions this family started), plus this session's
+  own `start_session` cards not yet started, and the board's
+  In progress and In review items (Board actions below). Cards not yet
   started from other sessions or routines are invisible; say so.
 - **Board actions** (P19b, `brief`, `closeout`, `board-review`, `idea`,
   `today`, `weekly-review`): `gh
@@ -71,8 +80,11 @@ when ToolSearch cannot find it either, and the report says so.
   "Switched; continue with the brief." and does nothing else that turn. The
   model id is one the app's picker offers; a wrong id makes the tool list
   the valid ones. It switches its own child to a cheaper model or lower
-  effort without asking me; a switch to a costlier one waits for my OK. With
-  no parent, ask me to switch with `/model` and `/effort` and stop.
+  effort without asking me; a costlier one, above its own level included,
+  only with my approval: ask me first unless the app will prompt for the
+  call (not in bypass-permissions mode, tool not allow-listed), and then
+  its prompt counts. Denied: tell me and stop. With no parent, ask me to
+  switch with `/model` and `/effort` and stop.
 - **Ask me, or wait on me** (P6b): questions and acceptance cards are chat
   text, numbered Q1, Q2 with options and a proposed default, answered in one
   reply ("Q1 A, Q2 B"); the closing Reply line
