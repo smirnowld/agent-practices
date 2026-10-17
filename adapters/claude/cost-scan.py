@@ -62,12 +62,23 @@ PRICES = {
     "claude-sonnet-5-5": (2, 10, 0.20, 2.5, 4),
     "claude-sonnet-5": (2, 10, 0.20, 2.5, 4),
     "claude-haiku-4-5-20251001": (1, 5, 0.10, 1.25, 2),
+    # Added after the 2026-10-07 check; row and rules confirmed on PRICES_URL
+    # on 2026-10-17 (HAIKU_5_5_CHECKED). Not rechecked then: the other rows.
+    "claude-haiku-5-5": (0.10, 0.50, 0.01, 0.125, 0.20),
 }
+HAIKU_5_5_CHECKED = "2026-10-17"
+# Models priced by prompt length: a request whose prompt (input + cache read +
+# cache writes) is over the threshold pays the second row, each request on its
+# own (PRICES_URL, "Long context pricing", checked HAIKU_5_5_CHECKED). The US
+# multiplier applies to both rows.
+LONG_PROMPT = {"claude-haiku-5-5": (100000, (0.50, 2.50, 0.05, 0.625, 1.0))}
 # speed "fast": the page lists fast input and output at twice the base price,
 # with cache multipliers on top. A fast call on another model is not priced.
 FAST = {"claude-opus-5-5": 2, "claude-opus-5": 2, "claude-opus-4-8": 2}
 # inference_geo "us": 1.1x on 4.6 and later models; earlier ones reject it.
 GEO_US = 1.1
+# Haiku 5.5 takes the US multiplier (PRICES_URL, checked HAIKU_5_5_CHECKED) and has
+# no fast mode, so it is on neither list.
 NO_GEO = {"claude-haiku-4-5-20251001"}
 GEO_NONE = ("", "not_available", "global", None)
 WEB_SEARCH_USD = 0.01  # $10 per 1,000 searches
@@ -78,6 +89,8 @@ CONTEXT_TAG = re.compile(r"\[1m\]$")
 MAIN_TTL = 3600  # main sessions write 1h cache (observed)
 SUB_TTL = 300  # subagents write 5m cache (observed)
 MISS_TOKENS = 20000  # a write this big that reads under half the last context is a miss
+EFFORTS = ("low", "medium", "high", "xhigh", "max")
+CHARS_PER_TOKEN = 4  # start-context sizes are estimates: characters / 4
 READ_TOOLS = ("Read",)
 READ_PROGRAMS = ("cat", "sed", "head", "tail", "grep", "rg", "find")
 EDIT_TOOLS = {"Edit": "file_path", "MultiEdit": "file_path", "Write": "file_path",
@@ -175,11 +188,68 @@ def multiplier(model, usage):
     return m
 
 
-def token_cost(model, inp, out, cr, w5, w1, mult=1.0):
+def token_cost(model, inp, out, cr, w5, w1, mult=1.0, plen=None):
+    """Cost of one call, or of summed tokens at the base row. With plen, this is
+    one call of that prompt length, and a long one takes the model's
+    long-prompt row."""
     p = PRICES.get(model)
     if p is None or mult is None:
         return 0.0
+    lp = LONG_PROMPT.get(model)
+    if plen is not None and lp and plen > lp[0]:
+        p = lp[1]
     return (inp * p[0] + out * p[1] + cr * p[2] + w5 * p[3] + w1 * p[4]) / 1e6 * mult
+
+
+def text_len(v):
+    """Characters of a string, or of the strings in a list or dict; 0 otherwise.
+    Only a length leaves this function, never the text."""
+    if isinstance(v, str):
+        return len(v)
+    if isinstance(v, list):
+        return sum(text_len(x) for x in v)
+    if isinstance(v, dict):
+        return sum(text_len(x) for x in v.values())
+    return 0
+
+
+def start_source(d, sources):
+    """Add the size (characters) of one line before a session's first API call
+    to its source; the transcript's own wording of the source is not kept."""
+    kind = d.get("type")
+    if kind == "user":
+        m = d.get("message") or {}
+        c = m.get("content") if isinstance(m, dict) else None
+        sources["first_user_prompt"] = sources.get("first_user_prompt", 0) + (
+            len(c) if isinstance(c, str) else sum(text_len(x.get("text")) for x in c or [] if isinstance(x, dict)))
+        return
+    if kind != "attachment" or not isinstance(d.get("attachment"), dict):
+        return
+    a = d["attachment"]
+    t = a.get("type")
+    if t == "prompt_snapshot":
+        sources["system_prompt"] = text_len(a.get("systemPrompt"))  # a snapshot replaces the last
+    elif t == "instructions":
+        for f in a.get("files") or []:
+            if isinstance(f, dict):
+                k = "instructions_file:" + name(f.get("type"))
+                sources[k] = sources.get(k, 0) + text_len(f.get("content"))
+    elif t == "skill_listing":
+        sources["skill_listing"] = sources.get("skill_listing", 0) + text_len(a.get("content"))
+    elif t == "agent_listing_delta":
+        sources["agent_listing"] = sources.get("agent_listing", 0) + text_len(a.get("addedLines"))
+    elif t == "mcp_instructions_delta":
+        sources["mcp_instructions"] = sources.get("mcp_instructions", 0) + text_len(a.get("addedBlocks"))
+    elif t == "deferred_tools_delta":
+        sources["deferred_tool_names"] = sources.get("deferred_tool_names", 0) + text_len(a.get("addedLines"))
+    elif t == "hook_success":
+        k = "hook:" + name(a.get("hookEvent"))
+        sources[k] = sources.get(k, 0) + text_len(a.get("content"))
+    elif t == "session_context":
+        sources["session_context"] = sources.get("session_context", 0) + text_len(a.get("context"))
+    elif t in ("environment", "model", "date"):
+        sources["environment_model_date"] = sources.get("environment_model_date", 0) + text_len(
+            a.get("snapshot") if t == "environment" else a.get("text") if t == "model" else a.get("date"))
 
 
 def read_lines(path):
@@ -206,8 +276,9 @@ def parse_transcript(path, main):
     cost_state = cs_time = resume_time = None
     cs_line = -1
     first = last = cwd = None
-    pending_compact = False
+    pending_compact = None
     usage_lines = 0
+    sources, first_call_seen = {}, False
     for n, d in enumerate(read_lines(path)):
         t = parse_ts(d.get("timestamp")) if d.get("timestamp") else None
         if t:
@@ -216,6 +287,8 @@ def parse_transcript(path, main):
         if cwd is None and isinstance(d.get("cwd"), str):
             cwd = d["cwd"]
         kind = d.get("type")
+        if main and not first_call_seen:
+            start_source(d, sources)
         if t and cost_state is not None and resume_time is None:
             resume_time = t  # first main line after the last cost-state line
         if kind == "cost-state":
@@ -228,7 +301,7 @@ def parse_transcript(path, main):
                                 "trigger": trig if trig in ("auto", "manual") else "?",
                                 "pre": cm.get("preTokens") if isinstance(cm.get("preTokens"), int) else None,
                                 "post": cm.get("postTokens") if isinstance(cm.get("postTokens"), int) else None})
-            pending_compact = True
+            pending_compact = len(compactions) - 1
         elif kind == "assistant":
             m = d.get("message") or {}
             mid = m.get("id")
@@ -236,11 +309,14 @@ def parse_transcript(path, main):
                 continue
             if isinstance(m.get("usage"), dict):
                 usage_lines += 1
+            first_call_seen = True
             if mid not in calls:
                 order.append(mid)
                 calls[mid] = {"t0": t, "pc": pending_compact, "line": n}
-                pending_compact = False
-            calls[mid].update(model=name(m.get("model")), usage=m.get("usage") or {}, t1=t)
+                pending_compact = None
+            eff = d.get("effort")
+            calls[mid].update(model=name(m.get("model")), usage=m.get("usage") or {}, t1=t,
+                              effort=eff if eff in EFFORTS else "unknown")
             for c in m.get("content") or []:
                 if not isinstance(c, dict) or c.get("type") != "tool_use" or c.get("id") in seen_tools:
                     continue
@@ -279,17 +355,18 @@ def parse_transcript(path, main):
         ws = stu.get("web_search_requests") or 0
         mult = multiplier(model, u)
         priced = model in PRICES and mult is not None
-        usd = token_cost(model, inp, outp, cr, w5, w1, mult) + (ws * WEB_SEARCH_USD if priced else 0)
-        wusd = token_cost(model, 0, 0, 0, w5, w1, mult)
+        usd = token_cost(model, inp, outp, cr, w5, w1, mult, inp + cr + w5 + w1) + (ws * WEB_SEARCH_USD if priced else 0)
+        wusd = token_cost(model, 0, 0, 0, w5, w1, mult, inp + cr + w5 + w1)
         ctx = inp + cr + w5 + w1
-        cause = None
+        cause = gap = None
         if w5 + w1:
             if i == 0:
                 cause = "start"
-            elif r["pc"]:
+            elif r["pc"] is not None:
                 cause = "compaction"
             elif prev_t and r["t0"] and (r["t0"] - prev_t).total_seconds() > ttl:
                 cause = "idle"
+                gap = round((r["t0"] - prev_t).total_seconds())
             elif w5 + w1 > MISS_TOKENS and prev_ctx and cr < 0.5 * prev_ctx:
                 cause = "miss"
             else:
@@ -297,11 +374,16 @@ def parse_transcript(path, main):
             # The next call's cache lifetime follows this call's write type.
             ttl = MAIN_TTL if w1 >= w5 else SUB_TTL
         rec = {"t": iso(r["t0"]) if r["t0"] else None, "m": model, "in": inp, "out": outp, "cr": cr,
-               "w5": w5, "w1": w1, "usd": round(usd, 6), "wusd": round(wusd, 6)}
+               "w5": w5, "w1": w1, "usd": round(usd, 6), "wusd": round(wusd, 6), "e": r["effort"]}
         if ws:
             rec["ws"] = ws
         if cause:
             rec["cause"] = cause
+        if gap is not None:
+            rec["gap"] = gap
+        if r["pc"] is not None:
+            compactions[r["pc"]]["next_usd"] = rec["usd"]
+            compactions[r["pc"]]["next_wusd"] = rec["wusd"]
         if not priced:
             rec["np"] = 1
         if mult not in (None, 1.0):
@@ -315,7 +397,7 @@ def parse_transcript(path, main):
         prev_ctx = ctx
     return {"calls": out, "compactions": compactions, "tools": tools, "spawns": spawns,
             "reads": reads, "shell": shell, "edits": edits, "cost_state": cost_state,
-            "cs_time": cs_time, "resume_time": resume_time, "first": first, "last": last, "cwd": cwd, "usage_lines": usage_lines}
+            "cs_time": cs_time, "resume_time": resume_time, "sources": sources, "first": first, "last": last, "cwd": cwd, "usage_lines": usage_lines}
 
 
 CS_FIELDS = (("in", "inputTokens"), ("out", "outputTokens"), ("cr", "cacheReadInputTokens"),
@@ -392,6 +474,14 @@ def allocate(units, cost_state):
             if c.get("tail"):
                 alloc[u][c["m"]] = alloc[u].get(c["m"], 0.0) + c["usd"]
     return alloc
+
+
+def top_effort(calls):
+    """The effort most calls ran at ("unknown" when no call recorded one)."""
+    counts = {}
+    for c in calls:
+        counts[c["e"]] = counts.get(c["e"], 0) + 1
+    return max(sorted(counts), key=counts.get) if counts else "unknown"
 
 
 def agent_meta(path):
@@ -494,7 +584,10 @@ def scan_session(root, project, path, tz):
         "reads": main["reads"], "shell": main["shell"], "edits": main["edits"],
         "coordinator_reads": len(main["reads"]) + sum(n for p, n in main["shell"].items() if p in READ_PROGRAMS),
         "main_usd": round(sum(alloc["main"].values()), 6),
-        "calls": main["calls"],
+        "calls": main["calls"], "effort": top_effort(main["calls"]),
+        # Estimated tokens (characters / 4) of what the transcript records before
+        # the first API call, by source; sizes only, never the text.
+        "start_sources": {k: v // CHARS_PER_TOKEN for k, v in sorted(main["sources"].items())},
         "subagents": [],
     }
     if cs:
@@ -518,7 +611,7 @@ def scan_session(root, project, path, tz):
         sub = {"id": aid, "type": atype, "model": max(counts, key=counts.get) if counts else None,
                "usd": round(sum(alloc[aid].values()), 6),
                "transcript_usd": round(sum(c["usd"] for c in data["calls"]), 6),
-               "compactions": len(data["compactions"]), "calls": data["calls"]}
+               "effort": top_effort(data["calls"]), "compactions": len(data["compactions"]), "calls": data["calls"]}
         if kind:
             sub["kind"] = kind
         session["subagents"].append(sub)
@@ -578,7 +671,8 @@ def main():
         "prices": {"date": PRICES_DATE, "source": PRICES_SOURCE, "unit": "USD per million tokens",
                    "columns": ["input", "output", "cache_read", "cache_write_5m", "cache_write_1h"],
                    "models": {m: list(p) for m, p in PRICES.items()},
-                   "fast": FAST, "geo_us": GEO_US, "web_search_usd": WEB_SEARCH_USD,
+                   "fast": FAST, "geo_us": GEO_US,
+                   "long_prompt": {m: {"over_tokens": t, "row": list(r)} for m, (t, r) in LONG_PROMPT.items()}, "web_search_usd": WEB_SEARCH_USD,
                    "not_priced": "unknown models; fast mode or an inference geo the source does not list"},
         "window": {"since": a.since.isoformat(), "until": a.until.isoformat(), "tz": tz_name,
                    "start": iso(start), "end": iso(end), "session_by": "first timestamp of the main transcript"},
@@ -592,7 +686,13 @@ def main():
                               "main sessions 1h and subagents 5m)",
                       "miss": f"not idle, but a write over {MISS_TOKENS} tokens whose cache read is "
                               "under half the previous call's context (the cached prefix changed)",
-                      "growth": "any other write: new turns appended to a cached prefix"}},
+                      "growth": "any other write: new turns appended to a cached prefix"},
+                  "call_fields": {"e": "effort the call ran at (low, medium, high, xhigh, max, or unknown "
+                                       "when the line records none)",
+                                  "gap": "idle calls only: seconds since the previous call ended"},
+                  "start_sources": f"estimated tokens (characters / {CHARS_PER_TOKEN}) of the lines before a "
+                                   "main session's first call; system prompt and tool definitions are not "
+                                   "all recorded, so the rest of the first call's context is unsplit"},
         "sessions": sessions,
     }
     text = json.dumps(doc, separators=(",", ":"))

@@ -9,7 +9,9 @@
 # cost-state line, an unpriced model, days after the window), that the scanner
 # stops on a format it does not know, and that a phrase planted in message
 # text, tool input and output, agent descriptions, agent types and a title
-# never reaches either output. HOME is set so project names do not depend on
+# never reaches either output; the added measures (effort, idle rebuilds,
+# compaction cost, start-context sources, Haiku 5.5 long-prompt pricing) and
+# scripts/cost-throughput.py with a stubbed gh. HOME is set so project names do not depend on
 # the machine.
 set -eu
 dir=$(dirname "$0")
@@ -53,7 +55,7 @@ HOME=/Users/test python3 "$dir/../adapters/claude/cost-scan.py" --since 2026-09-
   --tz Europe/Tallinn --projects-root "$tmp/no-cost-state" --out "$tmp/open.json" || {
   echo "error: scanner stopped on a window that reaches today" >&2; exit 1; }
 
-python3 - "$tmp/scan.json" "$tmp/report.json" <<'EOF'
+python3 - "$tmp/scan.json" "$tmp/report.json" "$dir/cost-report.py" "$dir/../adapters/claude/cost-scan.py" <<'EOF'
 import json, sys
 scan = json.load(open(sys.argv[1]))
 rep = json.load(open(sys.argv[2]))
@@ -157,7 +159,134 @@ eq("shell reads", cr["shell_reads"], {"cat": 1, "grep": 1})
 eq("reviews", rep["reviews"]["by_role"], {"critical-reviewer": {"runs": 1, "usd": 0.19, "usd_per_run": 0.19}})
 d = rep["delegation"]
 eq("p2b", [d[k]["sessions"] for k in ("self-implemented", "delegated", "neither")], [2, 1, 1])
+# Effort, idle gaps, compaction cost, start-context sources (scanner).
+eq("a effort per call", [x["e"] for x in a["calls"]], ["medium"] * 3 + ["high"] * 2)
+eq("a effort most common", (a["effort"], a["subagents"][0]["effort"]), ("medium", "high"))
+eq("c efforts", (c["effort"], {x["id"]: x["effort"] for x in c["subagents"]}),
+   ("xhigh", {"agent-b1": "unknown", "agent-i1": "low"}))
+eq("f effort (one max call of seven, others unrecorded)", ([x["e"] for x in f["calls"]][:2], f["effort"]),
+   (["max", "unknown"], "unknown"))
+eq("idle gaps (seconds)", [x.get("gap") for x in a["calls"]], [None] * 4 + [6540])
+eq("c main idle gap", c["calls"][1]["gap"], 34170)
+eq("subagent idle gaps", (a["subagents"][0]["calls"][1]["gap"], fsub["agent-g1"]["calls"][1]["gap"]), (600, 900))
+eq("a compaction keeps the next call's cost", a["compactions"],
+   [{"t": "2026-09-29T08:10:00Z", "trigger": "auto", "pre": 170000, "post": 18000,
+     "next_usd": a["calls"][3]["usd"], "next_wusd": a["calls"][3]["wusd"]}])
+# Sizes only: characters / 4, lines before the first call, a later listing not counted.
+eq("a start sources", a["start_sources"], {
+    "deferred_tool_names": 40, "first_user_prompt": 8, "hook:SessionStart": 10,
+    "instructions_file:Project": 100, "instructions_file:User": 50, "session_context": 20,
+    "skill_listing": 200, "system_prompt": 500})
+eq("start sources without attachments", b["start_sources"], {"first_user_prompt": 5})
+
+# Report: role x model x effort, idle rebuilds, compaction log, start split.
+rme = {(x["role"], x["model"], x["effort"]): x for x in rep["role_model_effort"]["by_run"]}
+eq("main role is coordinator", rme[("coordinator", "claude-opus-5-5", "medium")]["runs"], 1)
+eq("subagent role by agent type", rme[("critical-reviewer", "claude-sonnet-5-5", "high")]["usd"], 0.19)
+eq("implementer", rme[("implementer", "claude-opus-5-5", "low")]["runs"], 1)
+byc = {(x["role"], x["model"], x["effort"]): x for x in rep["role_model_effort"]["by_call"]}
+eq("by call", byc[("coordinator", "claude-opus-5-5", "high")]["calls"], 2)
+ir = rep["idle_rebuilds"]
+eq("idle events and tokens", (ir["events"], ir["tokens"]), (5, 52500))
+eq("idle by gap", {k: v["events"] for k, v in ir["by_gap"].items()},
+   {"5min-1h": 3, "1-2h": 1, "2-8h": 0, "8h+": 1})
+eq("idle by role", {k: v["events"] for k, v in ir["by_role"].items()},
+   {"main:coordinator": 2, "subagent:critical-reviewer": 1, "subagent:explorer": 1, "subagent:?": 1})
+eq("idle share of spend", ir["share_of_spend"], round(ir["usd"] / t["usd"], 4), 1e-3)
+eq("idle per 7 days", ir["per_7_days_usd"], round(ir["usd"] * 7 / 3, 2), 0.011)
+eq("idle fixture sessions are alone", {k: v["events"] for k, v in ir["by_other_main_sessions_active"].items()},
+   {"0": 5, "1": 0, "2": 0, "3+": 0})
+eq("subagent resumed after 5 min", ir["subagent_resumed_after_5min"]["events"], 3)
+eq("long main session", [(x["session"][:1], x["rebuilds"], x["span_hours"]) for x in ir["long_main_sessions"]],
+   [("c", 1, 9.5)])
+eq("event rows are per event, costliest first", [(e["session"][:1], e["who"], e["gap_s"]) for e in ir["event_rows"]][:2],
+   [("a", "main", 6540), ("a", "subagent", 600)])
+cl = rep["compaction_log"]["rows"]
+eq("compaction log", [(x["session"][:1], x["pre"], x["post"], x["trigger"]) for x in cl], [("a", 170000, 18000, "auto")])
+eq("compaction next call cost", cl[0]["next_call_usd"], a["calls"][3]["usd"])
+ss = rep["start_split"]
+eq("start split sources", ss["by_source"]["system_prompt"]["tokens"], 500)
+eq("start split not split",
+   ss["not_split"]["tokens"], ss["first_call_context_tokens"] - sum(v["tokens"] for v in ss["by_source"].values()))
+eq("start split sessions", ss["sessions"], 4)
+
+# Report logic on a built scan: other main sessions active in the previous hour.
+import importlib.machinery, importlib.util
+def load(path, name):
+    spec = importlib.util.spec_from_loader(name, importlib.machinery.SourceFileLoader(name, path))
+    m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m); return m
+cr_mod = load(sys.argv[3], "cost_report")
+def call(t, cause=None, gap=None, w=1000, usd=1.0):
+    x = {"t": t, "m": "m", "in": 0, "out": 0, "cr": 0, "w5": 0, "w1": w, "usd": usd, "wusd": usd, "e": "high"}
+    if cause: x["cause"] = cause
+    if gap: x["gap"] = gap
+    return x
+sess = lambda sid, calls, subs=(): {"session_id": sid, "project_name": "p", "usd": 10.0, "calls": calls, "subagents": list(subs)}
+built = [
+    sess("x", [call("2026-01-01T09:00:00Z", "start"), call("2026-01-01T12:00:00Z", "idle", 10800, usd=1.0),
+               call("2026-01-01T15:00:00Z", "idle", 10800, usd=2.0), call("2026-01-02T00:30:00Z", "idle", 34200, usd=4.0)]),
+    sess("o1", [call("2026-01-01T11:30:00Z"), call("2026-01-01T14:30:00Z")]),
+    sess("o2", [call("2026-01-01T11:40:00Z")]), sess("o3", [call("2026-01-01T11:50:00Z")]),
+]
+b_ir = cr_mod.idle_rebuilds(built, 1.0)
+eq("active buckets events", {k: v["events"] for k, v in b_ir["by_other_main_sessions_active"].items()},
+   {"0": 1, "1": 1, "2": 0, "3+": 1})
+eq("active buckets cost and average", b_ir["by_other_main_sessions_active"]["3+"], {"events": 1, "usd": 1.0, "avg_usd": 1.0})
+eq("gap buckets", {k: v["events"] for k, v in b_ir["by_gap"].items()}, {"5min-1h": 0, "1-2h": 0, "2-8h": 2, "8h+": 1})
+eq("long session share", b_ir["long_main_sessions"], [{
+    "session": "x", "project": "p", "span_hours": 15.5, "session_usd": 10.0, "rebuilds": 3, "main_rebuilds": 3,
+    "rebuild_usd": 7.0, "share_of_session": 0.7}])
+eq("event rows hold every event", len(b_ir["event_rows"]), 3)
+
+# Prices: Haiku 5.5 is priced by prompt length, per call.
+sc = load(sys.argv[4], "cost_scan")
+eq("haiku 5.5 short prompt", sc.token_cost("claude-haiku-5-5", 80000, 0, 0, 0, 10000, 1.0, 90000), 0.01, 1e-9)
+eq("haiku 5.5 long prompt", sc.token_cost("claude-haiku-5-5", 80000, 0, 0, 0, 30000, 1.0, 110000), 0.07, 1e-9)
+eq("haiku 5.5 takes the US multiplier", sc.multiplier("claude-haiku-5-5", {"inference_geo": "us"}), 1.1)
+eq("haiku 5.5 has no fast mode", sc.multiplier("claude-haiku-5-5", {"speed": "fast"}), None)
 if fails:
     sys.exit("error: " + "\n  ".join(fails))
 EOF
+
+# Throughput: merged PRs (stubbed gh), active main sessions and idle-rebuild cost per day.
+cat > "$tmp/gh" <<'STUBEOF'
+#!/bin/sh
+# Stub for gh: acme/one merged 2 PRs on 2026-09-29 and 1 on 2026-09-30, acme/two 1 on
+# 2026-09-30; acme/bad fails.
+repo=; search=
+while [ $# -gt 0 ]; do
+  case "$1" in --repo) repo=$2; shift;; --search) search=$2; shift;; esac
+  shift
+done
+case "$repo:$search" in
+  acme/bad:*) echo "boom" >&2; exit 1;;
+  acme/one:merged:2026-09-29..2026-09-29) echo '[{"number":1,"mergedAt":"x"},{"number":2,"mergedAt":"x"}]';;
+  acme/one:merged:2026-09-30..2026-09-30|acme/two:merged:2026-09-30..2026-09-30) echo '[{"number":3,"mergedAt":"x"}]';;
+  *) echo '[]';;
+esac
+STUBEOF
+chmod +x "$tmp/gh"
+COST_THROUGHPUT_GH="$tmp/gh" python3 "$dir/cost-throughput.py" "$tmp/scan.json" --repo acme/one --repo acme/two \
+  --repo acme/bad --out "$tmp/tp.json" --text > "$tmp/tp.txt"
+python3 - "$tmp/tp.json" "$tmp/tp.txt" <<'TPEOF'
+import json, sys
+tp = json.load(open(sys.argv[1]))
+d = tp["days"]
+fails = []
+def eq(what, got, want):
+    if got != want:
+        fails.append(f"{what}: got {got!r}, want {want!r}")
+eq("days", list(d), ["2026-09-29", "2026-09-30", "2026-10-01"])
+eq("merged by repo (a failing repo is null)", d["2026-09-29"]["merged_by_repo"],
+   {"acme/one": 2, "acme/two": 0, "acme/bad": None})
+eq("merged sums the known repos", [d[k]["merged_prs"] for k in d], [2, 2, 0])
+eq("active main sessions per local day", [d[k]["active_main_sessions"] for k in d], [1, 2, 1])
+eq("idle rebuild cost per local day", [d[k]["idle_rebuild_usd"] for k in d], [0.24, 0.0, 0.0])
+eq("idle rebuild main part", [d[k]["idle_rebuild_usd_main"] for k in d], [0.17, 0.0, 0.0])
+txt = open(sys.argv[2]).read()
+if "2026-09-29" not in txt or "*" not in txt:
+    fails.append("text table lacks the day or the failed-query mark")
+if fails:
+    sys.exit("error: " + "\n  ".join(fails))
+TPEOF
 echo "cost-review self-test passed"
