@@ -9,14 +9,23 @@ ToolSearch `select:NAME` before judging it absent. Chat is the fallback only
 when ToolSearch cannot find it either, and the report says so.
 
 - **Propose a session** (P2c, `brief` step 6, closeout, routines): one
-  `mcp__ccd_session__spawn_task` chip per brief. The prompt is the filled
-  brief; the title is its title; the summary says why now and repeats the
-  Model line's model and effort. Briefs listed only in chat are not proposed.
+  `mcp__ccd_session__start_session` call per brief, `context` `fresh`.
+  `initiation`: `own_initiative` (a card I start) for work I did not ask
+  for; `user_asked` when I told you to start it; `offer` when my latest
+  message names the task without saying where it runs: the title alone
+  first, then the brief with the returned `proposal_id` if I pick a new
+  session.
+  The `prompt` is the filled brief; the title is its title; `background` says
+  why now; `model` and `effort` are the Model line's when at or below this
+  session's (the tool takes nothing higher), otherwise omitted. Briefs listed
+  only in chat are not proposed. Older app builds have
+  `mcp__ccd_session__spawn_task` instead, with no model or effort: its
+  summary repeats the Model line's model and effort.
 - **Title and place a session** (P2a, `templates/session-title.md`): rename
   with `mcp__ccd_session_mgmt__set_session_title` and `session_id` `self`, at
   start once sized, before the first turn ends even for a one-answer task
   (started by a skill: before its first step), and whenever the autonomy
-  marker moves up. A `spawn_task` chip's title is already in that form; a
+  marker moves up. A proposed session's title is already in that form; a
   Stop hook blocks a turn end while the title is not and no rename was
   tried. Move into a project with
   `mcp__ccd_directory__change_directory`; the move applies when the turn ends.
@@ -32,10 +41,12 @@ when ToolSearch cannot find it either, and the report says so.
   until one is. Only agents manage groups; a declined call is not retried,
   and an unattended session skips this. Desktop-app sessions only: cloud
   sessions have no sidebar tools; their thread is the brief's Thread line.
-- **Work in flight** (`brief` step 1): `mcp__ccd_session_mgmt__list_sessions`,
-  plus this session's own `spawn_task` calls, and the board's
-  In progress and In review items (Board actions below). Chips not yet
-  started from other sessions or routines are invisible; say so.
+- **Work in flight** (`brief` step 1): `mcp__ccd_session_mgmt__list_sessions`
+  with `linked: true` for the sessions this one started (they report back
+  here), unfiltered for the rest, plus this session's own `start_session`
+  proposals not yet started, and the board's In progress and In review
+  items (Board actions below). Proposals not yet started from other sessions
+  or routines are invisible; say so.
 - **Board actions** (P19b, `brief`, `closeout`, `board-review`, `idea`,
   `today`, `weekly-review`): `gh
   project` through the shell, with `gh api` for what it lacks (REST for
@@ -64,7 +75,11 @@ when ToolSearch cannot find it either, and the report says so.
   tier (`tiers.json`) and never lowers a reviewer below the implementer's.
   A PreToolUse hook denies this session's own `Edit`/`Write` on source; docs
   and a config file on the brief's `Coordinator edits:` line pass.
-- **Model check** (P2d): on a mismatch, send the parent "Switch me to MODEL at
+- **Model check** (P2d): `start_session` sets a session's model and effort
+  only at or below its starter's, so a starter that set the Model line's
+  leaves nothing to switch; the handshake is for a brief that asks for more
+  than its starter could set, or a session started without them. On a
+  mismatch, send the parent "Switch me to MODEL at
   EFFORT: SESSION_ID" with `mcp__ccd_session_mgmt__send_message` and wait.
   The parent switches it with `mcp__ccd_session_mgmt__set_session_model` and
   `set_session_effort`, replies

@@ -36,7 +36,8 @@ marketplace (`.claude-plugin/marketplace.json`, plugin source `"."`), so
   start with their own heading (hooks.md, "Hook output" and "Hook execution
   details", https://code.claude.com/docs/en/hooks, checked 2026-10-07).
   `PreToolUse` on `Edit|Write|MultiEdit|NotebookEdit` runs
-  `check-coordinator-edit.py` (P2b; see Coordinator edits below). `PreToolUse` on `mcp__ccd_session__spawn_task` runs
+  `check-coordinator-edit.py` (P2b; see Coordinator edits below). `PreToolUse` on `mcp__ccd_session__start_session` (and
+  `mcp__ccd_session__spawn_task`, its name in older app builds) runs
   `check-chip-brief.py` (see Chips below); it denies with
   `hookSpecificOutput.permissionDecision: "deny"`, and on its own errors
   exits 0 so the call proceeds (hooks.md, checked 2026-09-29). It needs
@@ -177,24 +178,33 @@ unverified against vendor docs.
 - Model check (P2d): the rule is in [session.md](session.md). That a wrong
   model id makes `set_session_model` list the valid ones is recorded
   2026-10-15, unverified against vendor docs.
-- Chips (P2c): a session I am offered as a desktop-app chip, whether from
-  `spawn_task` or a scheduled routine (below), is a brief. Its prompt is filled
-  from [`templates/brief.md`](../../templates/brief.md), heading and Model line
-  at the top, not written as a free-form task. `spawn_task` cannot set model or
-  effort (it takes a title, a summary, a prompt and a directory; observed
-  2026-09-29, unverified against vendor docs), so the chip's summary repeats
-  the Model line's model and effort for me to pick when I start it, and the
-  started session runs the model check above. A session started from a chip
-  or by another session runs on its starter's model and effort, not the
-  settings default (recorded 2026-10-15, unverified against vendor docs),
-  which is why the model check is its first action. A `PreToolUse` hook
+- Chips (P2c): a session I am offered as a desktop-app card, whether proposed
+  with `start_session` or by a scheduled routine (below), is a brief. Its
+  prompt is filled from [`templates/brief.md`](../../templates/brief.md),
+  heading and Model line at the top, not written as a free-form task. On
+  2026-10-18 the desktop app's session tool was `mcp__ccd_session__start_session`,
+  replacing `spawn_task` (observed from the tool description, unverified
+  against vendor docs). It takes `initiation` (`user_asked` starts now,
+  `offer` asks me first with a title alone, `own_initiative` leaves a card),
+  a `prompt` and `background`, `context` fresh or fork, `model` (same family
+  or cheaper than the starter's) and `effort` (at or below the starter's),
+  `use_worktree`, `cwd`, `target` local, ssh or cloud, and `wake_when_done`;
+  the sessions it starts are linked and report back to their starter.
+  `spawn_task` took only a title, a summary, a prompt and a directory
+  (observed 2026-09-29), so its chips repeated the Model line's model and
+  effort in the summary for me to pick. A session started without a model or
+  effort runs on its starter's, not the settings default (recorded
+  2026-10-15, unverified against vendor docs), which is why the model check
+  above stays its first action. A `PreToolUse` hook
   ([`hooks/check-chip-brief.py`](hooks/check-chip-brief.py)) denies a
-  `spawn_task` prompt without the brief's heading, Model line, Goal and Proof,
-  or whose Model line names a tier without its `tiers.json` model (sessions
-  wrote "standard" and named the model only in their final message,
-  2026-09-30), and returns the template so the retry is one call. The hook fires on the
-  desktop app's `mcp__ccd_session__spawn_task` (observed 2026-09-29 with a
-  test chip; unverified against vendor docs).
+  `start_session` or `spawn_task` prompt without the brief's heading, Model
+  line, Goal and Proof, or whose Model line names a tier without its
+  `tiers.json` model (sessions wrote "standard" and named the model only in
+  their final message, 2026-09-30), and returns the template so the retry is
+  one call. A call with no prompt passes: an `offer` sends a title alone and
+  starting a proposal sends only `proposal_id`. The hook fired on
+  `spawn_task` (observed 2026-09-29 with a test chip); that it fires on
+  `start_session` is unverified until a session observes a denial.
 - Session titles (P2a): the rule is in [session.md](session.md). Before it,
   sessions I started were titled after my first message, and the session list
   showed neither the work's kind nor whether it waited on me (2026-10-07).
@@ -253,14 +263,16 @@ unverified against vendor docs.
   [session.md](session.md); the model it names comes from `tiers.json`
   (Sonnet for fast, Opus for standard). Before session.md was
   printed at start, sessions told to use the `brief` skill wrote briefs in
-  chat and made no chips until reminded (2026-09-30). Where sessions default to another model, I pick the
-  chip's model when I start it; otherwise the started session stops at the
-  model check and asks to be switched. In-flight work for the skill's
-  step 1: the desktop app's `list_sessions` lists other sessions; its
-  description does not mention chips not yet started (tool description, checked 2026-09-30, unverified
-  against vendor docs), so the skill also checks this session's own earlier
-  `spawn_task` calls; chips from other sessions or routines not yet started
-  stay invisible.
+  chat and made no chips until reminded (2026-09-30). The proposing session sets the Model line's
+  model and effort on `start_session` when they are at or below its own;
+  otherwise the started session stops at the model check and asks to be
+  switched. In-flight work for the skill's
+  step 1: the desktop app's `list_sessions` lists other sessions, and with
+  `linked: true` the ones this session started (tool description, checked
+  2026-10-18, unverified against vendor docs); neither mentions proposals not
+  yet started, so the skill also checks this session's own earlier
+  `start_session` calls; proposals from other sessions or routines not yet
+  started stay invisible.
 - Browser steps (P9a): the rule is in [session.md](session.md). Claude in
   Chrome opens its own tabs in my Chrome, shares its login state, runs in a
   visible window, and pauses at a login page or CAPTCHA for me to handle;
