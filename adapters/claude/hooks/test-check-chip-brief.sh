@@ -28,6 +28,9 @@ echo "$out" | grep -qF '"permissionDecision": "deny"' || { echo "error: model no
 passes '{"tool_input":{"initiation":"own_initiative","title":"x","prompt":"  # Brief: Fix badge\n\n  **Model:** fast (Sonnet) at low\n\n  ## Goal\n\nx\n\n  ## Proof\n\n- make check\n"}}' ||
   { echo "error: indented brief was not passed: $out" >&2; exit 1; }
 
+out=$(echo '{"tool_input":{"proposal_id":"task_ab12","prompt":"Fix the stale badge."}}' | run)
+echo "$out" | grep -qF '"permissionDecision": "deny"' || { echo "error: prompt with proposal_id was not denied; the hook must not skip on proposal_id" >&2; exit 1; }
+
 for empty in '{"tool_input":{"proposal_id":"task_ab12"}}' '{"tool_input":{"initiation":"offer","title":"Fix badge"}}' '{"tool_input":{"initiation":"user_asked","prompt":""}}'; do
   passes "$empty" || { echo "error: call with no prompt was not passed silently: $empty" >&2; exit 1; }
 done

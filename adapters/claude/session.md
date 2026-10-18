@@ -9,10 +9,12 @@ ToolSearch `select:NAME` before judging it absent. Chat is the fallback only
 when ToolSearch cannot find it either, and the report says so.
 
 - **Propose a session** (P2c, `brief` step 6, closeout, routines): one
-  `mcp__ccd_session__start_session` call per brief. `initiation`
-  `own_initiative` (a card I start) unless I asked for the session: then
-  `user_asked`, or `offer` with the title alone when I named the task in my
-  latest message, and the brief follows with the returned `proposal_id`.
+  `mcp__ccd_session__start_session` call per brief, `context` `fresh`.
+  `initiation`: `own_initiative` (a card I start) for work I did not ask
+  for; `user_asked` when I told you to start it; `offer` when my latest
+  message names the task without saying where it runs: the title alone
+  first, then the brief with the returned `proposal_id` if I pick a new
+  session.
   The `prompt` is the filled brief; the title is its title; `background` says
   why now; `model` and `effort` are the Model line's when at or below this
   session's (the tool takes nothing higher), otherwise omitted. Briefs listed

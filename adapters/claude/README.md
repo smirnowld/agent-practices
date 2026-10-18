@@ -263,9 +263,10 @@ unverified against vendor docs.
   [session.md](session.md); the model it names comes from `tiers.json`
   (Sonnet for fast, Opus for standard). Before session.md was
   printed at start, sessions told to use the `brief` skill wrote briefs in
-  chat and made no chips until reminded (2026-09-30). Where sessions default to another model, I pick the
-  chip's model when I start it; otherwise the started session stops at the
-  model check and asks to be switched. In-flight work for the skill's
+  chat and made no chips until reminded (2026-09-30). The proposing session sets the Model line's
+  model and effort on `start_session` when they are at or below its own;
+  otherwise the started session stops at the model check and asks to be
+  switched. In-flight work for the skill's
   step 1: the desktop app's `list_sessions` lists other sessions, and with
   `linked: true` the ones this session started (tool description, checked
   2026-10-18, unverified against vendor docs); neither mentions proposals not

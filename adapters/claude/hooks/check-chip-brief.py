@@ -3,9 +3,10 @@
 session's prompt must be a brief (P2c).
 
 A call with no prompt passes: starting an existing proposal sends only
-proposal_id, and an offer sends only a title. Otherwise it blocks a prompt that lacks the brief's heading, Model line, Goal or Proof,
-or whose Model line lacks a tier followed by its model from tiers.json, and hands
-back templates/brief.md so the retry takes one call. Any error lets
+proposal_id, and an offer sends only a title. Otherwise it blocks a prompt
+that lacks the brief's heading, Model line, Goal or Proof, or whose Model
+line lacks a tier followed by its model from tiers.json, and hands back
+templates/brief.md so the retry takes one call. Any error lets
 the chip through with a note on stderr; a broken check must not block chips.
 """
 import json
