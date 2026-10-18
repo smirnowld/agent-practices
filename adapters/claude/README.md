@@ -228,7 +228,11 @@ unverified against vendor docs.
   without a prompt passes only as an "offer" or a start of a proposal by id.
   A fresh start must pass both `model` and `effort`, so a start never
   takes the starter's level by default. A card above the cap passes: it
-  waits for me, and its model check asks to be switched up (P2d).
+  waits for me, and its model check asks to be switched up (P2d). For
+  `spawn_task`, which has no model or effort, only the brief check
+  applies. The hook fired on `spawn_task` (observed 2026-09-29 with a test
+  chip); that it fires on `start_session` is unverified until a session
+  observes a denial there.
 - Session titles (P2a): the rule is in [session.md](session.md). Before it,
   sessions I started were titled after my first message, and the session list
   showed neither the work's kind nor whether it waited on me (2026-10-07).
@@ -291,7 +295,7 @@ unverified against vendor docs.
   proposer's cap starts lower and its model check asks to be switched (see
   Starting sessions above). In-flight work for the skill's
   step 1: the desktop app's `list_sessions` lists other sessions, and
-  `linked` narrows it to this family; its description does not mention
+  with `linked` true the ones this session started; its description does not mention
   cards not yet started (tool description, checked 2026-10-17, unverified
   against vendor docs), so the skill also checks this session's own earlier
   `start_session` cards; cards from other sessions or routines not yet

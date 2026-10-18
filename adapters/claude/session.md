@@ -80,7 +80,7 @@ when ToolSearch cannot find it either, and the report says so.
   and a config file on the brief's `Coordinator edits:` line pass.
 - **Model check** (P2d): a session started at its brief's model and effort
   has nothing to switch; the handshake is for a brief above its starter's
-  cap. On a mismatch, send the parent "Switch me to MODEL at
+  cap, or a session started without them. On a mismatch, send the parent "Switch me to MODEL at
   EFFORT: SESSION_ID" with `mcp__ccd_session_mgmt__send_message` and wait.
   The parent switches it with `mcp__ccd_session_mgmt__set_session_model` and
   `set_session_effort`, replies
