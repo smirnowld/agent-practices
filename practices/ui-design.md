@@ -111,7 +111,7 @@ than by topic, cheapest first. Each layer reports only what it can see.
 | 0. Measurements | The running screens | Scripts | UI6 to UI8, UI10, UI12, UI13 by number: sizes across locale and theme, truncation, contrast, target sizes; side-by-side grids for the next layers |
 | 1. Copy | Changed strings, every locale, with key and screen | [Copy reviewer](../roles/copy-reviewer.md) | UI15 to UI18 |
 | 2. Visual | The grids and a few full-size screens, the change's description, the project's `docs/design.md` | [Design reviewer](../roles/design-reviewer.md) | Guide compliance, consistency the scripts could not measure (UI6 to UI9), usability (UI11, UI14), brand, UI1 to UI5 |
-| 3. Critique | A new screen's plan or sketch | Design reviewer in critique mode, at planning time | Whether the screen's structure suits its job; advisory |
+| 3. Critique | A new screen's plan or sketch | Design reviewer in critique mode, at planning time | Whether the screen's structure suits its job; advisory. Shown to the owner as drawn options side by side, never as text layouts |
 
 Rules for every layer:
 

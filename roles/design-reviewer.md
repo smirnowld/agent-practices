@@ -42,5 +42,12 @@ In critique mode (a new screen at planning time, from a plan, sketch or
 mock), skip the checks above and answer: does the structure suit the
 screen's job, what should be visual rather than text, what is missing for
 the error, empty, offline and large-text states. Every point is advisory.
+The owner judges a critique by looking, not reading: turn each choice the
+plan leaves open into two or three options the coordinator can draw side
+by side at the stage's fidelity (wireframes while planning, rough or
+finished designs later), each with the same data and a one-line trade-off.
+Keep your findings to the few the drawings cannot show. Match the density
+to what the screen's user needs to see. Do not pare a screen down by
+default.
 
 Aim to finish within about 10 responses.
