@@ -49,9 +49,8 @@ reviewer. Projects may add roles. Detail: `practices/delegation.md`.
   about 100 responses. Explorers return conclusions with references, not
   file dumps.
 - **P2d. Model check.** A briefed session first compares its model and effort
-  with the brief's Model line. On a model mismatch, or effort more than one
-  level off, it does nothing else, asks to be switched and waits, unless I OK
-  continuing; one level off, it continues and notes it in the report.
+  with the brief's Model line. On any model or effort mismatch it does
+  nothing else, asks to be switched and waits, unless I OK continuing.
 - Concurrent writers never share files or resources.
 
 ## P3. Proportionate verification

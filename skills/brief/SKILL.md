@@ -140,8 +140,8 @@ names (P1); writing a brief out in chat does not propose it. A
 session that proposes a package's work itself moves its item Planned →
 Ready (`gh project item-edit`; a draft the same way). A read-only routine
 such as `board-review` never writes: the session it proposes makes the
-move when it runs. The proposal carries the Model line's model and effort
-as `session.md` says. Only where `session.md` names no
+move when it runs. The proposed session starts at the Model line's model
+and effort as `session.md` says, never silently below them. Only where `session.md` names no
 such tool, send the briefs in chat and say so in the report. Never commit
 them to the repository (P17).
 

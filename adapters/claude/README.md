@@ -36,12 +36,11 @@ marketplace (`.claude-plugin/marketplace.json`, plugin source `"."`), so
   start with their own heading (hooks.md, "Hook output" and "Hook execution
   details", https://code.claude.com/docs/en/hooks, checked 2026-10-07).
   `PreToolUse` on `Edit|Write|MultiEdit|NotebookEdit` runs
-  `check-coordinator-edit.py` (P2b; see Coordinator edits below). `PreToolUse` on `mcp__ccd_session__start_session` (and
-  `mcp__ccd_session__spawn_task`, its name in older app builds) runs
-  `check-chip-brief.py` (see Chips below); it denies with
+  `check-coordinator-edit.py` (P2b; see Coordinator edits below). `PreToolUse` on `mcp__ccd_session__start_session` (and the older
+  `spawn_task`) runs `check-chip-brief.py` (see Starting sessions below); it denies with
   `hookSpecificOutput.permissionDecision: "deny"`, and on its own errors
   exits 0 so the call proceeds (hooks.md, checked 2026-09-29). It needs
-  `python3`; without it the hook fails and chips go through unchecked.
+  `python3`; without it the hook fails and session starts go through unchecked.
   `Stop` runs `check-attention.py` (see Waiting on me below) and
   `check-session-title.py` (see Session titles below); they block with
   top-level `decision: "block"` and a `reason` and skip when
@@ -178,33 +177,62 @@ unverified against vendor docs.
 - Model check (P2d): the rule is in [session.md](session.md). That a wrong
   model id makes `set_session_model` list the valid ones is recorded
   2026-10-15, unverified against vendor docs.
-- Chips (P2c): a session I am offered as a desktop-app card, whether proposed
-  with `start_session` or by a scheduled routine (below), is a brief. Its
-  prompt is filled from [`templates/brief.md`](../../templates/brief.md),
-  heading and Model line at the top, not written as a free-form task. On
-  2026-10-18 the desktop app's session tool was `mcp__ccd_session__start_session`,
-  replacing `spawn_task` (observed from the tool description, unverified
-  against vendor docs). It takes `initiation` (`user_asked` starts now,
-  `offer` asks me first with a title alone, `own_initiative` leaves a card),
-  a `prompt` and `background`, `context` fresh or fork, `model` (same family
-  or cheaper than the starter's) and `effort` (at or below the starter's),
-  `use_worktree`, `cwd`, `target` local, ssh or cloud, and `wake_when_done`;
-  the sessions it starts are linked and report back to their starter.
-  `spawn_task` took only a title, a summary, a prompt and a directory
-  (observed 2026-09-29), so its chips repeated the Model line's model and
-  effort in the summary for me to pick. A session started without a model or
-  effort runs on its starter's, not the settings default (recorded
-  2026-10-15, unverified against vendor docs), which is why the model check
-  above stays its first action. A `PreToolUse` hook
+- Starting sessions (P2c): the rule is in [session.md](session.md). A
+  session proposed or started by another, or by a scheduled routine
+  (below), gets a brief as its prompt, filled from
+  [`templates/brief.md`](../../templates/brief.md), heading and Model line
+  at the top. Observed in the desktop app on 2026-10-17 (tool schema and
+  throwaway sessions; unverified against vendor docs):
+  - The tool is `mcp__ccd_session__start_session`; older app builds have
+    `spawn_task`, which took only a title, a summary, a prompt and a
+    directory (observed 2026-09-29). It takes `initiation` (`user_asked`
+    starts now, `offer` asks me first with a title alone, `own_initiative`
+    leaves a card), a `prompt` and `background`, `context` fresh or fork,
+    `model`, `effort`, `use_worktree`, `cwd`, `target` local, ssh or cloud,
+    and `wake_when_done`; the sessions it starts are linked and report back
+    to their starter (tool description, checked 2026-10-18). Its `model`
+    and `effort` apply to "fresh" sessions; the schema says effort must be
+    at or below the starter's and a higher model "is ignored".
+  - A start now ("user_asked") is refused on a turn that another session's
+    message or an automated event began: such a session can only propose.
+  - Cards ("own_initiative") are capped the same way, silently: a card at
+    effort high from an Opus-medium session ran at Opus medium; a Fable card
+    from it ran Opus medium; an Opus-high card proposed by a Sonnet-low
+    session ran at Sonnet low. A card passing a lower model and effort
+    (Sonnet low from Opus medium) kept them.
+  - A parent raising its child above the parent's own model or effort
+    (`set_session_effort` high, `set_session_model` Fable, from an
+    Opus-medium parent) works; the app showed me an approval card for each
+    first, in auto mode. Its tool description says bypass-permissions mode
+    does not ask.
+  - A card offers me no way to change its model or effort before I start
+    it.
+
+  So a session above its starter's cap starts as a card and is raised
+  through its model check, with my approval on the app's card; a start
+  now above the cap would silently run lower. A session started by
+  another runs on its starter's model and effort, not the settings
+  default (recorded 2026-10-15), which is why the model check is its first
+  action. A `PreToolUse` hook
   ([`hooks/check-chip-brief.py`](hooks/check-chip-brief.py)) denies a
-  `start_session` or `spawn_task` prompt without the brief's heading, Model
-  line, Goal and Proof, or whose Model line names a tier without its
-  `tiers.json` model (sessions wrote "standard" and named the model only in
-  their final message, 2026-09-30), and returns the template so the retry is
-  one call. A call with no prompt passes: an `offer` sends a title alone and
-  starting a proposal sends only `proposal_id`. The hook fired on
-  `spawn_task` (observed 2026-09-29 with a test chip); that it fires on
-  `start_session` is unverified until a session observes a denial.
+  prompt without the brief's heading, Model line, Goal and Proof, or whose
+  Model line names a tier without its `tiers.json` model (sessions wrote
+  "standard" and named the model only in their final message,
+  2026-09-30), and returns the template so the retry is one call. It also
+  denies a passed `model` or `effort` that differs from the Model line,
+  and a "user_asked" start whose Model line is above the starter's model
+  (the transcript's last assistant model) or effort (`CLAUDE_EFFORT`, set
+  in desktop-app sessions, observed 2026-10-17; whether it follows a later
+  effort switch is unverified); where either is unknown that last check is
+  skipped with a note. An effort word it cannot read is denied. A call
+  without a prompt passes only as an "offer" or a start of a proposal by id.
+  A fresh start must pass both `model` and `effort`, so a start never
+  takes the starter's level by default. A card above the cap passes: it
+  waits for me, and its model check asks to be switched up (P2d). For
+  `spawn_task`, which has no model or effort, only the brief check
+  applies. The hook fired on `spawn_task` (observed 2026-09-29 with a test
+  chip); that it fires on `start_session` is unverified until a session
+  observes a denial there.
 - Session titles (P2a): the rule is in [session.md](session.md). Before it,
   sessions I started were titled after my first message, and the session list
   showed neither the work's kind nor whether it waited on me (2026-10-07).
@@ -263,15 +291,14 @@ unverified against vendor docs.
   [session.md](session.md); the model it names comes from `tiers.json`
   (Sonnet for fast, Opus for standard). Before session.md was
   printed at start, sessions told to use the `brief` skill wrote briefs in
-  chat and made no chips until reminded (2026-09-30). The proposing session sets the Model line's
-  model and effort on `start_session` when they are at or below its own;
-  otherwise the started session stops at the model check and asks to be
-  switched. In-flight work for the skill's
-  step 1: the desktop app's `list_sessions` lists other sessions, and with
-  `linked: true` the ones this session started (tool description, checked
-  2026-10-18, unverified against vendor docs); neither mentions proposals not
-  yet started, so the skill also checks this session's own earlier
-  `start_session` calls; proposals from other sessions or routines not yet
+  chat and made no cards until reminded (2026-09-30). A card above its
+  proposer's cap starts lower and its model check asks to be switched (see
+  Starting sessions above). In-flight work for the skill's
+  step 1: the desktop app's `list_sessions` lists other sessions, and
+  with `linked` true the ones this session started; its description does not mention
+  cards not yet started (tool description, checked 2026-10-17, unverified
+  against vendor docs), so the skill also checks this session's own earlier
+  `start_session` cards; cards from other sessions or routines not yet
   started stay invisible.
 - Browser steps (P9a): the rule is in [session.md](session.md). Claude in
   Chrome opens its own tabs in my Chrome, shares its login state, runs in a
@@ -453,13 +480,13 @@ unverified against vendor docs.
     unverified against vendor docs; sizes are estimates.
 - Scheduled routines (`docs-drift-check`, `triage`, `board-review`,
   `project-setup` audit) run as local desktop-app scheduled tasks, one per
-  project; a proposed session appears as a chip. Local tasks fire only while the app is open and the
+  project; a proposed session appears as a card. Local tasks fire only while the app is open and the
   machine awake; a missed run catches up once
   (https://code.claude.com/docs/en/desktop-scheduled-tasks, checked
   2026-09-27). The shared-board routines run the same way, on one
   machine only, or each note arrives twice: `today` each weekday morning,
   its note the run's final message plus a push notification, and a
-  Monday-morning task whose chip starts an interactive `weekly-review`.
+  Monday-morning task whose card starts an interactive `weekly-review`.
   They stay local because a cloud session has no `gh` sign-in with the
   `project` scope (observed; unverified against vendor docs).
 - Local-only paths are not links (P18): cite a GitHub URL pinned to a commit,
