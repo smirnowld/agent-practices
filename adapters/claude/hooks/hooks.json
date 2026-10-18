@@ -39,7 +39,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "mcp__ccd_session__spawn_task",
+        "matcher": "mcp__ccd_session__start_session|mcp__ccd_session__spawn_task",
         "hooks": [
           {
             "type": "command",

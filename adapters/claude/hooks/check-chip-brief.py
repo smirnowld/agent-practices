@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""PreToolUse hook for spawn_task: a chip's prompt must be a brief (P2c).
+"""PreToolUse hook for start_session (spawn_task in older app builds): a
+session's prompt must be a brief (P2c).
 
-Blocks a prompt that lacks the brief's heading, Model line, Goal or Proof,
+A call with no prompt passes: starting an existing proposal sends only
+proposal_id, and an offer sends only a title. Otherwise it blocks a prompt that lacks the brief's heading, Model line, Goal or Proof,
 or whose Model line lacks a tier followed by its model from tiers.json, and hands
 back templates/brief.md so the retry takes one call. Any error lets
 the chip through with a note on stderr; a broken check must not block chips.
@@ -20,7 +22,9 @@ REQUIRED = [
 
 
 def main():
-    prompt = json.load(sys.stdin)["tool_input"].get("prompt") or ""
+    prompt = json.load(sys.stdin)["tool_input"].get("prompt")
+    if prompt is None or prompt == "":
+        return
     missing = [what for pattern, what in REQUIRED if not re.search(pattern, prompt, re.M)]
     root = os.environ.get("CLAUDE_PLUGIN_ROOT") or os.path.join(os.path.dirname(__file__), "../../..")
     with open(os.path.join(root, "adapters/claude/tiers.json")) as f:
@@ -37,7 +41,9 @@ def main():
     reason = (
         "A chip's prompt is a brief (P2c). Missing: " + "; ".join(missing) + ". "
         "Refill the prompt from this template, keep what you already wrote, "
-        "and repeat the Model line's model and effort in the summary (tldr).\n\n" + template
+        "and set start_session's model and effort from the Model line where they "
+        "are at or below this session's (spawn_task, which has neither, repeats "
+        "them in its summary).\n\n" + template
     )
     json.dump({"hookSpecificOutput": {
         "hookEventName": "PreToolUse",
