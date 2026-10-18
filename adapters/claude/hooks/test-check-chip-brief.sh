@@ -7,8 +7,9 @@
 # only as an offer or with a proposal_id; a passed model or effort must match
 # the Model line; a call with a brief must pass both unless its context is
 # "fork" (an omitted context is fresh);
-# a session started now may not exceed the starter's model or effort; bad
-# input passes with a note on stderr.
+# a session started now may not exceed the starter's model or effort;
+# spawn_task (older builds) gets only the brief check; bad input passes
+# with a note on stderr.
 set -eu
 dir=$(dirname "$0")
 tmp=$(mktemp -d)
@@ -18,23 +19,32 @@ run() { python3 "$hook"; }
 # Pass cases must also leave stderr empty: a skipped check is not a pass.
 passes() { out=$(printf '%s\n' "$1" | python3 "$hook" 2>&1); [ -z "$out" ]; }
 
-out=$(echo '{"tool_input":{"prompt":"Fix the stale badge."}}' | run)
+out=$(echo '{"tool_input":{"initiation":"own_initiative","title":"x","prompt":"Fix the stale badge."}}' | run)
 for needle in '"permissionDecision": "deny"' "# Brief: TITLE" "Model:" "## Goal" "## Proof" "## Handoff"; do
   echo "$out" | grep -qF "$needle" || { echo "error: deny output lacks: $needle" >&2; exit 1; }
 done
 
-template=$(python3 -c 'import json,sys; print(json.dumps({"tool_input": {"model": "opus", "effort": "medium", "prompt": open(sys.argv[1]).read().replace("<tier> (<model>) at <effort>", "standard (opus) at medium")}}))' "$dir/../../../templates/brief.md")
+template=$(python3 -c 'import json,sys; print(json.dumps({"tool_input": {"initiation": "own_initiative", "title": "x", "model": "opus", "effort": "medium", "prompt": open(sys.argv[1]).read().replace("<tier> (<model>) at <effort>", "standard (opus) at medium")}}))' "$dir/../../../templates/brief.md")
 passes "$template" || { echo "error: templates/brief.md with its model and effort filled was denied; hook and template disagree" >&2; exit 1; }
 
-out=$(printf "%s\n" '{"tool_input":{"prompt":"# Brief: Fix badge\n\n**Model:** standard at medium\n\n## Goal\n\nx\n\n## Proof\n\n- make check\n"}}' | run)
+out=$(printf "%s\n" '{"tool_input":{"initiation":"own_initiative","title":"x","prompt":"# Brief: Fix badge\n\n**Model:** standard at medium\n\n## Goal\n\nx\n\n## Proof\n\n- make check\n"}}' | run)
 echo "$out" | grep -qF "standard (opus)" || { echo "error: tier without model was not denied with the tier map: $out" >&2; exit 1; }
-out=$(printf "%s\n" '{"tool_input":{"prompt":"# Brief: Fix badge\n\n**Model:** standard (sonnet) at medium\n\n## Goal\n\nx\n\n## Proof\n\n- make check\n"}}' | run)
+out=$(printf "%s\n" '{"tool_input":{"initiation":"own_initiative","title":"x","prompt":"# Brief: Fix badge\n\n**Model:** standard (sonnet) at medium\n\n## Goal\n\nx\n\n## Proof\n\n- make check\n"}}' | run)
 echo "$out" | grep -qF '"permissionDecision": "deny"' || { echo "error: model not matching its tier was not denied" >&2; exit 1; }
 
-passes '{"tool_input":{"model":"sonnet","effort":"low","prompt":"  # Brief: Fix badge\n\n  **Model:** fast (Sonnet) at low\n\n  ## Goal\n\nx\n\n  ## Proof\n\n- make check\n"}}' ||
+passes '{"tool_input":{"initiation":"own_initiative","title":"x","model":"sonnet","effort":"low","prompt":"  # Brief: Fix badge\n\n  **Model:** fast (Sonnet) at low\n\n  ## Goal\n\nx\n\n  ## Proof\n\n- make check\n"}}' ||
   { echo "error: indented brief was not passed: $out" >&2; exit 1; }
 
-for bad in 'not json' '{"tool_input":null}' '{"tool_input":{"prompt":["x"]}}'; do
+out=$(echo '{"tool_input":{"proposal_id":"task_ab12","prompt":"Fix the stale badge."}}' | run)
+echo "$out" | grep -qF '"permissionDecision": "deny"' || { echo "error: prompt with proposal_id was not denied; the hook must not skip on proposal_id" >&2; exit 1; }
+
+for empty in '{"tool_input":{"proposal_id":"task_ab12"}}' '{"tool_input":{"initiation":"offer","title":"Fix badge"}}'; do
+  passes "$empty" || { echo "error: call with no prompt was not passed silently: $empty" >&2; exit 1; }
+done
+out=$(echo '{"tool_input":{"initiation":"user_asked","prompt":""}}' | run)
+echo "$out" | grep -qF "needs the filled brief as its prompt" || { echo "error: empty-prompt user_asked was not denied: $out" >&2; exit 1; }
+
+for bad in 'not json' '{"tool_input":null}' '{"tool_input":{"initiation":"own_initiative","title":"x","prompt":["x"]}}'; do
   err=$(printf '%s\n' "$bad" | run 2>&1 >/dev/null) || { echo "error: hook exited non-zero on: $bad" >&2; exit 1; }
   echo "$err" | grep -q "check-chip-brief: skipped" || { echo "error: no stderr note on: $bad" >&2; exit 1; }
 done
@@ -45,6 +55,12 @@ passes '{"tool_input":{"proposal_id":"p_123"}}' || { echo "error: proposal_id-on
 out=$(echo '{"tool_input":{"initiation":"user_asked","title":"Fix badge"}}' | run)
 echo "$out" | grep -qF '"permissionDecision": "deny"' && echo "$out" | grep -qF "needs the filled brief as its prompt" ||
   { echo "error: prompt-less user_asked was not denied: $out" >&2; exit 1; }
+
+# spawn_task (older builds) has no model or effort: only the brief check applies.
+passes '{"tool_name":"mcp__ccd_session__spawn_task","tool_input":{"title":"x","prompt":"# Brief: Fix badge\n\n**Model:** strong (fable) at max\n\n## Goal\n\nx\n\n## Proof\n\n- make check\n"}}' ||
+  { echo "error: spawn_task with a valid brief and no model or effort was denied" >&2; exit 1; }
+out=$(echo '{"tool_name":"mcp__ccd_session__spawn_task","tool_input":{"title":"x","prompt":"Fix the stale badge."}}' | run)
+echo "$out" | grep -qF "repeat the Model line's model and effort in the summary" || { echo "error: spawn_task deny lacks the summary hint: $out" >&2; exit 1; }
 
 # A starter transcript on sonnet, and a call builder: MODEL_LINE then JSON fields.
 printf '%s\n' '{"type":"user","message":{"role":"user"}}' '{"type":"assistant","message":{"model":"claude-opus-5-5"}}' \

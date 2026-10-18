@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""PreToolUse hook for session starts and cards: a started session's prompt
-must be a brief (P2c), started at the brief's model and effort.
+"""PreToolUse hook for session starts and cards (start_session, or
+spawn_task in older app builds): a started session's prompt must be a brief
+(P2c), started at the brief's model and effort.
 
 A call without a prompt passes only as an offer (initiation "offer") or
 when it starts an earlier proposal by its proposal_id; any other is blocked.
@@ -13,9 +14,10 @@ omitted context counts as fresh) must pass both model and effort; a fork
 inherits the starter's. A session started now ("user_asked") whose Model
 line is above the starter's own model or effort is blocked, since the app
 would silently run it at the starter's level (cards are capped the same way
-when started); ROUTE gives the card-then-switch route instead. Any error
-lets the call through with a note on stderr; a broken check must not block
-session starts.
+when started); ROUTE gives the card-then-switch route instead. spawn_task
+has no model or effort parameters, so for it only the brief check applies.
+Any error lets the call through with a note on stderr; a broken check must
+not block session starts.
 """
 import json
 import os
@@ -39,6 +41,10 @@ ROUTE = (
     "effort. When it starts, its model check (P2d) asks you to switch it up, "
     "and the app asks the user to approve the costlier switch."
 )
+
+
+# Older app builds name the start tool this; it has no model or effort parameters.
+SPAWN_TASK = "mcp__ccd_session__spawn_task"
 
 
 def family(model_id):
@@ -77,6 +83,7 @@ def template_text(root):
 def main():
     data = json.load(sys.stdin)
     tool_input = data["tool_input"]
+    spawn_task = data.get("tool_name") == SPAWN_TASK
     prompt = tool_input.get("prompt")
     root = os.environ.get("CLAUDE_PLUGIN_ROOT") or os.path.join(os.path.dirname(__file__), "../../..")
     if prompt is None or prompt == "":
@@ -118,11 +125,18 @@ def main():
                 f"'{pair.group(1)}) at EFFORT' ({got}): " + ", ".join(valid)
             )
     if missing:
+        how = (
+            "and repeat the Model line's model and effort in the summary, since "
+            "spawn_task has no model or effort parameters" if spawn_task else
+            "and pass the Model line's model and effort as model and effort"
+        )
         deny(
             "A started session's prompt is a brief (P2c). Missing: " + "; ".join(missing) + ". "
             "Refill the prompt from this template, keep what you already wrote, "
-            "and pass the Model line's model and effort as model and effort.\n\n" + template_text(root)
+            + how + ".\n\n" + template_text(root)
         )
+        return
+    if spawn_task:
         return
 
     brief_model = re.split(r"\(\s*", pair.group(1))[-1].lower()

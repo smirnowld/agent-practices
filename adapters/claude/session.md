@@ -13,13 +13,17 @@ when ToolSearch cannot find it either, and the report says so.
   The prompt is the filled brief, the title its title, `background` why now.
   Pass the Model line's model as `model` (the id the app's picker offers)
   and its effort as `effort`. `initiation` is "own_initiative" (a card I
-  start) unless I asked here in words to start it now ("user_asked"); a turn
-  another session or an event started may only propose. The app silently
+  start) unless I asked here in words to start it now ("user_asked"), or
+  "offer" when my latest message names the task without saying where it
+  runs: the title alone first, then the brief with the returned
+  `proposal_id` if I pick a new session. A turn another session or an
+  event started may only propose. The app silently
   caps both values at the starter's own model and effort, cards included,
   so a session above that cap starts only as a card (a hook enforces
   this): its model check (P2d, below) asks this session to switch it up,
-  which the app puts to me.
-  Briefs listed only in chat are not proposed.
+  which the app puts to me. Briefs listed only in chat are not proposed.
+  Older app builds have `mcp__ccd_session__spawn_task` instead, with no
+  model or effort: its summary repeats the Model line's.
 - **Title and place a session** (P2a, `templates/session-title.md`): rename
   with `mcp__ccd_session_mgmt__set_session_title` and `session_id` `self`, at
   start once sized, before the first turn ends even for a one-answer task
@@ -41,7 +45,8 @@ when ToolSearch cannot find it either, and the report says so.
   and an unattended session skips this. Desktop-app sessions only: cloud
   sessions have no sidebar tools; their thread is the brief's Thread line.
 - **Work in flight** (`brief` step 1): `mcp__ccd_session_mgmt__list_sessions`
-  (`linked` true for the sessions this family started), plus this session's
+  (`linked` true for the sessions this one started, unfiltered for the
+  rest), plus this session's
   own `start_session` cards not yet started, and the board's
   In progress and In review items (Board actions below). Cards not yet
   started from other sessions or routines are invisible; say so.
@@ -73,7 +78,9 @@ when ToolSearch cannot find it either, and the report says so.
   tier (`tiers.json`) and never lowers a reviewer below the implementer's.
   A PreToolUse hook denies this session's own `Edit`/`Write` on source; docs
   and a config file on the brief's `Coordinator edits:` line pass.
-- **Model check** (P2d): on a mismatch, send the parent "Switch me to MODEL at
+- **Model check** (P2d): a session started at its brief's model and effort
+  has nothing to switch; the handshake is for a brief above its starter's
+  cap. On a mismatch, send the parent "Switch me to MODEL at
   EFFORT: SESSION_ID" with `mcp__ccd_session_mgmt__send_message` and wait.
   The parent switches it with `mcp__ccd_session_mgmt__set_session_model` and
   `set_session_effort`, replies

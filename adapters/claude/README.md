@@ -183,10 +183,16 @@ unverified against vendor docs.
   [`templates/brief.md`](../../templates/brief.md), heading and Model line
   at the top. Observed in the desktop app on 2026-10-17 (tool schema and
   throwaway sessions; unverified against vendor docs):
-  - The tool is `mcp__ccd_session__start_session`; `spawn_task` is gone.
-    Its `model` and `effort` apply to "fresh" sessions; the schema says
-    effort must be at or below the starter's and a higher model "is
-    ignored".
+  - The tool is `mcp__ccd_session__start_session`; older app builds have
+    `spawn_task`, which took only a title, a summary, a prompt and a
+    directory (observed 2026-09-29). It takes `initiation` (`user_asked`
+    starts now, `offer` asks me first with a title alone, `own_initiative`
+    leaves a card), a `prompt` and `background`, `context` fresh or fork,
+    `model`, `effort`, `use_worktree`, `cwd`, `target` local, ssh or cloud,
+    and `wake_when_done`; the sessions it starts are linked and report back
+    to their starter (tool description, checked 2026-10-18). Its `model`
+    and `effort` apply to "fresh" sessions; the schema says effort must be
+    at or below the starter's and a higher model "is ignored".
   - A start now ("user_asked") is refused on a turn that another session's
     message or an automated event began: such a session can only propose.
   - Cards ("own_initiative") are capped the same way, silently: a card at
