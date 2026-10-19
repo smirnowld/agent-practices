@@ -336,10 +336,10 @@ Every project's `AGENTS.md` declares its accessibility level; none declared
 is `none`, which the baseline audit reports. **none**: no accessibility
 work, and reviews raise no accessibility findings. **built-in**: only the
 habits that cost nothing when written first; no per-change testing or fixing
-at large text or with a screen reader. **reviewed**: built-in, plus a
-focused review, its own work package, before each milestone the project
-names. Outside such a review, an accessibility finding that breaks no
-built-in habit is tracked for the next review, not fixed on the go (P4, P6).
-When planned work would give a project users outside my team, paying
-customers, the public or a legal duty, say the level may need to rise and
-ask me (`practices/accessibility.md`).
+at large text or with a screen reader, and reviews raise only a broken
+habit. **reviewed**: built-in, plus a focused review, its own work package,
+before each milestone the project names. Outside such a review, an
+accessibility finding that breaks no built-in habit is tracked for the next
+review, not fixed on the go (P4, P6). When planned work would give a project
+users outside my team, paying customers, the public or a legal duty, say the
+level may need to rise and ask me (`practices/accessibility.md`).

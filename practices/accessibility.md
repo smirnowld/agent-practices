@@ -1,11 +1,11 @@
 # Accessibility
 
-Detail for P22. How much accessibility work a project does is a choice made per project
-(P22), not a default every change carries. The reason: checking and fixing
-every screen at large text and with a screen reader, on every change, costs
-a lot while screens are still being redesigned, and a tool only its author
-uses gets nothing from it. What is cheap to build in from the start is
-expensive to retrofit, and what is expensive to check is cheap to check
+Detail for P22. How much accessibility work a project does is a choice made
+per project, not a default every change carries. The reason: checking and
+fixing every screen at large text and with a screen reader, on every change,
+costs a lot while screens are still being redesigned, and a tool only its
+author uses gets nothing from it. What is cheap to build in from the start
+is expensive to retrofit, and what is expensive to check is cheap to check
 once, before people depend on it.
 
 ## Levels
