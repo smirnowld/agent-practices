@@ -14,6 +14,9 @@ Two modes, same checklist: `practices/project-baseline.md`.
 
 - Repo type (product, infrastructure, tooling) from `AGENTS.md`. Missing:
   propose one with the reason and ask me (P6); do not assume.
+- Accessibility level (P22) from `AGENTS.md`. Missing: R8 is a gap;
+  propose a level from who uses the project (`practices/accessibility.md`)
+  and ask me (P6); do not assume.
 - Public or private; hosting plan (see R4 in `practices/project-baseline.md`).
 - Deployed or not; holds user data or not; has code beyond docs; has
   `docs/adr/`; has a staging or demo environment, and how its data is reset.

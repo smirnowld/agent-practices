@@ -17,6 +17,7 @@ project elsewhere maps each row to its host's equivalent.
 | R5 | Public repos: licence, `SECURITY.md`, private vulnerability reporting on | when public | when public | when public |
 | R6 | Issue labels: `deferred-review`; kinds `work-package`, `maintainer-step`, `long-lead`, `initiative` ([tracking.md](tracking.md#labels)); priority is the board's Priority field, not a label | ✓ | ✓ | ✓ |
 | R7 | A private GitHub Projects board copied from the template, linked from `AGENTS.md` (a public repository's is named in my own agent configuration instead), with the fields, views and workflows of [tracking.md](tracking.md); set up and audited by `project-setup` | ✓ | ✓ | ✓ |
+| R8 | `AGENTS.md` declares the accessibility level (P22); a `reviewed` project names its milestones | ✓ | ✓ | ✓ |
 | **CI** |||||
 | C1 | Checks run on every PR and on the default branch | ✓ | ✓ | ✓ |
 | C2 | One aggregate job the ruleset requires; lanes skip only when not applicable, never fake green (note below) | ✓ | ✓ | ✓ |

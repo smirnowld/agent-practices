@@ -329,3 +329,17 @@ and for what. Brief only where a UI cuts it off, with the distinguishing
 words first. Code identifiers follow their codebase. A rename keeps
 everything that matches the old name working
 (`practices/writing-to-me.md#names`).
+
+## P22. Accessibility level
+
+Every project's `AGENTS.md` declares its accessibility level; none declared
+is `none`, which the baseline audit reports. **none**: no accessibility
+work, and reviews raise no accessibility findings. **built-in**: build with
+what costs nothing (platform text styles, labels on icon-only controls, no
+fixed heights on text, system components, contrast in the colour tokens);
+no per-change testing or fixing at large text or with a screen reader, and
+reviews raise only a broken built-in habit. **reviewed**: built-in, plus a
+focused accessibility review, planned as its own work package, before each
+milestone the project names. When planned work would give a project users
+outside my team, paying customers, the public or a legal duty, say the level
+may need to rise and ask me (`practices/accessibility.md`).
