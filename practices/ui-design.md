@@ -61,9 +61,8 @@ overrides one by number and says why.
 - **UI12. Touch targets.** Every tappable element is at least 44×44 pt on iOS
   and 48×48 dp on Android, and at least 24×24 CSS px on the web (WCAG 2.5.8),
   including its padding.
-- **UI13. Large text works.** At the largest accessibility text size the
-  platform offers that the project supports, nothing clips or overlaps and
-  every action stays reachable.
+- **UI13.** Retired: large text is not checked per change; the project's
+  accessibility level decides when it is reviewed (P22).
 - **UI14. Errors are prominent.** An error or blocking state uses the
   project's error style at body size or larger, next to the thing it is
   about, and is visible without scrolling from that thing. Small grey text
@@ -108,7 +107,7 @@ than by topic, cheapest first. Each layer reports only what it can see.
 
 | Layer | Input | Who | Finds |
 |---|---|---|---|
-| 0. Measurements | The running screens | Scripts | UI6 to UI8, UI10, UI12, UI13 by number: sizes across locale and theme, truncation, contrast, target sizes; side-by-side grids for the next layers |
+| 0. Measurements | The running screens | Scripts | UI6 to UI8, UI10, UI12 by number: sizes across locale and theme, truncation, contrast, target sizes; side-by-side grids for the next layers |
 | 1. Copy | Changed strings, every locale, with key and screen | [Copy reviewer](../roles/copy-reviewer.md) | UI15 to UI18 |
 | 2. Visual | The grids and a few full-size screens, the change's description, the project's `docs/design.md` | [Design reviewer](../roles/design-reviewer.md) | Guide compliance, consistency the scripts could not measure (UI6 to UI9), usability (UI11, UI14), brand, UI1 to UI5 |
 | 3. Critique | A new screen's plan or sketch | Design reviewer in critique mode, at planning time | Whether the screen's structure suits its job; advisory. Shown to the owner as drawn options side by side, never as text layouts |
