@@ -97,7 +97,7 @@ In audit mode, stop here and deliver the report (step 5).
 
 Sort gaps into:
 
-- **Can fix in the repo:** files (`AGENTS.md` type line and policy block,
+- **Can fix in the repo:** files (`AGENTS.md` type and accessibility-level lines and policy block,
   docs from `templates/docs/`, the work-package issue template
   (`templates/github/work-package-issue.md` copied to
   `.github/ISSUE_TEMPLATE/work-package.md`), `SECURITY.md`, Dependabot config, CI lanes,

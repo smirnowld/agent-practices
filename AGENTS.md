@@ -1,6 +1,6 @@
 # Working on this repository
 
-Repo type: tooling (P19). Rules for agents editing agent-practices itself. The policy for other projects
+Repo type: tooling (P19). Accessibility level: none (P22). Rules for agents editing agent-practices itself. The policy for other projects
 is in [policy/AGENTS.md](policy/AGENTS.md).
 
 - Place content by the table in [README.md](README.md#what-goes-where). One
