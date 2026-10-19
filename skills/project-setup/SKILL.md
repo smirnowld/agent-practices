@@ -14,6 +14,9 @@ Two modes, same checklist: `practices/project-baseline.md`.
 
 - Repo type (product, infrastructure, tooling) from `AGENTS.md`. Missing:
   propose one with the reason and ask me (P6); do not assume.
+- Accessibility level (P22) from `AGENTS.md`. Missing: R8 is a gap;
+  propose a level from who uses the project (`practices/accessibility.md`)
+  and ask me (P6); do not assume.
 - Public or private; hosting plan (see R4 in `practices/project-baseline.md`).
 - Deployed or not; holds user data or not; has code beyond docs; has
   `docs/adr/`; has a staging or demo environment, and how its data is reset.
@@ -94,7 +97,7 @@ In audit mode, stop here and deliver the report (step 5).
 
 Sort gaps into:
 
-- **Can fix in the repo:** files (`AGENTS.md` type line and policy block,
+- **Can fix in the repo:** files (`AGENTS.md` type and accessibility-level lines and policy block,
   docs from `templates/docs/`, the work-package issue template
   (`templates/github/work-package-issue.md` copied to
   `.github/ISSUE_TEMPLATE/work-package.md`), `SECURITY.md`, Dependabot config, CI lanes,
