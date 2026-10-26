@@ -217,6 +217,43 @@ Rotate as in the Keychain section, then rewrite the file the same way.
 - Install both with `make install-bin` from this repository's main checkout
   (links from a worktree dangle once it is removed).
 
+### Full access in WSL
+
+WSL has no 1Password desktop-app integration, so a Linux `op` would ask for
+the account password again after 30 idle minutes. In WSL (`WSL_DISTRO_NAME`
+set) with the Windows `op.exe` on `PATH`, `with-secrets --full-access` runs
+`op.exe run` instead, which the Windows 1Password app authorises with
+Windows Hello. `op.exe` resolves the template and starts `CMD` back in the
+same distribution, as the same user and in the same folder, through
+`wsl.exe --exec`; arguments, stdin and the exit code pass through. The
+template's names are added to `WSLENV` so their values cross back.
+
+- The new WSL session doesn't inherit the caller's environment, so
+  `with-secrets` saves it (`PATH`, `AWS_PROFILE` and the rest) to a mode-600
+  file in `XDG_RUNTIME_DIR`, which the command's side loads and deletes.
+  That file holds whatever the caller exported, secrets included, until
+  then. Variables whose names are not valid shell names don't cross.
+- The run stops if `XDG_RUNTIME_DIR` is missing, a symlink, not the user's,
+  or writable by group or others, as WSLg's own fallback
+  `/mnt/wslg/runtime-dir` is. With `systemd=true` under `[boot]` in
+  `/etc/wsl.conf` (then `wsl --shutdown` from Windows) it is the in-memory
+  `/run/user/UID`, which passes.
+- A missing folder stops the run. The command runs in a new session,
+  outside any sandbox or namespace the caller ran in.
+- It also refuses `op://` values and 1Password tokens in the Windows-side
+  environment, and template names that clash with each other or with a
+  Windows variable when case is ignored.
+- Without `op.exe` it falls back to the Linux `op`; agent mode is the same
+  everywhere.
+
+One-time setup on the Windows PC
+([app integration](https://www.1password.dev/cli/app-integration.md),
+checked 2026-10-26): install the CLI (`winget install AgileBits.1Password.CLI`),
+then in the Windows 1Password app turn on Windows Hello, and under
+Settings, Developer, select "Integrate with 1Password CLI". If `op.exe`
+reports no accounts, select "Keep 1Password in the notification area"
+under Settings, General and restart the app.
+
 ### Quotas
 
 Per the [rate limits](https://www.1password.dev/service-accounts/rate-limits),
