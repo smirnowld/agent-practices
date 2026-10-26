@@ -1,6 +1,9 @@
 #!/bin/sh
 # Self-test for with-secrets against fake op and security; touches no vault.
 set -eu
+# The WSL route needs WSL_DISTRO_NAME; only the WSL cases set it, with fake
+# op.exe and wsl.exe, so no case reaches the real ones.
+unset WSL_DISTRO_NAME WSLENV
 here=$(cd "$(dirname "$0")" && pwd)
 tool="$here/with-secrets"
 dir=$(mktemp -d)
@@ -141,6 +144,121 @@ grep -q 'no template agent.env.tpl' "$dir/out" || { echo "expected agent.env.tpl
 "$tool" --project demo --dry-run --template "$dir/agent.tpl" > "$dir/out" 2>/dev/null
 grep -qx "$(printf 'A\tagents-demo')" "$dir/out"
 [ ! -s "$log" ]
+
+# WSL: full-access goes through the Windows op.exe, which starts the command
+# back in this distro with wsl.exe. Fake wslpath prefixes WIN:, fake op.exe
+# strips it; fake wsl.exe passes on only the variables WSLENV names, as the
+# Windows-to-WSL boundary does.
+cat > "$dir/bin/wslpath" <<'FAKE'
+#!/bin/sh
+echo "wslpath $*" >> "$FAKE_LOG"
+[ "$1" = -w ] || exit 9
+[ -z "${FAKE_WSLPATH_FAIL:-}" ] || exit 1
+echo "WIN:$2"
+FAKE
+cat > "$dir/bin/op.exe" <<'FAKE'
+#!/bin/sh
+echo "op.exe $*" >> "$FAKE_LOG"
+[ "$1" = run ] && [ "$2" = --env-file ] && [ "$4" = -- ] || exit 9
+case $3 in WIN:*) ;; *) exit 9 ;; esac
+echo "op.exe token=${OP_SERVICE_ACCOUNT_TOKEN:-none}" >> "$FAKE_LOG"
+tpl=${3#WIN:}; shift 4
+while IFS= read -r l; do
+  case $l in ''|'#'*) continue ;; esac
+  export "${l%%=*}=value-${l%%=*}"
+done < "$tpl"
+exec "$@"
+FAKE
+cat > "$dir/bin/wsl.exe" <<'FAKE'
+#!/bin/sh
+echo "wsl.exe $*" >> "$FAKE_LOG"
+[ "$1" = -d ] && [ "$2" = "$WSL_DISTRO_NAME" ] && [ "$3" = --cd ] && [ "$5" = --exec ] || exit 9
+echo "wslenv=${WSLENV-unset}" >> "$FAKE_LOG"
+cd "$4" || exit 9
+shift 5
+# Only PATH, HOME, FAKE_LOG and the variables WSLENV names reach the command.
+old_ifs=$IFS; IFS=:
+for e in ${WSLENV-}; do
+  n=${e%%/*}
+  if v=$(printenv "$n"); then set -- "$n=$v" "$@"; fi
+done
+IFS=$old_ifs
+exec env -i PATH="$PATH" HOME="$HOME" FAKE_LOG="$FAKE_LOG" "$@"
+FAKE
+chmod +x "$dir/bin/wslpath" "$dir/bin/op.exe" "$dir/bin/wsl.exe"
+FAKE_LOG=$log WSL_DISTRO_NAME=Ubuntu-test; export FAKE_LOG WSL_DISTRO_NAME
+for c in op.exe wsl.exe wslpath; do
+  [ "$(command -v "$c")" = "$dir/bin/$c" ] || { echo "$c is not the fake: $(command -v "$c")"; exit 1; }
+done
+printf '# full access\nA=op://demo-ops/item/field\nB=op://Private/other item/field\n' > "$dir/wsl.tpl"
+nolinuxop() { if grep -q '^op ' "$log"; then echo "the Linux op ran"; exit 1; fi; }
+
+# Values, arguments, stdin, exit code and directory all cross; WSLENV unset
+# becomes A:B with no leading colon; a stray token never reaches op.exe.
+mkdir "$dir/wd"; wd=$(cd "$dir/wd" && pwd)
+: > "$log"; rc=0
+(cd "$wd" && printf 'yes\n' | OP_SERVICE_ACCOUNT_TOKEN=stray "$tool" --full-access --template "$dir/wsl.tpl" -- \
+  sh -c 'out=$1; shift; read -r in; pwd > "$out"; env > "$out.env"
+    printf "%s|" "$A" "$B" "$in" "$#" "$@" > "$out.vals"; exit 7' \
+  x "$dir/wchild" 'a b' '$HOME' "it's" 'q"uo"te' '' 'back\slash' ';echo pwn') || rc=$?
+[ "$rc" = 7 ] || { echo "exit code $rc, expected 7"; exit 1; }
+printf '%s|' value-A value-B yes 7 'a b' '$HOME' "it's" 'q"uo"te' '' 'back\slash' ';echo pwn' > "$dir/wexpect"
+cmp -s "$dir/wexpect" "$dir/wchild.vals" || { echo "got: $(cat "$dir/wchild.vals")"; exit 1; }
+[ "$(cat "$dir/wchild")" = "$wd" ]
+grep -qx "op.exe run --env-file WIN:$dir/wsl.tpl -- wsl.exe -d Ubuntu-test --cd $wd --exec sh -c .*" "$log"
+grep -qx 'wslpath -w .*' "$log"
+grep -qx 'op.exe token=none' "$log"
+grep -qx 'wslenv=A:B' "$log"
+lacks OP_SERVICE_ACCOUNT_TOKEN "$dir/wchild.env"
+nolinuxop
+
+# An existing WSLENV keeps its entries first and intact; --operator is the same.
+for flag in --full-access --operator; do
+  : > "$log"
+  WSLENV=USERPROFILE/p:A "$tool" "$flag" --template "$dir/wsl.tpl" -- \
+    sh -c 'echo "$A $B" > "$0"' "$dir/wchild"
+  [ "$(cat "$dir/wchild")" = "value-A value-B" ]
+  grep -qx 'wslenv=USERPROFILE/p:A:B' "$log"
+  nolinuxop
+done
+
+# Dry run in WSL names the route and calls none of the three.
+: > "$log"
+"$tool" --full-access --dry-run --template "$dir/wsl.tpl" 2>"$dir/out" >/dev/null
+grep -qx "mode full-access (Windows op.exe), template $dir/wsl.tpl" "$dir/out"
+[ ! -s "$log" ]
+
+# A reference in the environment is still refused, before op.exe.
+: > "$log"
+fails env X=op://demo-ops/other/field "$tool" --full-access --template "$dir/wsl.tpl" -- true
+grep -q 'environment holds op:// references (X)' "$dir/out"
+[ ! -s "$log" ]
+
+# wslpath failing stops the run before op.exe.
+: > "$log"
+FAKE_WSLPATH_FAIL=1; export FAKE_WSLPATH_FAIL
+fails "$tool" --full-access --template "$dir/wsl.tpl" -- true
+unset FAKE_WSLPATH_FAIL
+grep -q 'wslpath cannot convert' "$dir/out"
+lacks op.exe "$log"
+
+# Agent mode in WSL is unchanged: the Linux op, never op.exe.
+: > "$log"
+"$tool" --project demo --template "$dir/agent.tpl" -- true
+grep -qx 'op token=tok-demo' "$log"
+lacks op.exe "$log"; lacks wsl.exe "$log"; lacks wslpath "$log"
+
+# Without op.exe on PATH, full-access uses the Linux op.
+mkdir "$dir/linbin"; cp "$dir/bin/op" "$dir/linbin/op"
+: > "$log"
+(PATH="$dir/linbin:/usr/bin:/bin"
+  ! command -v op.exe >/dev/null 2>&1 || { echo "op.exe still on PATH"; exit 1; }
+  "$tool" --full-access --template "$dir/wsl.tpl" -- true)
+grep -qx 'op token=none' "$log"
+lacks op.exe "$log"; lacks wsl.exe "$log"
+
+rm "$dir/bin/wslpath" "$dir/bin/op.exe" "$dir/bin/wsl.exe"
+unset WSL_DISTRO_NAME FAKE_LOG
 
 # Linux: the token comes from ~/.config/op/agent-PROJECT.token, mode 600 or
 # 400 and yours; the Keychain is never asked.
