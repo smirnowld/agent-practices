@@ -220,14 +220,22 @@ Rotate as in the Keychain section, then rewrite the file the same way.
 ### Full access in WSL
 
 WSL has no 1Password desktop-app integration, so a Linux `op` would ask for
-the account password every 30 minutes. In WSL (`WSL_DISTRO_NAME` set) with
-the Windows `op.exe` on `PATH`, `with-secrets --full-access` runs
+the account password again after 30 idle minutes. In WSL (`WSL_DISTRO_NAME`
+set) with the Windows `op.exe` on `PATH`, `with-secrets --full-access` runs
 `op.exe run` instead, which the Windows 1Password app authorises with
 Windows Hello. `op.exe` resolves the template and starts `CMD` back in the
-same distribution and folder through `wsl.exe --exec`, which passes
-arguments, stdin and the exit code through unchanged; the template's names
-are added to `WSLENV` so their values cross back. Without `op.exe` it falls
-back to the Linux `op`; agent mode is the same everywhere.
+same distribution, as the same user and in the same folder, through
+`wsl.exe --exec`; arguments, stdin and the exit code pass through. The
+template's names are added to `WSLENV` so their values cross back. The new
+WSL session doesn't inherit the caller's environment, so `with-secrets`
+saves it (`PATH`, `AWS_PROFILE` and the rest) to a mode-600 file in the
+user's runtime directory, which the command's side loads and deletes; a
+missing folder stops the run. It is a new session, outside any sandbox or
+namespace the caller ran in. Before running, it refuses `op://` values and
+1Password tokens in the Windows-side environment too, and template names
+that clash with each other or with a Windows variable when case is
+ignored. Without `op.exe` it falls back to the Linux `op`; agent mode is
+the same everywhere.
 
 One-time setup on the Windows PC
 ([app integration](https://www.1password.dev/cli/app-integration.md),
