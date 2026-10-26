@@ -305,13 +305,31 @@ rc=0; wait "$wpid" || rc=$?
 if kill -0 "$(cat "$dir/op.pid")" 2>/dev/null; then echo "op.exe outlived with-secrets"; exit 1; fi
 rtempty
 
-# The environment file needs XDG_RUNTIME_DIR, a directory; no /tmp fallback.
-: > "$log"
-(unset XDG_RUNTIME_DIR; fails "$tool" --full-access --template "$dir/wsl.tpl" -- true)
-grep -q 'XDG_RUNTIME_DIR is unset or not a directory' "$dir/out"
-(XDG_RUNTIME_DIR=$dir/winenv; fails "$tool" --full-access --template "$dir/wsl.tpl" -- true)
-grep -q 'XDG_RUNTIME_DIR is unset or not a directory' "$dir/out"
-lacks '^op.exe' "$log"; lacks '^cmd.exe' "$log"
+# The environment file needs XDG_RUNTIME_DIR: a directory, not a symlink,
+# yours, and not writable by group or others; no /tmp fallback.
+rtrefused() {
+  : > "$log"
+  fails "$tool" --full-access --template "$dir/wsl.tpl" -- true
+  grep -q "XDG_RUNTIME_DIR.*$1" "$dir/out" || { echo "expected '$1' in: $(cat "$dir/out")"; exit 1; }
+  lacks '^op.exe' "$log"; lacks '^cmd.exe' "$log"
+}
+(unset XDG_RUNTIME_DIR; rtrefused 'is unset')
+(XDG_RUNTIME_DIR=$dir/winenv; rtrefused 'is not a directory')
+for m in 777 1777 770 720 702; do chmod "$m" "$dir/rt"; rtrefused "has mode $m"; done
+chmod 700 "$dir/rt"
+ln -s rt "$dir/rtlink"
+(XDG_RUNTIME_DIR=$dir/rtlink; rtrefused 'is a symlink')
+(XDG_RUNTIME_DIR=$dir/rtlink/; rtrefused 'is a symlink')
+(FAKE_UID=4242; export FAKE_UID; rtrefused 'is not owned by you')
+"$tool" --full-access --template "$dir/wsl.tpl" -- true
+XDG_RUNTIME_DIR=$dir/rt/ "$tool" --full-access --template "$dir/wsl.tpl" -- true
+rtempty
+
+# A closed stdin is handed on as /dev/null.
+"$tool" --full-access --template "$dir/wsl.tpl" -- \
+  sh -c 'if read -r x; then echo got; else echo eof; fi > "$0"' "$dir/wchild" <&-
+[ "$(cat "$dir/wchild")" = eof ]
+rtempty
 
 # A directory the new session cannot enter fails closed: wsl.exe falls back
 # to /, and the inner shell refuses to run the command there. A current
