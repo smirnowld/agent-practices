@@ -147,8 +147,10 @@ grep -qx "$(printf 'A\tagents-demo')" "$dir/out"
 
 # WSL: full-access goes through the Windows op.exe, which starts the command
 # back in this distro with wsl.exe. Fake wslpath prefixes WIN:, fake op.exe
-# strips it; fake wsl.exe passes on only the variables WSLENV names, as the
-# Windows-to-WSL boundary does.
+# strips it. Fake wsl.exe models the boundary: the command gets only HOME, a
+# default PATH and the variables WSLENV names (last entry wins, /w skipped),
+# and a missing --cd directory falls back to /. Fake cmd.exe prints the
+# Windows environment from FAKE_WINENV plus what WSLENV forwards, with CRLF.
 cat > "$dir/bin/wslpath" <<'FAKE'
 #!/bin/sh
 echo "wslpath $*" >> "$FAKE_LOG"
@@ -161,40 +163,65 @@ cat > "$dir/bin/op.exe" <<'FAKE'
 echo "op.exe $*" >> "$FAKE_LOG"
 [ "$1" = run ] && [ "$2" = --env-file ] && [ "$4" = -- ] || exit 9
 case $3 in WIN:*) ;; *) exit 9 ;; esac
+case $5 in WIN:*) ;; *) exit 9 ;; esac
 echo "op.exe token=${OP_SERVICE_ACCOUNT_TOKEN:-none}" >> "$FAKE_LOG"
-tpl=${3#WIN:}; shift 4
+[ -z "${FAKE_OPEXE_FAIL:-}" ] || exit 3
+[ -z "${FAKE_RMDIR:-}" ] || rmdir "$FAKE_RMDIR"
+tpl=${3#WIN:} cmd=${5#WIN:}; shift 5
 while IFS= read -r l; do
   case $l in ''|'#'*) continue ;; esac
   export "${l%%=*}=value-${l%%=*}"
 done < "$tpl"
-exec "$@"
+exec "$cmd" "$@"
 FAKE
 cat > "$dir/bin/wsl.exe" <<'FAKE'
 #!/bin/sh
 echo "wsl.exe $*" >> "$FAKE_LOG"
-[ "$1" = -d ] && [ "$2" = "$WSL_DISTRO_NAME" ] && [ "$3" = --cd ] && [ "$5" = --exec ] || exit 9
+[ "$1" = -d ] && [ "$2" = "$WSL_DISTRO_NAME" ] && [ "$3" = -u ] && [ "$4" = "$(id -un)" ] \
+  && [ "$5" = --cd ] && [ "$7" = --exec ] || exit 9
 echo "wslenv=${WSLENV-unset}" >> "$FAKE_LOG"
-cd "$4" || exit 9
-shift 5
-# Only PATH, HOME, FAKE_LOG and the variables WSLENV names reach the command.
-old_ifs=$IFS; IFS=:
-for e in ${WSLENV-}; do
-  n=${e%%/*}
+[ "${11}" = with-secrets ] || exit 9
+dump=${12}
+echo "dumpmode=$(stat -c %a "$dump")" >> "$FAKE_LOG"
+cd "$6" 2>/dev/null || { echo "wsl.exe in /" >> "$FAKE_LOG"; cd /; }
+shift 7
+names=$(printf '%s' "${WSLENV-}" | awk -v RS=: '{ n = $0; f = ""; i = index(n, "/")
+  if (i) { f = substr(n, i + 1); n = substr(n, 1, i - 1) }
+  if (n != "") last[n] = f } END { for (n in last) if (last[n] !~ /w/) print n }')
+for n in $names; do
   if v=$(printenv "$n"); then set -- "$n=$v" "$@"; fi
 done
-IFS=$old_ifs
-exec env -i PATH="$PATH" HOME="$HOME" FAKE_LOG="$FAKE_LOG" "$@"
+[ -z "${WSLENV+x}" ] || set -- "WSLENV=$WSLENV" "$@"
+rc=0; env -i PATH=/usr/bin:/bin HOME="$HOME" WSL_INTEROP=/run/WSL/new "$@" || rc=$?
+[ -e "$dump" ] && echo "dump left by the inner shell" >> "$FAKE_LOG"
+exit "$rc"
 FAKE
-chmod +x "$dir/bin/wslpath" "$dir/bin/op.exe" "$dir/bin/wsl.exe"
-FAKE_LOG=$log WSL_DISTRO_NAME=Ubuntu-test; export FAKE_LOG WSL_DISTRO_NAME
-for c in op.exe wsl.exe wslpath; do
+cat > "$dir/bin/cmd.exe" <<'FAKE'
+#!/bin/sh
+echo "cmd.exe $*" >> "$FAKE_LOG"
+[ "$*" = "/d /c set" ] || exit 9
+{ cat "$FAKE_WINENV"
+  old_ifs=$IFS; IFS=:
+  for e in ${WSLENV-}; do n=${e%%/*}; v=$(printenv "$n") && echo "$n=$v"; done
+  IFS=$old_ifs
+} | sed 's/$/\r/'
+FAKE
+chmod +x "$dir/bin/wslpath" "$dir/bin/op.exe" "$dir/bin/wsl.exe" "$dir/bin/cmd.exe"
+printf 'Path=C:\\Windows\nUSERPROFILE=C:\\Users\\demo\n=C:=C:\\\n' > "$dir/winenv"
+mkdir -m 700 "$dir/rt"
+FAKE_LOG=$log WSL_DISTRO_NAME=Ubuntu-test FAKE_WINENV=$dir/winenv XDG_RUNTIME_DIR=$dir/rt
+export FAKE_LOG WSL_DISTRO_NAME FAKE_WINENV XDG_RUNTIME_DIR
+for c in op.exe wsl.exe wslpath cmd.exe; do
   [ "$(command -v "$c")" = "$dir/bin/$c" ] || { echo "$c is not the fake: $(command -v "$c")"; exit 1; }
 done
 printf '# full access\nA=op://demo-ops/item/field\nB=op://Private/other item/field\n' > "$dir/wsl.tpl"
 nolinuxop() { if grep -q '^op ' "$log"; then echo "the Linux op ran"; exit 1; fi; }
+rtempty() { [ -z "$(ls -A "$dir/rt")" ] || { echo "environment file left: $(ls -A "$dir/rt")"; exit 1; }; }
+me=$(id -un)
 
 # Values, arguments, stdin, exit code and directory all cross; WSLENV unset
-# becomes A:B with no leading colon; a stray token never reaches op.exe.
+# becomes A:B with no leading colon, and the command sees no WSLENV; a stray
+# token never reaches op.exe; the environment file is 600 and then gone.
 mkdir "$dir/wd"; wd=$(cd "$dir/wd" && pwd)
 : > "$log"; rc=0
 (cd "$wd" && printf 'yes\n' | OP_SERVICE_ACCOUNT_TOKEN=stray "$tool" --full-access --template "$dir/wsl.tpl" -- \
@@ -205,34 +232,113 @@ mkdir "$dir/wd"; wd=$(cd "$dir/wd" && pwd)
 printf '%s|' value-A value-B yes 7 'a b' '$HOME' "it's" 'q"uo"te' '' 'back\slash' ';echo pwn' > "$dir/wexpect"
 cmp -s "$dir/wexpect" "$dir/wchild.vals" || { echo "got: $(cat "$dir/wchild.vals")"; exit 1; }
 [ "$(cat "$dir/wchild")" = "$wd" ]
-grep -qx "op.exe run --env-file WIN:$dir/wsl.tpl -- wsl.exe -d Ubuntu-test --cd $wd --exec sh -c .*" "$log"
-grep -qx 'wslpath -w .*' "$log"
+grep -qx "op.exe run --env-file WIN:$dir/wsl.tpl -- WIN:$dir/bin/wsl.exe -d Ubuntu-test -u $me --cd $wd --exec /bin/sh -c .*" "$log"
 grep -qx 'op.exe token=none' "$log"
 grep -qx 'wslenv=A:B' "$log"
+grep -qx 'dumpmode=600' "$log"
+grep -qx 'cmd.exe /d /c set' "$log"
 lacks OP_SERVICE_ACCOUNT_TOKEN "$dir/wchild.env"
-nolinuxop
+lacks '^WSLENV=' "$dir/wchild.env"
+lacks "^A=op:" "$dir/wchild.env"
+lacks 'dump left' "$log"; nolinuxop; rtempty
 
-# An existing WSLENV keeps its entries first and intact; --operator is the same.
+# The caller's variables and PATH reach the command; a plain value of a
+# template name loses to the secret; existing WSLENV entries for template
+# names are dropped (the last entry would win) and the rest stay first; the
+# command sees the caller's own WSLENV but the new session's WSL_INTEROP.
+# --operator is the same.
+mkdir "$dir/callerbin"; printf '#!/bin/sh\necho hi\n' > "$dir/callerbin/hello-caller"
+chmod +x "$dir/callerbin/hello-caller"
+tricky=$(printf "it's \$HOME \"q\" \\\\ \nline2")
 for flag in --full-access --operator; do
   : > "$log"
-  WSLENV=USERPROFILE/p:A "$tool" "$flag" --template "$dir/wsl.tpl" -- \
-    sh -c 'echo "$A $B" > "$0"' "$dir/wchild"
-  [ "$(cat "$dir/wchild")" = "value-A value-B" ]
+  A=plain AWS_PROFILE=staging WSLENV=USERPROFILE/p:A:A/p PATH="$dir/callerbin:$PATH" \
+    WSL_INTEROP=/run/WSL/caller TRICKY="$tricky" "$tool" "$flag" --template "$dir/wsl.tpl" -- \
+    sh -c 'printf "%s\n" "$A $B" "$AWS_PROFILE" "$WSLENV" "$(command -v hello-caller)" \
+      "$WSL_INTEROP" "$TRICKY" > "$0"' "$dir/wchild"
+  printf '%s\n' "value-A value-B" staging USERPROFILE/p:A:A/p "$dir/callerbin/hello-caller" \
+    /run/WSL/new "$tricky" > "$dir/wexpect"
+  cmp -s "$dir/wexpect" "$dir/wchild" || { echo "got: $(cat "$dir/wchild")"; exit 1; }
   grep -qx 'wslenv=USERPROFILE/p:A:B' "$log"
-  nolinuxop
+  nolinuxop; rtempty
 done
 
-# Dry run in WSL names the route and calls none of the three.
+# A relative template path starting with - is made absolute for wslpath.
+cp "$dir/wsl.tpl" "$wd/-t.tpl"
+: > "$log"
+(cd "$wd" && "$tool" --full-access --template -t.tpl -- sh -c 'echo "$A" > "$0"' "$dir/wchild")
+[ "$(cat "$dir/wchild")" = value-A ]
+grep -qx "wslpath -w $wd/-t.tpl" "$log"
+
+# The environment file is gone when op.exe fails before running anything.
+: > "$log"; rc=0
+FAKE_OPEXE_FAIL=1; export FAKE_OPEXE_FAIL
+"$tool" --full-access --template "$dir/wsl.tpl" -- true || rc=$?
+unset FAKE_OPEXE_FAIL
+[ "$rc" = 3 ] || { echo "exit code $rc, expected 3"; exit 1; }
+lacks "^wsl.exe" "$log"; rtempty
+
+# A directory the new session cannot enter fails closed: wsl.exe falls back
+# to /, and the inner shell refuses to run the command there. A current
+# directory that is already gone is refused before op.exe.
+mkdir "$dir/gone"; : > "$log"; rc=0
+FAKE_RMDIR=$dir/gone; export FAKE_RMDIR
+(cd "$dir/gone" && "$tool" --full-access --template "$dir/wsl.tpl" -- \
+  sh -c ': > "$0"' "$dir/ran") 2>"$dir/out" || rc=$?
+unset FAKE_RMDIR
+[ "$rc" = 126 ] || { echo "exit code $rc, expected 126"; exit 1; }
+[ ! -e "$dir/ran" ] || { echo "the command ran in /"; exit 1; }
+grep -qx 'wsl.exe in /' "$log"
+rtempty
+mkdir "$dir/gone"; : > "$log"; rc=0
+(cd "$dir/gone" && rmdir "$dir/gone" && "$tool" --full-access --template "$dir/wsl.tpl" -- \
+  sh -c ': > "$0"' "$dir/ran") 2>"$dir/out" || rc=$?
+[ "$rc" = 1 ] && grep -q 'cannot tell the current directory' "$dir/out" \
+  || { echo "rc $rc: $(cat "$dir/out")"; exit 1; }
+[ ! -e "$dir/ran" ]; lacks '^op.exe' "$log"; rtempty
+
+# Dry run in WSL names the route and calls no .exe or wslpath.
 : > "$log"
 "$tool" --full-access --dry-run --template "$dir/wsl.tpl" 2>"$dir/out" >/dev/null
 grep -qx "mode full-access (Windows op.exe), template $dir/wsl.tpl" "$dir/out"
 [ ! -s "$log" ]
 
-# A reference in the environment is still refused, before op.exe.
+# A reference in the WSL environment is still refused, before any .exe.
 : > "$log"
 fails env X=op://demo-ops/other/field "$tool" --full-access --template "$dir/wsl.tpl" -- true
 grep -q 'environment holds op:// references (X)' "$dir/out"
 [ ! -s "$log" ]
+
+# The Windows environment: op:// values and service tokens refused by name,
+# values never shown, op.exe never run.
+winrefused() {
+  : > "$log"
+  fails "$tool" --full-access --template "$dir/wsl.tpl" -- true
+  grep -q "$1" "$dir/out" || { echo "expected '$1' in: $(cat "$dir/out")"; exit 1; }
+  lacks dummysecret "$dir/out"; lacks '^op.exe' "$log"; rtempty
+}
+cp "$dir/winenv" "$dir/winenv.ok"
+printf 'XREF=op://Private/item/dummysecret\n' >> "$dir/winenv"
+winrefused 'Windows environment holds op:// references (XREF)'
+cp "$dir/winenv.ok" "$dir/winenv"; printf 'OP_SERVICE_ACCOUNT_TOKEN=dummysecret\n' >> "$dir/winenv"
+winrefused 'Windows environment sets OP_SERVICE_ACCOUNT_TOKEN'
+cp "$dir/winenv.ok" "$dir/winenv"; printf 'op_connect_token=dummysecret\n' >> "$dir/winenv"
+winrefused 'Windows environment sets OP_CONNECT_TOKEN'
+cp "$dir/winenv.ok" "$dir/winenv"
+
+# Names that collide in Windows, which ignores case, are refused.
+printf 'A=op://demo-ops/item/field\na=op://demo-ops/item/other\n' > "$dir/case.tpl"
+: > "$log"
+fails "$tool" --full-access --template "$dir/case.tpl" -- true
+grep -q 'differ only in case (A)' "$dir/out"; [ ! -s "$log" ]
+printf 'path=op://demo-ops/item/field\n' > "$dir/case.tpl"
+fails "$tool" --full-access --template "$dir/case.tpl" -- true
+grep -q 'template name PATH (in any case) is not allowed' "$dir/out"
+printf 'userprofile=op://demo-ops/item/field\n' > "$dir/case.tpl"
+: > "$log"
+fails "$tool" --full-access --template "$dir/case.tpl" -- true
+grep -q 'match Windows variables, ignoring case: userprofile' "$dir/out"
+lacks '^op.exe' "$log"; rtempty
 
 # wslpath failing stops the run before op.exe.
 : > "$log"
@@ -242,11 +348,20 @@ unset FAKE_WSLPATH_FAIL
 grep -q 'wslpath cannot convert' "$dir/out"
 lacks op.exe "$log"
 
-# Agent mode in WSL is unchanged: the Linux op, never op.exe.
+# Without cmd.exe the Windows environment cannot be checked: refused.
+mkdir "$dir/nocmd"
+for c in op.exe wsl.exe wslpath; do ln -s "$dir/bin/$c" "$dir/nocmd/$c"; done
+: > "$log"
+(PATH="$dir/nocmd:/usr/bin:/bin"
+  fails "$tool" --full-access --template "$dir/wsl.tpl" -- true)
+grep -q 'no cmd.exe on PATH' "$dir/out"
+lacks op.exe "$log"
+
+# Agent mode in WSL is unchanged: the Linux op, never an .exe.
 : > "$log"
 "$tool" --project demo --template "$dir/agent.tpl" -- true
 grep -qx 'op token=tok-demo' "$log"
-lacks op.exe "$log"; lacks wsl.exe "$log"; lacks wslpath "$log"
+lacks '\.exe' "$log"; lacks wslpath "$log"
 
 # Without op.exe on PATH, full-access uses the Linux op.
 mkdir "$dir/linbin"; cp "$dir/bin/op" "$dir/linbin/op"
@@ -255,10 +370,10 @@ mkdir "$dir/linbin"; cp "$dir/bin/op" "$dir/linbin/op"
   ! command -v op.exe >/dev/null 2>&1 || { echo "op.exe still on PATH"; exit 1; }
   "$tool" --full-access --template "$dir/wsl.tpl" -- true)
 grep -qx 'op token=none' "$log"
-lacks op.exe "$log"; lacks wsl.exe "$log"
+lacks '\.exe' "$log"
 
-rm "$dir/bin/wslpath" "$dir/bin/op.exe" "$dir/bin/wsl.exe"
-unset WSL_DISTRO_NAME FAKE_LOG
+rm "$dir/bin/wslpath" "$dir/bin/op.exe" "$dir/bin/wsl.exe" "$dir/bin/cmd.exe"
+unset WSL_DISTRO_NAME FAKE_LOG FAKE_WINENV XDG_RUNTIME_DIR
 
 # Linux: the token comes from ~/.config/op/agent-PROJECT.token, mode 600 or
 # 400 and yours; the Keychain is never asked.
