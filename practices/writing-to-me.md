@@ -85,11 +85,27 @@ message, so first try not to need it, then make it impossible to miss.
   is only there, in a code comment or in thinking is a step I never saw.
   Steps a worker reports go into the coordinator's message the same way.
 - **Each step** says where (which machine, directory or page), the exact
-  command in its own code block, one command per block, ready to paste with
-  no placeholders I must invent (name the value and where it comes from
-  when one is unavoidable), what I should see when it worked, and what
+  command in its own code block, one command per block (except commands
+  that must run together, below), ready to paste with no placeholders I
+  must invent (name the value and where it comes from when one is
+  unavoidable), what I should see when it worked, and what
   happens next: "then tell me" or "the session picks it up by itself".
   Commands and links do not count toward a message's word budget.
+- **Commands that must run together** are the exception to one per block.
+  They go in one block that runs as a unit and stops at the first
+  failure. A terminal runs a pasted block line by line and carries on
+  after a failed line, so later lines act on a broken state.
+  - PowerShell 7.4 or later: wrap the block in `& { … }`. Its first two
+    lines are `$ErrorActionPreference = 'Stop'` and
+    `$PSNativeCommandUseErrorActionPreference = $true`, so failing
+    programs stop it too.
+  - A POSIX shell: wrap it in `( set -e; … )`. The parentheses keep a
+    failure from closing my shell.
+  - Windows PowerShell 5.1 has no such setting for programs: give one
+    command per block there.
+
+  Say not to rerun the block after a failure. A check I must read before
+  going on is its own block, with what I should see.
 - **After I do it**, verify it yourself and continue; don't ask me to check.
 
 Before: "You'll need to add the deploy secret and enable the workflow."
@@ -106,7 +122,8 @@ exists and ask you before the first deploy runs."
 
 Origin: projects of every kind. One-off setup steps were left in READMEs,
 PR bodies and agent reasoning, where they were missed, and some were steps
-the agent could have run itself.
+the agent could have run itself. In a machine setup, a pasted setup block
+kept running after its install command failed and wrote a broken config.
 
 ## Names
 
