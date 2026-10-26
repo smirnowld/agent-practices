@@ -217,6 +217,26 @@ Rotate as in the Keychain section, then rewrite the file the same way.
 - Install both with `make install-bin` from this repository's main checkout
   (links from a worktree dangle once it is removed).
 
+### Full access in WSL
+
+WSL has no 1Password desktop-app integration, so a Linux `op` would ask for
+the account password every 30 minutes. In WSL (`WSL_DISTRO_NAME` set) with
+the Windows `op.exe` on `PATH`, `with-secrets --full-access` runs
+`op.exe run` instead, which the Windows 1Password app authorises with
+Windows Hello. `op.exe` resolves the template and starts `CMD` back in the
+same distribution and folder through `wsl.exe --exec`, which passes
+arguments, stdin and the exit code through unchanged; the template's names
+are added to `WSLENV` so their values cross back. Without `op.exe` it falls
+back to the Linux `op`; agent mode is the same everywhere.
+
+One-time setup on the Windows PC
+([app integration](https://www.1password.dev/cli/app-integration.md),
+checked 2026-10-26): install the CLI (`winget install AgileBits.1Password.CLI`),
+then in the Windows 1Password app turn on Windows Hello, and under
+Settings, Developer, select "Integrate with 1Password CLI". If `op.exe`
+reports no accounts, select "Keep 1Password in the notification area"
+under Settings, General and restart the app.
+
 ### Quotas
 
 Per the [rate limits](https://www.1password.dev/service-accounts/rate-limits),
