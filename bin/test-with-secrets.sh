@@ -166,6 +166,7 @@ case $3 in WIN:*) ;; *) exit 9 ;; esac
 case $5 in WIN:*) ;; *) exit 9 ;; esac
 echo "op.exe token=${OP_SERVICE_ACCOUNT_TOKEN:-none}" >> "$FAKE_LOG"
 [ -z "${FAKE_OPEXE_FAIL:-}" ] || exit 3
+if [ -n "${FAKE_OPEXE_SLEEP:-}" ]; then echo $$ > "$FAKE_OPEXE_SLEEP"; exec sleep 5; fi
 [ -z "${FAKE_RMDIR:-}" ] || rmdir "$FAKE_RMDIR"
 tpl=${3#WIN:} cmd=${5#WIN:}; shift 5
 while IFS= read -r l; do
@@ -200,6 +201,8 @@ cat > "$dir/bin/cmd.exe" <<'FAKE'
 #!/bin/sh
 echo "cmd.exe $*" >> "$FAKE_LOG"
 [ "$*" = "/d /c set" ] || exit 9
+# Interop hands the Windows process our stdin; drain it as that would.
+cat >/dev/null
 { cat "$FAKE_WINENV"
   old_ifs=$IFS; IFS=:
   for e in ${WSLENV-}; do n=${e%%/*}; v=$(printenv "$n") && echo "$n=$v"; done
@@ -263,6 +266,12 @@ for flag in --full-access --operator; do
   nolinuxop; rtempty
 done
 
+# A large input reaches the command whole.
+: > "$log"
+seq 1 20000 | "$tool" --full-access --template "$dir/wsl.tpl" -- sh -c 'wc -c > "$0"' "$dir/wchild"
+[ "$(tr -d ' ' < "$dir/wchild")" = "$(seq 1 20000 | wc -c | tr -d ' ')" ] \
+  || { echo "stdin cut to $(cat "$dir/wchild") bytes"; exit 1; }
+
 # A relative template path starting with - is made absolute for wslpath.
 cp "$dir/wsl.tpl" "$wd/-t.tpl"
 : > "$log"
@@ -277,6 +286,32 @@ FAKE_OPEXE_FAIL=1; export FAKE_OPEXE_FAIL
 unset FAKE_OPEXE_FAIL
 [ "$rc" = 3 ] || { echo "exit code $rc, expected 3"; exit 1; }
 lacks "^wsl.exe" "$log"; rtempty
+
+# TERM goes on to op.exe; once it has ended the file is removed and the exit
+# status is 143.
+: > "$log"; rm -f "$dir/op.pid"
+FAKE_OPEXE_SLEEP=$dir/op.pid; export FAKE_OPEXE_SLEEP
+"$tool" --full-access --template "$dir/wsl.tpl" -- true &
+wpid=$!
+unset FAKE_OPEXE_SLEEP
+i=0; while [ ! -s "$dir/op.pid" ] && [ "$i" -lt 40 ]; do sleep 0.05; i=$((i + 1)); done
+[ -s "$dir/op.pid" ] || { echo "fake op.exe did not start"; exit 1; }
+kill -TERM "$wpid"
+# The fake sleeps 5 s: still running after 1 s means TERM was not passed on.
+i=0; while kill -0 "$wpid" 2>/dev/null && [ "$i" -lt 20 ]; do sleep 0.05; i=$((i + 1)); done
+if kill -0 "$wpid" 2>/dev/null; then echo "TERM was not passed on to op.exe"; kill -KILL "$wpid"; exit 1; fi
+rc=0; wait "$wpid" || rc=$?
+[ "$rc" = 143 ] || { echo "exit code $rc after TERM, expected 143"; exit 1; }
+if kill -0 "$(cat "$dir/op.pid")" 2>/dev/null; then echo "op.exe outlived with-secrets"; exit 1; fi
+rtempty
+
+# The environment file needs XDG_RUNTIME_DIR, a directory; no /tmp fallback.
+: > "$log"
+(unset XDG_RUNTIME_DIR; fails "$tool" --full-access --template "$dir/wsl.tpl" -- true)
+grep -q 'XDG_RUNTIME_DIR is unset or not a directory' "$dir/out"
+(XDG_RUNTIME_DIR=$dir/winenv; fails "$tool" --full-access --template "$dir/wsl.tpl" -- true)
+grep -q 'XDG_RUNTIME_DIR is unset or not a directory' "$dir/out"
+lacks '^op.exe' "$log"; lacks '^cmd.exe' "$log"
 
 # A directory the new session cannot enter fails closed: wsl.exe falls back
 # to /, and the inner shell refuses to run the command there. A current
