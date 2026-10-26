@@ -226,20 +226,25 @@ set) with the Windows `op.exe` on `PATH`, `with-secrets --full-access` runs
 Windows Hello. `op.exe` resolves the template and starts `CMD` back in the
 same distribution, as the same user and in the same folder, through
 `wsl.exe --exec`; arguments, stdin and the exit code pass through. The
-template's names are added to `WSLENV` so their values cross back. The new
-WSL session doesn't inherit the caller's environment, so `with-secrets`
-saves it (`PATH`, `AWS_PROFILE` and the rest) to a mode-600 file in the
-user's runtime directory (`XDG_RUNTIME_DIR`, in memory; the run stops if it
-is missing, a symlink, not the user's, or writable by group or others, as
-WSLg's own fallback is; with `systemd=true` under `[boot]` in
-`/etc/wsl.conf` it is `/run/user/UID`, which passes), which the command's side loads and deletes. That file holds
-whatever the caller exported, secrets included, until then. Variables whose
-names are not valid shell names don't cross. A missing folder stops the run. It is a new session, outside any sandbox or
-namespace the caller ran in. Before running, it refuses `op://` values and
-1Password tokens in the Windows-side environment too, and template names
-that clash with each other or with a Windows variable when case is
-ignored. Without `op.exe` it falls back to the Linux `op`; agent mode is
-the same everywhere.
+template's names are added to `WSLENV` so their values cross back.
+
+- The new WSL session doesn't inherit the caller's environment, so
+  `with-secrets` saves it (`PATH`, `AWS_PROFILE` and the rest) to a mode-600
+  file in `XDG_RUNTIME_DIR`, which the command's side loads and deletes.
+  That file holds whatever the caller exported, secrets included, until
+  then. Variables whose names are not valid shell names don't cross.
+- The run stops if `XDG_RUNTIME_DIR` is missing, a symlink, not the user's,
+  or writable by group or others, as WSLg's own fallback
+  `/mnt/wslg/runtime-dir` is. With `systemd=true` under `[boot]` in
+  `/etc/wsl.conf` (then `wsl --shutdown` from Windows) it is the in-memory
+  `/run/user/UID`, which passes.
+- A missing folder stops the run. The command runs in a new session,
+  outside any sandbox or namespace the caller ran in.
+- It also refuses `op://` values and 1Password tokens in the Windows-side
+  environment, and template names that clash with each other or with a
+  Windows variable when case is ignored.
+- Without `op.exe` it falls back to the Linux `op`; agent mode is the same
+  everywhere.
 
 One-time setup on the Windows PC
 ([app integration](https://www.1password.dev/cli/app-integration.md),
