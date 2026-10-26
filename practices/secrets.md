@@ -229,8 +229,10 @@ same distribution, as the same user and in the same folder, through
 template's names are added to `WSLENV` so their values cross back. The new
 WSL session doesn't inherit the caller's environment, so `with-secrets`
 saves it (`PATH`, `AWS_PROFILE` and the rest) to a mode-600 file in the
-user's runtime directory (`XDG_RUNTIME_DIR`, in memory; no runtime directory
-stops the run), which the command's side loads and deletes. That file holds
+user's runtime directory (`XDG_RUNTIME_DIR`, in memory; the run stops if it
+is missing, a symlink, not the user's, or writable by group or others, as
+WSLg's own fallback is; with `systemd=true` under `[boot]` in
+`/etc/wsl.conf` it is `/run/user/UID`, which passes), which the command's side loads and deletes. That file holds
 whatever the caller exported, secrets included, until then. Variables whose
 names are not valid shell names don't cross. A missing folder stops the run. It is a new session, outside any sandbox or
 namespace the caller ran in. Before running, it refuses `op://` values and
